@@ -29,3 +29,17 @@ func CreateTable(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, game)
 }
+
+func GetTable(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
+	}
+
+	game, err := service.GetTable(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+
+	return c.JSON(http.StatusOK, game)
+}

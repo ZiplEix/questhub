@@ -46,3 +46,19 @@ func CreateTable(name, gmID string) (*model.Game, error) {
 
 	return game, nil
 }
+
+func GetTable(id string) (*model.Game, error) {
+	game := &model.Game{}
+	query := `
+		SELECT id, name, gm_id, invite_code, is_active, created_at
+		FROM games
+		WHERE id = $1
+	`
+	err := database.DB.QueryRow(context.Background(), query, id).Scan(
+		&game.ID, &game.Name, &game.GmID, &game.InviteCode, &game.IsActive, &game.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return game, nil
+}
