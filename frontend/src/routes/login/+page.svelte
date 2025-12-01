@@ -16,7 +16,7 @@
                 {
                     email,
                     password,
-                    callbackURL: "/me",
+                    callbackURL: "/",
                 },
                 {
                     onError: (ctx) => {

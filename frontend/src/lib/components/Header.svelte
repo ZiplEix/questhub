@@ -15,15 +15,17 @@
     </div>
 
     <div class="flex items-center gap-4">
-        <button
+        <a
+            href="/login"
             class="font-medium text-dark-gray hover:text-burnt-orange transition-colors"
         >
             Connexion
-        </button>
-        <button
+        </a>
+        <a
+            href="/signup"
             class="bg-burnt-orange text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5"
         >
             Créer une table
-        </button>
+        </a>
     </div>
 </header>

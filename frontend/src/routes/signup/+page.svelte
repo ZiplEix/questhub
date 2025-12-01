@@ -16,7 +16,7 @@
         try {
             await authClient.signIn.social({
                 provider: "google",
-                callbackURL: "/me",
+                callbackURL: "/",
                 errorCallbackURL: "/signup",
             });
         } catch (e: any) {
