@@ -9,8 +9,9 @@ import (
 	mdw "questhub/middleware"
 
 	"context"
-	"github.com/ZiplEix/better-logs/httpmw"
 	"time"
+
+	"github.com/ZiplEix/better-logs/httpmw"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,6 +19,8 @@ import (
 
 func main() {
 	config.InitEnv()
+
+	database.InitDB()
 
 	logger, cleanup := config.InitLogger()
 	defer func() {
@@ -29,8 +32,6 @@ func main() {
 	}()
 	// Prevent unused variable error if logger is not used directly in main
 	_ = logger
-
-	database.InitDB()
 
 	authURL := os.Getenv("BETTER_AUTH_URL")
 	if err := mdw.InitJWKS(authURL); err != nil {
