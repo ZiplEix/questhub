@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+@theme {
+    --color-cream: #F9F7F2;
+    --color-burnt-orange: #E07A5F;
+    --color-mustard-yellow: #F2CC8F;
+    --color-dark-gray: #3D405B;
+    --color-soft-shadow: rgba(0, 0, 0, 0.05);
+
+    --font-sans: "Inter", sans-serif;
+    --font-display: "Outfit", sans-serif;
+
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+}
+
+body {
+    background-color: var(--color-cream);
+    color: var(--color-dark-gray);
+    font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+}
