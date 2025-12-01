@@ -28,3 +28,7 @@ h5,
 h6 {
     font-family: var(--font-display);
 }
+
+button:hover {
+    cursor: pointer;
+}
