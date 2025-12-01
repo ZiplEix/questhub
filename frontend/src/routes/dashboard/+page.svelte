@@ -1,7 +1,30 @@
 <script lang="ts">
-    import { Dice5, LogOut, Archive, ArchiveRestore } from "lucide-svelte";
+    import { Dice5, Archive, ArchiveRestore, X } from "lucide-svelte";
     import GameCard from "$lib/components/GameCard.svelte";
     import Header from "$lib/components/Header.svelte";
+    import { api } from "$lib/api";
+    import { goto } from "$app/navigation";
+    import { onMount } from "svelte";
+    import { authClient } from "$lib/auth-client";
+
+    let jwtToken = $state<string | null>(null);
+
+    onMount(async () => {
+        try {
+            const { data, error: tokenError } = await authClient.token();
+
+            if (tokenError || !data?.token) {
+                console.error(tokenError);
+                goto("/login");
+                return;
+            }
+
+            jwtToken = data.token;
+        } catch (error) {
+            console.error(error);
+            goto("/login");
+        }
+    });
 
     // Mock Data
     const mockGames = [
@@ -42,10 +65,49 @@
     ];
 
     let showArchived = $state(false);
+    let dialog: HTMLDialogElement;
+    let newGameName = $state("");
+    let creating = $state(false);
 
     let filteredGames = $derived(
         mockGames.filter((g) => (showArchived ? !g.isActive : g.isActive)),
     );
+
+    function openDialog() {
+        dialog.showModal();
+    }
+
+    function closeDialog() {
+        dialog.close();
+        newGameName = "";
+    }
+
+    async function createGame(e: SubmitEvent) {
+        e.preventDefault();
+        creating = true;
+
+        let response: any;
+
+        try {
+            response = await api.post(
+                "/table",
+                { name: newGameName },
+                {
+                    headers: {
+                        Authorization: `Bearer ${jwtToken}`,
+                    },
+                },
+            );
+            console.log(response.data);
+        } catch (e: any) {
+            console.error(e);
+        } finally {
+            creating = false;
+            goto(`/table/${response.data.id}`);
+        }
+
+        closeDialog();
+    }
 </script>
 
 <div class="min-h-screen bg-cream">
@@ -81,7 +143,8 @@
                 </button>
 
                 <button
-                    class="bg-burnt-orange text-white px-6 py-3 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                    class="bg-burnt-orange text-white px-6 py-3 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 flex items-center gap-2 hover:cursor-pointer"
+                    onclick={openDialog}
                 >
                     <Dice5 size={20} />
                     Nouvelle Partie
@@ -120,7 +183,8 @@
                 </p>
                 {#if !showArchived}
                     <button
-                        class="bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-lg"
+                        class="bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-lg hover:cursor-pointer"
+                        onclick={openDialog}
                     >
                         Créer une table
                     </button>
@@ -128,4 +192,59 @@
             </div>
         {/if}
     </main>
+
+    <dialog
+        bind:this={dialog}
+        class="m-auto rounded-3xl bg-white shadow-xl backdrop:bg-black/50 p-0 w-full max-w-lg open:animate-in open:fade-in open:zoom-in-95 open:duration-200 backdrop:animate-in backdrop:fade-in backdrop:duration-200"
+    >
+        <div class="p-8 md:p-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-display font-bold text-2xl text-dark-gray">
+                    Nouvelle Partie
+                </h2>
+                <button
+                    onclick={closeDialog}
+                    class="text-dark-gray/40 hover:text-dark-gray transition-colors hover:cursor-pointer"
+                >
+                    <X size={24} />
+                </button>
+            </div>
+
+            <form onsubmit={createGame} class="space-y-6">
+                <div>
+                    <label
+                        class="block text-sm font-medium text-dark-gray mb-2 ml-1"
+                        for="gameName"
+                    >
+                        Nom de la partie
+                    </label>
+                    <input
+                        type="text"
+                        id="gameName"
+                        bind:value={newGameName}
+                        required
+                        class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/50 focus:border-burnt-orange transition-all bg-stone-50"
+                        placeholder="Ex: La Légende de Vox Machina"
+                    />
+                </div>
+
+                <div class="flex justify-end gap-3 mt-8">
+                    <button
+                        type="button"
+                        onclick={closeDialog}
+                        class="px-6 py-3 rounded-xl font-medium text-dark-gray hover:bg-stone-50 transition-colors hover:cursor-pointer"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={creating}
+                        class="bg-burnt-orange text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0 hover:cursor-pointer"
+                    >
+                        {creating ? "Création..." : "Créer la partie"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
 </div>

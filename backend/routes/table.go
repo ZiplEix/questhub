@@ -1,0 +1,14 @@
+package routes
+
+import (
+	"questhub/controller"
+	"questhub/middleware"
+
+	"github.com/labstack/echo/v4"
+)
+
+func initTableRoutes(e *echo.Echo) {
+	g := e.Group("/table", middleware.JWTMiddleware)
+
+	g.POST("", controller.CreateTable)
+}

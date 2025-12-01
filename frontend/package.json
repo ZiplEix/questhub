@@ -23,6 +23,7 @@
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.17",
 		"@types/pg": "^8.15.6",
+		"axios": "^1.13.2",
 		"better-auth": "^1.4.4",
 		"lucide-svelte": "^0.555.0",
 		"pg": "^8.16.3",
