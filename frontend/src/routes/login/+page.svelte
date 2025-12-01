@@ -7,7 +7,8 @@
     let error = $state("");
     let loading = $state(false);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (event: SubmitEvent) => {
+        event.preventDefault();
         error = "";
         loading = true;
 
@@ -54,11 +55,11 @@
                 </p>
             </div>
 
-            <form class="space-y-5" on:submit|preventDefault={handleSubmit}>
+            <form class="space-y-5" onsubmit={handleSubmit}>
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Email</label
+                        for="email">Email</label
                     >
                     <input
                         type="email"
@@ -72,7 +73,7 @@
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Mot de passe</label
+                        for="password">Mot de passe</label
                     >
                     <input
                         type="password"

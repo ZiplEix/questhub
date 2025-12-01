@@ -9,7 +9,8 @@
     let error = $state("");
     let loading = $state(false);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (event: SubmitEvent) => {
+        event.preventDefault();
         error = "";
 
         if (password !== confirmPassword) {
@@ -61,11 +62,11 @@
                 <p class="text-dark-gray/60">Créez un compte pour commencer.</p>
             </div>
 
-            <form class="space-y-5" on:submit|preventDefault={handleSubmit}>
+            <form class="space-y-5" onsubmit={handleSubmit}>
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Nom</label
+                        for="name">Nom</label
                     >
                     <input
                         type="text"
@@ -79,7 +80,7 @@
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Email</label
+                        for="email">Email</label
                     >
                     <input
                         type="email"
@@ -93,7 +94,7 @@
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Mot de passe</label
+                        for="password">Mot de passe</label
                     >
                     <input
                         type="password"
@@ -107,7 +108,7 @@
                 <div>
                     <label
                         class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        >Confirmer le mot de passe</label
+                        for="confirmPassword">Confirmer le mot de passe</label
                     >
                     <input
                         type="password"
