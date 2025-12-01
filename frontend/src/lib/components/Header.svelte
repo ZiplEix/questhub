@@ -34,13 +34,21 @@
                     <p class="text-sm font-bold text-dark-gray">
                         {$session.data.user.name}
                     </p>
-                    <p class="text-xs text-dark-gray/60">Joueur</p>
+                    <p class="text-xs text-dark-gray/60">Maître du Jeu</p>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-mustard-yellow/30 flex items-center justify-center text-mustard-yellow font-bold border-2 border-white shadow-sm"
-                >
-                    {$session.data.user.name.charAt(0).toUpperCase()}
-                </div>
+                {#if $session.data.user.image}
+                    <img
+                        src={$session.data.user.image}
+                        alt={$session.data.user.name}
+                        class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                    />
+                {:else}
+                    <div
+                        class="w-10 h-10 rounded-full bg-mustard-yellow/30 flex items-center justify-center text-mustard-yellow font-bold border-2 border-white shadow-sm"
+                    >
+                        {$session.data.user.name.charAt(0).toUpperCase()}
+                    </div>
+                {/if}
                 <button
                     class="text-dark-gray/40 hover:text-red-500 transition-colors ml-2 hover:cursor-pointer"
                     title="Se déconnecter"
