@@ -16,7 +16,7 @@
                 {
                     email,
                     password,
-                    callbackURL: "/",
+                    callbackURL: "/dashboard",
                 },
                 {
                     onError: (ctx) => {
@@ -47,7 +47,7 @@
             // This will redirect the user to Google's consent screen
             await authClient.signIn.social({
                 provider: "google",
-                callbackURL: "/me", // où revenir après login OK
+                callbackURL: "/dashboard", // où revenir après login OK
                 errorCallbackURL: "/login", // où revenir si erreur
             });
         } catch (e: any) {

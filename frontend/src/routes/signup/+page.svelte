@@ -16,7 +16,7 @@
         try {
             await authClient.signIn.social({
                 provider: "google",
-                callbackURL: "/",
+                callbackURL: "/dashboard",
                 errorCallbackURL: "/signup",
             });
         } catch (e: any) {
@@ -42,7 +42,7 @@
                     email,
                     password,
                     name,
-                    callbackURL: "/", // ou '/login' si tu préfères
+                    callbackURL: "/dashboard", // ou '/login' si tu préfères
                 },
                 {
                     onError: (ctx) => {
