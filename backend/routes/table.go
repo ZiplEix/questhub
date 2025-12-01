@@ -11,5 +11,7 @@ func initTableRoutes(e *echo.Echo) {
 	g := e.Group("/table", middleware.JWTMiddleware)
 
 	g.POST("", controller.CreateTable)
+	g.GET("", controller.GetGames)
+	g.POST("/join", controller.JoinTable)
 	g.GET("/:id", controller.GetTable)
 }

@@ -1,12 +1,15 @@
 <script lang="ts">
-    import { Calendar, User } from "lucide-svelte";
+    import { goto } from "$app/navigation";
+    import { Calendar, User, Crown } from "lucide-svelte";
 
-    let { name, gm, imageUrl, createdAt, isActive } = $props<{
+    let { id, name, gm, imageUrl, createdAt, isActive, isGm } = $props<{
+        id: string;
         name: string;
         gm: string;
         imageUrl: string;
         createdAt: string;
         isActive: boolean;
+        isGm: boolean;
     }>();
 
     const date = new Date(createdAt).toLocaleDateString("fr-FR", {
@@ -35,6 +38,16 @@
                 >
             </div>
         {/if}
+        {#if isGm}
+            <div class="absolute top-3 left-3">
+                <span
+                    class="bg-burnt-orange text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1"
+                >
+                    <Crown size={12} />
+                    MJ
+                </span>
+            </div>
+        {/if}
     </div>
 
     <div class="p-5 flex flex-col flex-grow gap-4">
@@ -59,7 +72,8 @@
             </div>
 
             <button
-                class="bg-burnt-orange/10 text-burnt-orange px-4 py-2 rounded-lg text-sm font-bold hover:bg-burnt-orange hover:text-white transition-all"
+                class="bg-burnt-orange/10 text-burnt-orange px-4 py-2 rounded-lg text-sm font-bold hover:bg-burnt-orange hover:text-white transition-all hover:cursor-pointer"
+                onclick={() => goto(`/table/${id}`)}
             >
                 Jouer
             </button>

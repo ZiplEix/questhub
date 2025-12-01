@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Dice5, Archive, ArchiveRestore, X } from "lucide-svelte";
+    import { Dice5, LogOut, Archive, ArchiveRestore, X } from "lucide-svelte";
     import GameCard from "$lib/components/GameCard.svelte";
     import Header from "$lib/components/Header.svelte";
     import { api } from "$lib/api";
@@ -8,6 +8,8 @@
     import { authClient } from "$lib/auth-client";
 
     let jwtToken = $state<string | null>(null);
+    let games = $state<any[]>([]);
+    let loading = $state(true);
 
     onMount(async () => {
         try {
@@ -20,49 +22,28 @@
             }
 
             jwtToken = data.token;
+            await fetchGames(jwtToken);
         } catch (error) {
             console.error(error);
             goto("/login");
         }
     });
 
-    // Mock Data
-    const mockGames = [
-        {
-            id: "1",
-            name: "La Malédiction de Strahd",
-            gm: "Baptiste",
-            imageUrl: "https://placehold.co/600x400/3D405B/F9F7F2?text=Strahd",
-            createdAt: "2025-11-15T10:00:00Z",
-            isActive: true,
-        },
-        {
-            id: "2",
-            name: "Les Mines Oubliées de Phandelver",
-            gm: "Sarah",
-            imageUrl:
-                "https://placehold.co/600x400/E07A5F/white?text=Phandelver",
-            createdAt: "2025-10-20T14:30:00Z",
-            isActive: true,
-        },
-        {
-            id: "3",
-            name: "Campagne Homebrew: Aetheria",
-            gm: "Baptiste",
-            imageUrl:
-                "https://placehold.co/600x400/F2CC8F/3D405B?text=Aetheria",
-            createdAt: "2025-12-01T09:00:00Z",
-            isActive: true,
-        },
-        {
-            id: "4",
-            name: "One-shot: Le Manoir Hanté",
-            gm: "Marc",
-            imageUrl: "https://placehold.co/600x400/darkgrey/white?text=Manoir",
-            createdAt: "2025-01-10T18:00:00Z",
-            isActive: false,
-        },
-    ];
+    async function fetchGames(token: string | null) {
+        if (!token) return;
+        try {
+            const response = await api.get("/table", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            games = response.data;
+        } catch (e) {
+            console.error(e);
+        } finally {
+            loading = false;
+        }
+    }
 
     let showArchived = $state(false);
     let dialog: HTMLDialogElement;
@@ -70,7 +51,7 @@
     let creating = $state(false);
 
     let filteredGames = $derived(
-        mockGames.filter((g) => (showArchived ? !g.isActive : g.isActive)),
+        games.filter((g) => (showArchived ? !g.is_active : g.is_active)),
     );
 
     function openDialog() {
@@ -99,11 +80,12 @@
                 },
             );
             console.log(response.data);
+            await fetchGames(jwtToken); // Refresh list
+            goto(`/table/${response.data.id}`);
         } catch (e: any) {
             console.error(e);
         } finally {
             creating = false;
-            goto(`/table/${response.data.id}`);
         }
 
         closeDialog();
@@ -152,15 +134,23 @@
             </div>
         </div>
 
-        {#if filteredGames.length > 0}
+        {#if loading}
+            <div class="text-center py-24">
+                <p class="text-dark-gray/60 text-lg">
+                    Chargement des parties...
+                </p>
+            </div>
+        {:else if filteredGames.length > 0}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {#each filteredGames as game (game.id)}
                     <GameCard
+                        id={game.id}
                         name={game.name}
-                        gm={game.gm}
-                        imageUrl={game.imageUrl}
-                        createdAt={game.createdAt}
-                        isActive={game.isActive}
+                        gm={game.gm_name}
+                        imageUrl="https://placehold.co/600x400/3D405B/F9F7F2?text=QuestHub"
+                        createdAt={game.created_at}
+                        isActive={game.is_active}
+                        isGm={jwtToken ? true : false}
                     />
                 {/each}
             </div>
