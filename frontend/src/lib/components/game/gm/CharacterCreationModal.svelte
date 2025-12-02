@@ -19,6 +19,7 @@
     let name = $state("");
     let race = $state("");
     let maxHP = $state(10);
+    let money = $state(0);
     let isNPC = $state(false);
     let avatarType = $state<"upload" | "url">("upload");
     let avatarFile = $state<File | null>(null);
@@ -49,6 +50,7 @@
                 name = char.name || "";
                 race = char.race || "";
                 maxHP = char.max_hp || 10;
+                money = char.money || 0;
                 isNPC = char.is_npc || false;
 
                 if (char.avatar_url) {
@@ -100,6 +102,7 @@
                 name = "";
                 race = "";
                 maxHP = 10;
+                money = 0;
                 isNPC = false;
                 avatarFile = null;
                 avatarURL = "";
@@ -156,6 +159,7 @@
                 formData.append("name", name);
                 formData.append("race", race);
                 formData.append("max_hp", maxHP.toString());
+                formData.append("money", money.toString());
                 formData.append("is_npc", isNPC.toString());
 
                 if (avatarType === "upload" && avatarFile) {
@@ -192,7 +196,7 @@
                     }
                 });
 
-                if (character) {
+                if (character && character.id) {
                     await api.put(
                         `/table/${gameId}/characters/${character.id}`,
                         formData,
@@ -235,7 +239,7 @@
                 class="p-6 border-b border-stone-100 flex justify-between items-center sticky top-0 bg-white z-10"
             >
                 <h2 class="text-xl font-bold text-dark-gray">
-                    {character
+                    {character?.id
                         ? "Modifier le personnage"
                         : "Créer un personnage"}
                 </h2>
@@ -285,6 +289,20 @@
                             id="hp"
                             bind:value={maxHP}
                             min="1"
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label
+                            for="money"
+                            class="text-sm font-bold text-dark-gray"
+                            >Argent</label
+                        >
+                        <input
+                            type="number"
+                            id="money"
+                            bind:value={money}
+                            min="0"
                             class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
                         />
                     </div>
@@ -562,7 +580,7 @@
                             class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                         ></div>
                     {/if}
-                    {character ? "Enregistrer" : "Créer"}
+                    {character?.id ? "Enregistrer" : "Créer"}
                 </button>
             </div>
         </div>

@@ -5,20 +5,25 @@
         Pencil,
         Trash2,
         UserPlus,
+        UserMinus,
+        Download,
+        Upload,
     } from "lucide-svelte";
     import CharacterCreationModal from "$lib/components/game/gm/CharacterCreationModal.svelte";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { page } from "$app/state";
 
-    let { characters, players, onRefresh } = $props<{
-        characters: any[];
+    let { players, gameId } = $props<{
         players: any[];
-        onRefresh: () => void;
+        gameId: string;
     }>();
 
-    let isCharacterModalOpen = $state(false);
-    let selectedCharacter = $state<any>(null);
+    let characters = $state<any[]>([]);
+    let isModalOpen = $state(false);
+    let editingCharacter = $state<any>(null);
+    let fileInput: HTMLInputElement;
+
     let openMenuId = $state<string | null>(null);
 
     // Assignment Modal State
@@ -26,20 +31,36 @@
     let characterToAssign = $state<any>(null);
     let selectedPlayerId = $state<string>("");
 
+    async function loadCharacters() {
+        try {
+            const { data: tokenData } = await authClient.token();
+            const token = tokenData?.token;
+            const res = await api.get(`/table/${gameId}/characters`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            characters = res.data;
+        } catch (error) {
+            console.error("Failed to load characters:", error);
+        }
+    }
+
     function handleCharacterCreated() {
-        onRefresh();
-        selectedCharacter = null;
+        loadCharacters();
+        editingCharacter = null;
+        isModalOpen = false;
     }
 
     function openEditModal(character: any) {
-        selectedCharacter = character;
-        isCharacterModalOpen = true;
+        editingCharacter = character;
+        isModalOpen = true;
         openMenuId = null;
     }
 
     function openCreateModal() {
-        selectedCharacter = null;
-        isCharacterModalOpen = true;
+        editingCharacter = null;
+        isModalOpen = true;
     }
 
     function openAssignModal(character: any) {
@@ -49,10 +70,65 @@
         openMenuId = null;
     }
 
+    async function handleImport(event: Event) {
+        const target = event.target as HTMLInputElement;
+        if (!target.files || target.files.length === 0) return;
+
+        const file = target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const json = e.target?.result as string;
+                const charData = JSON.parse(json);
+
+                // Remove system fields to treat as new character
+                const { id, game_id, user_id, created_at, ...cleanData } =
+                    charData;
+
+                // Pre-fill the modal with imported data
+                editingCharacter = cleanData;
+                isModalOpen = true;
+
+                target.value = ""; // Reset input
+            } catch (error) {
+                console.error("Failed to import character:", error);
+                alert("Erreur lors de l'import du personnage.");
+            }
+        };
+
+        reader.readAsText(file);
+    }
+
+    function exportCharacter(character: any) {
+        // Create a clean copy of the character data for export
+        const {
+            id,
+            game_id,
+            user_id,
+            created_at,
+            player_name,
+            ...characterData
+        } = character;
+
+        const exportData = JSON.stringify(characterData, null, 2);
+        const blob = new Blob([exportData], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${character.name.replace(/\s+/g, "_").toLowerCase()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        openMenuId = null;
+    }
+
     async function assignCharacter() {
         if (!characterToAssign || !selectedPlayerId) return;
 
-        const gameId = page.params.id;
         try {
             const { data: tokenData } = await authClient.token();
             if (tokenData?.token) {
@@ -65,12 +141,41 @@
                         },
                     },
                 );
-                onRefresh();
+                loadCharacters();
                 isAssignModalOpen = false;
                 characterToAssign = null;
             }
         } catch (error) {
             console.error("Failed to assign character:", error);
+        }
+    }
+
+    async function unassignCharacter(character: any) {
+        if (
+            !confirm(
+                `Êtes-vous sûr de vouloir désassigner le personnage ${character.name} ?`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const { data: tokenData } = await authClient.token();
+            if (tokenData?.token) {
+                await api.post(
+                    `/table/${gameId}/characters/${character.id}/assign`,
+                    { player_id: "" }, // Empty player_id to unassign
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenData.token}`,
+                        },
+                    },
+                );
+                loadCharacters();
+                openMenuId = null;
+            }
+        } catch (error) {
+            console.error("Failed to unassign character:", error);
         }
     }
 
@@ -83,7 +188,6 @@
             return;
         }
 
-        const gameId = page.params.id;
         try {
             const { data: tokenData } = await authClient.token();
             if (tokenData?.token) {
@@ -95,7 +199,7 @@
                         },
                     },
                 );
-                onRefresh();
+                loadCharacters();
             }
         } catch (error) {
             console.error("Failed to delete character:", error);
@@ -117,6 +221,10 @@
             openMenuId = null;
         }
     }
+
+    $effect(() => {
+        loadCharacters();
+    });
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -126,13 +234,29 @@
         <h3 class="text-lg font-bold text-dark-gray">
             Personnages ({characters.length})
         </h3>
-        <button
-            onclick={openCreateModal}
-            class="flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white rounded-xl font-medium shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-sm"
-        >
-            <Plus size={18} />
-            Créer un personnage
-        </button>
+        <div class="flex gap-2">
+            <input
+                bind:this={fileInput}
+                type="file"
+                accept=".json"
+                class="hidden"
+                onchange={handleImport}
+            />
+            <button
+                onclick={() => fileInput.click()}
+                class="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-700 rounded-xl font-bold hover:bg-stone-200 transition-colors text-sm"
+            >
+                <Upload size={18} />
+                Importer
+            </button>
+            <button
+                onclick={openCreateModal}
+                class="flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white rounded-xl font-medium shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-sm"
+            >
+                <Plus size={18} />
+                Créer un personnage
+            </button>
+        </div>
     </div>
 
     <div class="space-y-3">
@@ -198,7 +322,24 @@
                                     <UserPlus size={16} />
                                     Assigner à un joueur
                                 </button>
+                                {#if character.user_id}
+                                    <button
+                                        onclick={() =>
+                                            unassignCharacter(character)}
+                                        class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
+                                    >
+                                        <UserMinus size={16} />
+                                        Désassigner
+                                    </button>
+                                {/if}
                             {/if}
+                            <button
+                                onclick={() => exportCharacter(character)}
+                                class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
+                            >
+                                <Download size={16} />
+                                Exporter
+                            </button>
                             <button
                                 onclick={() => openEditModal(character)}
                                 class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
@@ -229,10 +370,10 @@
 </div>
 
 <CharacterCreationModal
-    isOpen={isCharacterModalOpen}
-    onClose={() => (isCharacterModalOpen = false)}
+    isOpen={isModalOpen}
+    onClose={() => (isModalOpen = false)}
     onCharacterCreated={handleCharacterCreated}
-    character={selectedCharacter}
+    character={editingCharacter}
 />
 
 <!-- Assignment Modal -->

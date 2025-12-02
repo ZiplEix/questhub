@@ -17,6 +17,7 @@ type Character struct {
 	Stats      json.RawMessage `json:"stats"`
 	Inventory  json.RawMessage `json:"inventory"`
 	IsNPC      bool            `json:"is_npc"`
+	Money      int             `json:"money"`
 	CreatedAt  time.Time       `json:"created_at"`
 	PlayerName *string         `json:"player_name,omitempty"` // Populated when joining with user table
 }

@@ -1,0 +1,107 @@
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+Loading svelte-check in workspace: /home/baptiste/projects/questhub/frontend
+Getting Svelte diagnostics...
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/pupitre/Chat.svelte:118:13
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+            />
+            <button
+                onclick={sendMessage}
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-burnt-orange hover:bg-burnt-orange/10 rounded-lg transition-colors"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="m22 2-7 20-4-9-9-4Z" /><path
+                        d="M22 2 11 13"
+                    /></svg
+                >
+            </button>
+        </div>
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:313:21
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-dark-gray block"
+                        >Type</label
+                    >
+                    <div class="flex bg-stone-100 p-1 rounded-xl">
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:338:21
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-dark-gray block"
+                        >Avatar</label
+                    >
+                    <div class="flex gap-4 mb-2">
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:395:25
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-bold text-dark-gray"
+                            >Statistiques</label
+                        >
+                        <button
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:441:25
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-bold text-dark-gray"
+                            >Inventaire</label
+                        >
+                        <button
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/mj/GMTracker.svelte:53:21
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+                <div class="flex items-center justify-between gap-2">
+                    <div
+                        class="flex items-center bg-black/30 rounded px-1.5 py-0.5 text-xs font-mono"
+                        onclick={(e) => e.stopPropagation()}
+                    >
+                        <input
+                            type="number"
+                            value={entity.hp}
+                            class="w-6 bg-transparent text-right outline-none {entity.hp <
+                            entity.maxHp / 3
+                                ? 'text-red-400'
+                                : 'text-green-400'}"
+                        />
+                        <span class="text-stone-500 mx-1">/</span>
+                        <span class="text-stone-400">{entity.maxHp}</span>
+                    </div>
+
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/mj/GMTracker.svelte:53:21
+Warn: `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
+                <div class="flex items-center justify-between gap-2">
+                    <div
+                        class="flex items-center bg-black/30 rounded px-1.5 py-0.5 text-xs font-mono"
+                        onclick={(e) => e.stopPropagation()}
+                    >
+                        <input
+                            type="number"
+                            value={entity.hp}
+                            class="w-6 bg-transparent text-right outline-none {entity.hp <
+                            entity.maxHp / 3
+                                ? 'text-red-400'
+                                : 'text-green-400'}"
+                        />
+                        <span class="text-stone-500 mx-1">/</span>
+                        <span class="text-stone-400">{entity.maxHp}</span>
+                    </div>
+
+====================================
+svelte-check found 0 errors and 7 warnings in 3 files

@@ -3,12 +3,16 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"mime/multipart"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	model "questhub/models/database"
 	"questhub/models/request"
 	"questhub/service"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -362,54 +366,111 @@ func CreateCharacter(c echo.Context) error {
 	name := c.FormValue("name")
 	race := c.FormValue("race")
 	isNPC := c.FormValue("is_npc") == "true"
-	avatarURL := c.FormValue("avatar_url")
-	statsJSON := c.FormValue("stats")
-	inventoryJSON := c.FormValue("inventory")
 	maxHPStr := c.FormValue("max_hp")
+	stats := []byte(c.FormValue("stats"))
+	inventory := []byte(c.FormValue("inventory"))
+	money, _ := strconv.Atoi(c.FormValue("money"))
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Max HP")
 	}
 
-	var stats json.RawMessage
-	if statsJSON != "" {
-		stats = json.RawMessage(statsJSON)
-	} else {
-		stats = json.RawMessage("{}")
-	}
-
-	var inventoryItems []service.InventoryItem
-	if inventoryJSON != "" {
-		if err := json.Unmarshal([]byte(inventoryJSON), &inventoryItems); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid inventory JSON")
+	// Handle avatar upload
+	avatarURL := c.FormValue("avatar_url")
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		// Upload file
+		src, err := file.Open()
+		if err != nil {
+			return err
 		}
-	}
+		defer src.Close()
 
-	// Handle file upload
-	avatarFile, err := c.FormFile("avatar")
-	if err != nil && err != http.ErrMissingFile {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid file").SetInternal(err)
+		// Create uploads directory if not exists
+		if err := os.MkdirAll("uploads", 0755); err != nil {
+			return err
+		}
+
+		// Generate unique filename
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+		dstPath := filepath.Join("uploads", filename)
+
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		// Construct full URL
+		// Assuming server is running on localhost:8080 or configured host
+		// In production, this should be configurable
+		scheme := c.Scheme()
+		host := c.Request().Host
+		avatarURL = fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
 	}
 
 	// Handle inventory images
-	inventoryImages := make(map[int]*multipart.FileHeader)
-	form, err := c.MultipartForm()
-	if err == nil {
-		for i := range inventoryItems {
-			key := fmt.Sprintf("inventory_image_%d", i)
-			if files, ok := form.File[key]; ok && len(files) > 0 {
-				inventoryImages[i] = files[0]
+	// Parse inventory JSON to update image URLs
+	var inventoryItems []map[string]interface{}
+	if len(inventory) > 0 {
+		if err := json.Unmarshal(inventory, &inventoryItems); err != nil {
+			// Log error but continue
+			fmt.Println("Error unmarshalling inventory:", err)
+		} else {
+			updatedInventory := false
+			for i, item := range inventoryItems {
+				// Check for uploaded image for this item
+				formKey := fmt.Sprintf("inventory_image_%d", i)
+				invFile, err := c.FormFile(formKey)
+				if err == nil {
+					// Upload logic (similar to avatar)
+					src, err := invFile.Open()
+					if err != nil {
+						continue
+					}
+					defer src.Close()
+
+					ext := filepath.Ext(invFile.Filename)
+					filename := fmt.Sprintf("inv_%d_%d%s", i, time.Now().UnixNano(), ext)
+					dstPath := filepath.Join("uploads", filename)
+
+					dst, err := os.Create(dstPath)
+					if err != nil {
+						continue
+					}
+					defer dst.Close()
+
+					if _, err = io.Copy(dst, src); err != nil {
+						continue
+					}
+
+					scheme := c.Scheme()
+					host := c.Request().Host
+					itemURL := fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
+					item["image_url"] = itemURL
+					updatedInventory = true
+				}
+			}
+			if updatedInventory {
+				inventory, _ = json.Marshal(inventoryItems)
 			}
 		}
 	}
 
-	character, err := service.CreateCharacter(gameID, name, race, maxHP, isNPC, avatarFile, avatarURL, stats, inventoryItems, inventoryImages)
+	// Pass empty string for userID so the character is unassigned by default
+	// The GM can assign it later if needed.
+	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create character").SetInternal(err)
 	}
 
-	return c.JSON(http.StatusCreated, character)
+	return c.JSON(http.StatusCreated, char)
 }
 
 func UpdateCharacter(c echo.Context) error {
@@ -422,66 +483,127 @@ func UpdateCharacter(c echo.Context) error {
 	claims := c.Get("claims").(jwt.MapClaims)
 	userID := claims["sub"].(string)
 
-	// Verify GM
+	// Verify GM or Owner
 	game, err := service.GetTable(gameID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
 	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can update characters")
+
+	// Check if user is GM
+	isGM := game.GmID == userID
+
+	// If not GM, check if user owns the character
+	if !isGM {
+		char, err := service.GetUserCharacter(gameID, userID)
+		if err != nil || char.ID != charID {
+			return echo.NewHTTPError(http.StatusForbidden, "You can only update your own character")
+		}
 	}
 
 	name := c.FormValue("name")
 	race := c.FormValue("race")
-	isNPC := c.FormValue("is_npc") == "true"
-	avatarURL := c.FormValue("avatar_url")
-	statsJSON := c.FormValue("stats")
-	inventoryJSON := c.FormValue("inventory")
 	maxHPStr := c.FormValue("max_hp")
+	isNPC, _ := strconv.ParseBool(c.FormValue("is_npc"))
+	stats := []byte(c.FormValue("stats"))
+	inventory := []byte(c.FormValue("inventory"))
+	money, _ := strconv.Atoi(c.FormValue("money"))
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid Max HP")
 	}
 
-	var stats json.RawMessage
-	if statsJSON != "" {
-		stats = json.RawMessage(statsJSON)
-	} else {
-		stats = json.RawMessage("{}")
-	}
-
-	var inventoryItems []service.InventoryItem
-	if inventoryJSON != "" {
-		if err := json.Unmarshal([]byte(inventoryJSON), &inventoryItems); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid inventory JSON")
+	// Handle avatar upload
+	avatarURL := c.FormValue("avatar_url")
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		// Upload file
+		src, err := file.Open()
+		if err != nil {
+			return err
 		}
-	}
+		defer src.Close()
 
-	// Handle file upload
-	avatarFile, err := c.FormFile("avatar")
-	if err != nil && err != http.ErrMissingFile {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid file").SetInternal(err)
+		// Create uploads directory if not exists
+		if err := os.MkdirAll("uploads", 0755); err != nil {
+			return err
+		}
+
+		// Generate unique filename
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+		dstPath := filepath.Join("uploads", filename)
+
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+		// Construct full URL
+		scheme := c.Scheme()
+		host := c.Request().Host
+		avatarURL = fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
 	}
 
 	// Handle inventory images
-	inventoryImages := make(map[int]*multipart.FileHeader)
-	form, err := c.MultipartForm()
-	if err == nil {
-		for i := range inventoryItems {
-			key := fmt.Sprintf("inventory_image_%d", i)
-			if files, ok := form.File[key]; ok && len(files) > 0 {
-				inventoryImages[i] = files[0]
+	// Parse inventory JSON to update image URLs
+	var inventoryItems []map[string]interface{}
+	if len(inventory) > 0 {
+		if err := json.Unmarshal(inventory, &inventoryItems); err != nil {
+			// Log error but continue
+			fmt.Println("Error unmarshalling inventory:", err)
+		} else {
+			updatedInventory := false
+			for i, item := range inventoryItems {
+				// Check for uploaded image for this item
+				formKey := fmt.Sprintf("inventory_image_%d", i)
+				invFile, err := c.FormFile(formKey)
+				if err == nil {
+					// Upload logic (similar to avatar)
+					src, err := invFile.Open()
+					if err != nil {
+						continue
+					}
+					defer src.Close()
+
+					ext := filepath.Ext(invFile.Filename)
+					filename := fmt.Sprintf("inv_%d_%d%s", i, time.Now().UnixNano(), ext)
+					dstPath := filepath.Join("uploads", filename)
+
+					dst, err := os.Create(dstPath)
+					if err != nil {
+						continue
+					}
+					defer dst.Close()
+
+					if _, err = io.Copy(dst, src); err != nil {
+						continue
+					}
+
+					scheme := c.Scheme()
+					host := c.Request().Host
+					itemURL := fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
+					item["image_url"] = itemURL
+					updatedInventory = true
+				}
+			}
+			if updatedInventory {
+				inventory, _ = json.Marshal(inventoryItems)
 			}
 		}
 	}
 
-	character, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarFile, avatarURL, stats, inventoryItems, inventoryImages)
+	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update character").SetInternal(err)
 	}
 
-	return c.JSON(http.StatusOK, character)
+	return c.JSON(http.StatusOK, char)
 }
 
 func DeleteCharacter(c echo.Context) error {

@@ -14,7 +14,6 @@
     let game = $state<any>(null);
     let loading = $state(true);
     let players = $state<any[]>([]);
-    let characters = $state<any[]>([]);
     let invitations = $state<any[]>([]);
 
     const tabs = [
@@ -50,19 +49,6 @@
         }
     }
 
-    async function fetchCharacters(id: string, token: string) {
-        try {
-            const response = await api.get(`/table/${id}/characters`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            characters = response.data;
-        } catch (error) {
-            console.error("Failed to fetch characters:", error);
-        }
-    }
-
     async function fetchInvitations(id: string, token: string) {
         try {
             const response = await api.get(`/table/${id}/invitations`, {
@@ -83,7 +69,6 @@
             if (tokenData?.token) {
                 await Promise.all([
                     fetchPlayers(gameId, tokenData.token),
-                    fetchCharacters(gameId, tokenData.token),
                     fetchInvitations(gameId, tokenData.token),
                 ]);
             }
@@ -99,7 +84,6 @@
                     await Promise.all([
                         fetchGame(gameId, tokenData.token),
                         fetchPlayers(gameId, tokenData.token),
-                        fetchCharacters(gameId, tokenData.token),
                         fetchInvitations(gameId, tokenData.token),
                     ]);
                 }
@@ -186,11 +170,7 @@
 
                 <!-- CHARACTERS TAB -->
                 {#if activeTab === "characters"}
-                    <CharactersTab
-                        {characters}
-                        {players}
-                        onRefresh={refreshData}
-                    />
+                    <CharactersTab {players} gameId={page.params.id || ""} />
                 {/if}
 
                 <!-- INVITATIONS TAB -->
