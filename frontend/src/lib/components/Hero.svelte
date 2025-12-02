@@ -1,5 +1,8 @@
 <script lang="ts">
     import { ArrowRight } from "lucide-svelte";
+    import { authClient } from "$lib/auth-client";
+
+    const session = authClient.useSession();
 </script>
 
 <section
@@ -16,17 +19,31 @@
             Le compagnon de jeu de rôle gratuit qui gère vos inventaires, vos
             dés et vos combats. Gardez l'esprit libre pour l'aventure.
         </p>
-        <a
-            href="/signup"
-            class="group bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all hover:-translate-y-1 flex items-center gap-2 w-fit"
-        >
-            Rejoindre l'aventure
-            <span class="text-sm font-normal opacity-90">(Gratuit)</span>
-            <ArrowRight
-                size={20}
-                class="group-hover:translate-x-1 transition-transform"
-            />
-        </a>
+
+        {#if $session.data}
+            <a
+                href="/dashboard"
+                class="group bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all hover:-translate-y-1 flex items-center gap-2 w-fit"
+            >
+                Vos tables vous attendent
+                <ArrowRight
+                    size={20}
+                    class="group-hover:translate-x-1 transition-transform"
+                />
+            </a>
+        {:else}
+            <a
+                href="/signup"
+                class="group bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-opacity-90 transition-all hover:-translate-y-1 flex items-center gap-2 w-fit"
+            >
+                Rejoindre l'aventure
+                <span class="text-sm font-normal opacity-90">(Gratuit)</span>
+                <ArrowRight
+                    size={20}
+                    class="group-hover:translate-x-1 transition-transform"
+                />
+            </a>
+        {/if}
     </div>
     <div class="relative">
         <!-- Decorative blob background -->
