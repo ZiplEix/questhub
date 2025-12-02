@@ -6,10 +6,12 @@
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { authClient } from "$lib/auth-client";
+    import type { SessionUser } from "$lib/types/session-user";
 
     let jwtToken = $state<string | null>(null);
     let games = $state<any[]>([]);
     let loading = $state(true);
+    let user = $state<SessionUser | null>(null);
 
     onMount(async () => {
         try {
@@ -23,6 +25,19 @@
 
             jwtToken = data.token;
             await fetchGames(jwtToken);
+        } catch (error) {
+            console.error(error);
+            goto("/login");
+        }
+
+        try {
+            const { data, error: sessionError } = await authClient.getSession();
+            if (sessionError || !data?.user) {
+                console.error(sessionError);
+                goto("/login");
+                return;
+            }
+            user = data.user;
         } catch (error) {
             console.error(error);
             goto("/login");
@@ -203,7 +218,7 @@
                             `https://placehold.co/600x400/3D405B/F9F7F2?text=${game.name}`}
                         createdAt={game.created_at}
                         isActive={game.is_active}
-                        isGm={jwtToken ? true : false}
+                        isGm={user?.id === game.gm_id}
                         onDelete={() => handleDeleteGame(game.id, game.name)}
                     />
                 {/each}
