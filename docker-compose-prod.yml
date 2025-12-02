@@ -13,7 +13,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8080:8080"
+      - "3010:8080"
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
