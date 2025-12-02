@@ -28,8 +28,8 @@ func InitDB() {
 			DB.Close()
 		}
 
-		log.Printf("Failed to connect to PostgreSQL, retrying in 2 seconds... (%d/5)\n", i+1)
-		time.Sleep(2 * time.Second)
+		log.Printf("Failed to connect to PostgreSQL, retrying in %d seconds... (%d/5)\n", (2*time.Second)*time.Duration(i+1), i+1)
+		time.Sleep((2 * time.Second) * time.Duration(i+1))
 	}
 
 	log.Fatalf("Unable to connect to database after retries: %v\n", err)

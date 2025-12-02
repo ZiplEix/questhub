@@ -1,8 +1,11 @@
 package middleware
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
@@ -14,12 +17,22 @@ var jwks *keyfunc.JWKS
 func InitJWKS(authURL string) error {
 	jwksURL := authURL + "/api/auth/jwks"
 
-	var err error
-	jwks, err = keyfunc.Get(jwksURL, keyfunc.Options{
-		RefreshUnknownKID: true,
-	})
+	const maxRetries = 5
+	const retryDelay = 5 * time.Second
 
-	return err
+	var err error
+	for i := range maxRetries {
+		jwks, err = keyfunc.Get(jwksURL, keyfunc.Options{
+			RefreshUnknownKID: true,
+		})
+		if err == nil {
+			return nil
+		}
+		log.Printf("Failed to initialize JWKS (attempt %d/%d): %v. Retrying in %v...", i+1, maxRetries, err, retryDelay)
+		time.Sleep(retryDelay)
+	}
+
+	return fmt.Errorf("failed to initialize JWKS after %d attempts: %w", maxRetries, err)
 }
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
