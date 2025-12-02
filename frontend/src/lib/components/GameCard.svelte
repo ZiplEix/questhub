@@ -19,7 +19,8 @@
     });
 </script>
 
-<div
+<a
+    href={isGm ? `/table/${id}` : `/table/${id}/gm`}
     class="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-stone-100 flex flex-col h-full"
 >
     <div class="relative h-48 overflow-hidden">
@@ -73,10 +74,10 @@
 
             <button
                 class="bg-burnt-orange/10 text-burnt-orange px-4 py-2 rounded-lg text-sm font-bold hover:bg-burnt-orange hover:text-white transition-all hover:cursor-pointer"
-                onclick={() => goto(`/table/${id}`)}
+                onclick={() => goto(`/table/${isGm ? id : `${id}/gm`}`)}
             >
                 Jouer
             </button>
         </div>
     </div>
-</div>
+</a>
