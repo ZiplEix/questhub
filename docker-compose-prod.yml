@@ -34,7 +34,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       PUBLIC_BASE_API_URL: ${PUBLIC_BASE_API_URL}
     depends_on:
-      - backend
+      - postgres
 
 volumes:
   postgres_data:
