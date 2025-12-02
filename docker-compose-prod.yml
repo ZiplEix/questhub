@@ -21,7 +21,7 @@ services:
       - postgres
       - frontend
     volumes:
-      - ./uploads:/app/uploads
+      - /home/baptiste/questhub/upload:/app/uploads
 
   frontend:
     build: ./frontend
