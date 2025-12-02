@@ -49,6 +49,34 @@
     let dialog: HTMLDialogElement;
     let newGameName = $state("");
     let creating = $state(false);
+    let imageType = $state<"url" | "upload">("url");
+    let imageUrl = $state("");
+    let isUploading = $state(false);
+
+    async function handleFileUpload(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (!input.files || input.files.length === 0) return;
+
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append("image", file);
+
+        isUploading = true;
+        try {
+            const response = await api.post("/upload/image", formData, {
+                headers: {
+                    Authorization: `Bearer ${jwtToken}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            imageUrl = response.data.url;
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Erreur lors de l'upload de l'image");
+        } finally {
+            isUploading = false;
+        }
+    }
 
     let filteredGames = $derived(
         games.filter((g) => (showArchived ? !g.is_active : g.is_active)),
@@ -61,6 +89,8 @@
     function closeDialog() {
         dialog.close();
         newGameName = "";
+        imageUrl = "";
+        imageType = "url";
     }
 
     async function createGame(e: SubmitEvent) {
@@ -72,7 +102,7 @@
         try {
             response = await api.post(
                 "/table",
-                { name: newGameName },
+                { name: newGameName, image_url: imageUrl },
                 {
                     headers: {
                         Authorization: `Bearer ${jwtToken}`,
@@ -89,6 +119,28 @@
         }
 
         closeDialog();
+    }
+
+    async function handleDeleteGame(id: string, name: string) {
+        if (
+            !confirm(
+                `Êtes-vous sûr de vouloir supprimer la partie "${name}" ? Cette action est irréversible.`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            await api.delete(`/table/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${jwtToken}`,
+                },
+            });
+            await fetchGames(jwtToken);
+        } catch (e) {
+            console.error("Failed to delete game:", e);
+            alert("Erreur lors de la suppression de la partie");
+        }
     }
 </script>
 
@@ -147,10 +199,12 @@
                         id={game.id}
                         name={game.name}
                         gm={game.gm_name}
-                        imageUrl="https://placehold.co/600x400/3D405B/F9F7F2?text=QuestHub"
+                        imageUrl={game.image_url ||
+                            `https://placehold.co/600x400/3D405B/F9F7F2?text=${game.name}`}
                         createdAt={game.created_at}
                         isActive={game.is_active}
                         isGm={jwtToken ? true : false}
+                        onDelete={() => handleDeleteGame(game.id, game.name)}
                     />
                 {/each}
             </div>
@@ -216,6 +270,99 @@
                         class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/50 focus:border-burnt-orange transition-all bg-stone-50"
                         placeholder="Ex: La Légende de Vox Machina"
                     />
+                </div>
+
+                <div>
+                    <label
+                        class="block text-sm font-medium text-dark-gray mb-2 ml-1"
+                        for="imageType"
+                    >
+                        Image de couverture (optionnel)
+                    </label>
+
+                    <div class="flex gap-4 mb-4">
+                        <button
+                            type="button"
+                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {imageType ===
+                            'url'
+                                ? 'bg-dark-gray text-white'
+                                : 'bg-stone-100 text-dark-gray hover:bg-stone-200'}"
+                            onclick={() => (imageType = "url")}
+                        >
+                            Lien URL
+                        </button>
+                        <button
+                            type="button"
+                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {imageType ===
+                            'upload'
+                                ? 'bg-dark-gray text-white'
+                                : 'bg-stone-100 text-dark-gray hover:bg-stone-200'}"
+                            onclick={() => (imageType = "upload")}
+                        >
+                            Upload
+                        </button>
+                    </div>
+
+                    {#if imageType === "url"}
+                        <input
+                            type="url"
+                            bind:value={imageUrl}
+                            class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/50 focus:border-burnt-orange transition-all bg-stone-50"
+                            placeholder="https://example.com/image.jpg"
+                        />
+                    {:else}
+                        <div class="relative">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onchange={handleFileUpload}
+                                class="hidden"
+                                id="fileInput"
+                            />
+                            <label
+                                for="fileInput"
+                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-stone-300 rounded-xl cursor-pointer hover:bg-stone-50 transition-colors"
+                            >
+                                {#if isUploading}
+                                    <div
+                                        class="animate-spin rounded-full h-8 w-8 border-b-2 border-burnt-orange"
+                                    ></div>
+                                {:else if imageUrl && imageType === "upload"}
+                                    <img
+                                        src={imageUrl}
+                                        alt="Preview"
+                                        class="h-full w-full object-cover rounded-xl opacity-50"
+                                    />
+                                    <div
+                                        class="absolute inset-0 flex items-center justify-center"
+                                    >
+                                        <span
+                                            class="bg-white/80 px-3 py-1 rounded-full text-sm font-medium text-dark-gray"
+                                            >Changer l'image</span
+                                        >
+                                    </div>
+                                {:else}
+                                    <div class="text-center p-4">
+                                        <p
+                                            class="text-sm font-medium text-dark-gray"
+                                        >
+                                            Cliquez pour uploader
+                                        </p>
+                                        <p
+                                            class="text-xs text-dark-gray/60 mt-1"
+                                        >
+                                            PNG, JPG jusqu'à 5MB
+                                        </p>
+                                    </div>
+                                {/if}
+                            </label>
+                        </div>
+                        <p
+                            class="text-xs text-amber-600 mt-2 flex items-center gap-1"
+                        >
+                            ⚠️ Attention : toute image uploadée est publique.
+                        </p>
+                    {/if}
                 </div>
 
                 <div class="flex justify-end gap-3 mt-8">

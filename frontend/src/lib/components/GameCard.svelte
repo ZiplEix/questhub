@@ -1,16 +1,18 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { Calendar, User, Crown } from "lucide-svelte";
+    import { Calendar, User, Crown, Trash2 } from "lucide-svelte";
 
-    let { id, name, gm, imageUrl, createdAt, isActive, isGm } = $props<{
-        id: string;
-        name: string;
-        gm: string;
-        imageUrl: string;
-        createdAt: string;
-        isActive: boolean;
-        isGm: boolean;
-    }>();
+    let { id, name, gm, imageUrl, createdAt, isActive, isGm, onDelete } =
+        $props<{
+            id: string;
+            name: string;
+            gm: string;
+            imageUrl: string;
+            createdAt: string;
+            isActive: boolean;
+            isGm: boolean;
+            onDelete?: () => void;
+        }>();
 
     const date = new Date(createdAt).toLocaleDateString("fr-FR", {
         year: "numeric",
@@ -48,6 +50,17 @@
                     MJ
                 </span>
             </div>
+            <button
+                class="absolute top-3 right-3 bg-white/90 text-red-500 p-2 rounded-full shadow-md hover:bg-red-500 hover:text-white transition-all hover:cursor-pointer z-10"
+                onclick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete?.();
+                }}
+                title="Supprimer la partie"
+            >
+                <Trash2 size={16} />
+            </button>
         {/if}
     </div>
 

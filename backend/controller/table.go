@@ -23,7 +23,7 @@ func CreateTable(c echo.Context) error {
 	claims := c.Get("claims").(jwt.MapClaims)
 	gmID := claims["sub"].(string)
 
-	game, err := service.CreateTable(req.Name, gmID)
+	game, err := service.CreateTable(req.Name, gmID, req.ImageURL)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create table").SetInternal(err)
 	}
@@ -87,4 +87,23 @@ func JoinTable(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"id": gameID})
+}
+
+func DeleteTable(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	if err := service.DeleteTable(id, userID); err != nil {
+		if err.Error() == "unauthorized: only the GM can delete the table" {
+			return echo.NewHTTPError(http.StatusForbidden, err.Error())
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete table").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Table deleted successfully"})
 }

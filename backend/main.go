@@ -46,6 +46,9 @@ func main() {
 	// Add Better Logs middleware
 	e.Use(echo.WrapMiddleware(httpmw.Middleware))
 
+	// Serve static files
+	e.Static("/uploads", "uploads")
+
 	routes.SetupRoutes(e)
 
 	e.GET("/health", func(c echo.Context) error {

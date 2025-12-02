@@ -9,5 +9,6 @@ type Game struct {
 	GmName     string    `json:"gm_name"`
 	InviteCode string    `json:"invite_code"`
 	IsActive   bool      `json:"is_active"`
+	ImageURL   string    `json:"image_url"`
 	CreatedAt  time.Time `json:"created_at"`
 }

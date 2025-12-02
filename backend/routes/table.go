@@ -14,4 +14,5 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("", controller.GetGames)
 	g.POST("/join", controller.JoinTable)
 	g.GET("/:id", controller.GetTable)
+	g.DELETE("/:id", controller.DeleteTable)
 }
