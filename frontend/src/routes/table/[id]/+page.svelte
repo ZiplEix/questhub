@@ -1,109 +1,54 @@
 <script lang="ts">
-    import { page } from "$app/stores";
-    import { onMount } from "svelte";
-    import { api } from "$lib/api";
-    import { authClient } from "$lib/auth-client";
-    import { goto } from "$app/navigation";
-    import Header from "$lib/components/Header.svelte";
-    import { Crown } from "lucide-svelte";
+    import PlayerLayout from "$lib/components/game/player/PlayerLayout.svelte";
+    import ImmersionZone from "$lib/components/game/player/ImmersionZone.svelte";
+    import PlayerDashboard from "$lib/components/game/player/PlayerDashboard.svelte";
+    import { ChevronRight, ChevronLeft } from "lucide-svelte";
 
-    let game = $state<any>(null);
-    let loading = $state(true);
-    let error = $state("");
-    let userId = $state<string | null>(null);
+    let isDashboardOpen = $state(true);
 
-    const session = authClient.useSession();
-
-    $effect(() => {
-        if ($session.data?.user) {
-            userId = $session.data.user.id;
-        }
-    });
-
-    onMount(async () => {
-        const { data, error: tokenError } = await authClient.token();
-
-        if (tokenError || !data?.token) {
-            goto("/login");
-            return;
-        }
-
-        fetchGame(data.token);
-    });
-
-    async function fetchGame(token: string) {
-        try {
-            const response = await api.get(`/table/${$page.params.id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            game = response.data;
-        } catch (e) {
-            console.error(e);
-            error = "Impossible de charger la partie.";
-        } finally {
-            loading = false;
-        }
+    function toggleDashboard() {
+        isDashboardOpen = !isDashboardOpen;
     }
 </script>
 
-<div class="min-h-screen bg-cream">
-    <Header />
+<PlayerLayout>
+    <div class="relative w-full h-full flex overflow-hidden">
+        <!-- Left Zone: Immersion (Flexible) -->
+        <div
+            class="h-full relative transition-all duration-500 ease-in-out"
+            style="width: {isDashboardOpen ? '65%' : '100%'}"
+        >
+            <ImmersionZone />
 
-    <main class="max-w-4xl mx-auto px-4 py-16">
-        {#if loading}
-            <div class="text-center text-dark-gray">Chargement...</div>
-        {:else if error}
-            <div class="text-center text-red-500">{error}</div>
-        {:else if game}
-            <div
-                class="bg-white rounded-3xl shadow-sm border border-stone-100 p-8"
+            <!-- Toggle Button (Attached to the right edge of Immersion Zone) -->
+            <button
+                onclick={toggleDashboard}
+                class="absolute top-1/2 -translate-y-1/2 right-0 z-50 bg-white border border-stone-200 shadow-md p-1 rounded-l-lg hover:bg-stone-50 text-stone-500"
+                aria-label={isDashboardOpen
+                    ? "Fermer le tableau de bord"
+                    : "Ouvrir le tableau de bord"}
             >
-                <div class="flex items-center gap-4 mb-6">
-                    <h1 class="font-display font-bold text-3xl text-dark-gray">
-                        {game.name}
-                    </h1>
-                    {#if userId === game.gm_id}
-                        <div
-                            class="bg-burnt-orange/10 text-burnt-orange px-3 py-1 rounded-full flex items-center gap-1.5 text-sm font-bold border border-burnt-orange/20"
-                        >
-                            <Crown size={14} />
-                            MJ
-                        </div>
-                    {/if}
-                </div>
+                {#if isDashboardOpen}
+                    <ChevronRight size={20} />
+                {:else}
+                    <ChevronLeft size={20} />
+                {/if}
+            </button>
+        </div>
 
-                <div class="space-y-4">
-                    <div>
-                        <span class="font-bold text-dark-gray">ID:</span>
-                        <span class="text-dark-gray/80 ml-2">{game.id}</span>
-                    </div>
-                    <div>
-                        <span class="font-bold text-dark-gray"
-                            >Code d'invitation:</span
-                        >
-                        <span
-                            class="bg-stone-100 px-3 py-1 rounded-lg font-mono text-burnt-orange ml-2"
-                            >{game.invite_code}</span
-                        >
-                    </div>
-                    <div>
-                        <span class="font-bold text-dark-gray">GM ID:</span>
-                        <span class="text-dark-gray/80 ml-2">{game.gm_id}</span>
-                    </div>
-                    <div>
-                        <span class="font-bold text-dark-gray">Statut:</span>
-                        <span
-                            class="ml-2 {game.is_active
-                                ? 'text-green-600'
-                                : 'text-red-500'}"
-                        >
-                            {game.is_active ? "Active" : "Archivée"}
-                        </span>
-                    </div>
-                </div>
+        <!-- Right Zone: Dashboard (Collapsible) -->
+        <div
+            class="h-full relative transition-all duration-500 ease-in-out border-l border-stone-200 shadow-2xl z-40 bg-stone-50"
+            style="width: {isDashboardOpen
+                ? '35%'
+                : '0%'}; opacity: {isDashboardOpen
+                ? '1'
+                : '0'}; pointer-events: {isDashboardOpen ? 'auto' : 'none'}"
+        >
+            <div class="w-full h-full min-w-[350px]">
+                <!-- Prevent content squashing -->
+                <PlayerDashboard />
             </div>
-        {/if}
-    </main>
-</div>
+        </div>
+    </div>
+</PlayerLayout>
