@@ -17,7 +17,7 @@ import (
 )
 
 func generateInviteCode() (string, error) {
-	bytes := make([]byte, 10) // 10 bytes = 20 hex chars
+	bytes := make([]byte, 5) // 5 bytes = 10 hex chars
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
@@ -72,10 +72,11 @@ func GetTable(id string) (*model.Game, error) {
 func GetGames(userID string) ([]model.Game, error) {
 	games := []model.Game{}
 	query := `
-		SELECT g.id, g.name, g.gm_id, u.name, g.invite_code, g.is_active, COALESCE(g.image_url, ''), g.created_at
+		SELECT DISTINCT g.id, g.name, g.gm_id, u.name, g.invite_code, g.is_active, COALESCE(g.image_url, ''), g.created_at
 		FROM games g
 		JOIN "user" u ON g.gm_id = u.id
-		WHERE g.gm_id = $1
+		LEFT JOIN game_players gp ON g.id = gp.game_id
+		WHERE g.gm_id = $1 OR gp.user_id = $1
 		ORDER BY g.created_at DESC
 	`
 	rows, err := database.DB.Query(context.Background(), query, userID)
@@ -103,9 +104,9 @@ func JoinTable(inviteCode, userID string) (string, error) {
 		return "", err
 	}
 
-	// Insert into game_players
+	// Insert into game_invitations
 	query := `
-		INSERT INTO game_players (game_id, user_id)
+		INSERT INTO game_invitations (game_id, user_id)
 		VALUES ($1, $2)
 	`
 	_, err = database.DB.Exec(context.Background(), query, gameID, userID)
@@ -114,6 +115,60 @@ func JoinTable(inviteCode, userID string) (string, error) {
 	}
 
 	return gameID, nil
+}
+
+func GetPendingInvitations(gameID string) ([]model.Invitation, error) {
+	invitations := []model.Invitation{}
+	query := `
+		SELECT i.id, i.game_id, i.user_id, u.name, i.created_at
+		FROM game_invitations i
+		JOIN "user" u ON i.user_id = u.id
+		WHERE i.game_id = $1
+		ORDER BY i.created_at ASC
+	`
+	rows, err := database.DB.Query(context.Background(), query, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var invitation model.Invitation
+		if err := rows.Scan(&invitation.ID, &invitation.GameID, &invitation.UserID, &invitation.UserName, &invitation.CreatedAt); err != nil {
+			return nil, err
+		}
+		invitations = append(invitations, invitation)
+	}
+
+	return invitations, nil
+}
+
+func AcceptInvitation(gameID, userID string) error {
+	ctx := context.Background()
+	tx, err := database.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Insert into game_players
+	_, err = tx.Exec(ctx, "INSERT INTO game_players (game_id, user_id) VALUES ($1, $2)", gameID, userID)
+	if err != nil {
+		return err
+	}
+
+	// 2. Delete from game_invitations
+	_, err = tx.Exec(ctx, "DELETE FROM game_invitations WHERE game_id = $1 AND user_id = $2", gameID, userID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func DeclineInvitation(gameID, userID string) error {
+	_, err := database.DB.Exec(context.Background(), "DELETE FROM game_invitations WHERE game_id = $1 AND user_id = $2", gameID, userID)
+	return err
 }
 
 func DeleteTable(id, userID string) error {
@@ -177,4 +232,88 @@ func DeleteTable(id, userID string) error {
 	}
 
 	return nil
+}
+
+func RegenerateInviteCode(gameID string) (string, error) {
+	newCode, err := generateInviteCode()
+	if err != nil {
+		return "", err
+	}
+
+	query := `
+		UPDATE games
+		SET invite_code = $1
+		WHERE id = $2
+	`
+	_, err = database.DB.Exec(context.Background(), query, newCode, gameID)
+	if err != nil {
+		return "", err
+	}
+
+	return newCode, nil
+}
+
+func GetGamePlayers(gameID string) ([]model.Player, error) {
+	// 1. Get Game to know who is GM
+	game, err := GetTable(gameID)
+	if err != nil {
+		return nil, err
+	}
+
+	players := []model.Player{}
+	query := `
+		SELECT u.id, u.name, COALESCE(u.image, ''), gp.joined_at
+		FROM game_players gp
+		JOIN "user" u ON gp.user_id = u.id
+		WHERE gp.game_id = $1
+		ORDER BY gp.joined_at ASC
+	`
+	rows, err := database.DB.Query(context.Background(), query, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var player model.Player
+		if err := rows.Scan(&player.UserID, &player.Name, &player.AvatarURL, &player.JoinedAt); err != nil {
+			return nil, err
+		}
+		if player.UserID == game.GmID {
+			player.IsGM = true
+		}
+		players = append(players, player)
+	}
+
+	// Check if GM is in the list (usually not in game_players table if they created it but didn't "join" as player)
+	// If GM is not in list, we should probably add them?
+	// The requirement is "display players present in the game". Usually GM is considered present.
+	// Let's check if GM is already in the list.
+	gmInList := false
+	for _, p := range players {
+		if p.UserID == game.GmID {
+			gmInList = true
+			break
+		}
+	}
+
+	if !gmInList {
+		// Fetch GM details
+		var gm model.Player
+		gmQuery := `SELECT id, name, COALESCE(image, '') FROM "user" WHERE id = $1`
+		err := database.DB.QueryRow(context.Background(), gmQuery, game.GmID).Scan(&gm.UserID, &gm.Name, &gm.AvatarURL)
+		if err == nil {
+			gm.IsGM = true
+			gm.JoinedAt = game.CreatedAt // GM joined when game was created
+			// Prepend GM to list
+			players = append([]model.Player{gm}, players...)
+		}
+	}
+
+	return players, nil
+}
+
+func RemovePlayer(gameID, userID string) error {
+	_, err := database.DB.Exec(context.Background(), "DELETE FROM game_players WHERE game_id = $1 AND user_id = $2", gameID, userID)
+	return err
 }

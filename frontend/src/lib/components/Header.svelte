@@ -5,12 +5,16 @@
         User,
         LayoutDashboard,
         ChevronDown,
+        Settings,
     } from "lucide-svelte";
     import { authClient } from "$lib/auth-client";
     import { clickOutside } from "$lib/actions/clickOutside";
+    import { page } from "$app/state";
 
     const session = authClient.useSession();
     let isMenuOpen = $state(false);
+
+    let path = $state(page.url.pathname);
 
     const handleLogout = async () => {
         await authClient.signOut({
@@ -46,6 +50,39 @@
         >
     </a>
 
+    <!-- Centered on the header -->
+    <!-- Centered on the header -->
+    {#if path.endsWith("/gm")}
+        <div
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        >
+            <a
+                href="{path}/settings"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
+                title="Paramètres de la partie"
+            >
+                <Settings size={18} />
+                <span class="font-medium text-sm hidden md:inline"
+                    >Paramètres de la partie</span
+                >
+            </a>
+        </div>
+    {:else if path.endsWith("/gm/settings")}
+        <div
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        >
+            <a
+                href={path.replace("/settings", "")}
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
+                title="Retour au jeu"
+            >
+                <LayoutDashboard size={18} />
+                <span class="font-medium text-sm hidden md:inline"
+                    >Retour au jeu</span
+                >
+            </a>
+        </div>
+    {/if}
     <div class="flex items-center gap-4">
         {#if $session.data}
             <div class="relative" use:clickOutside={closeMenu}>

@@ -126,7 +126,7 @@
             );
             console.log(response.data);
             await fetchGames(jwtToken); // Refresh list
-            goto(`/table/${response.data.id}`);
+            goto(`/table/${response.data.id}/gm/settings`);
         } catch (e: any) {
             console.error(e);
         } finally {
