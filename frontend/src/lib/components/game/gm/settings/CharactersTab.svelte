@@ -1,18 +1,30 @@
 <script lang="ts">
-    import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-svelte";
+    import {
+        Plus,
+        MoreVertical,
+        Pencil,
+        Trash2,
+        UserPlus,
+    } from "lucide-svelte";
     import CharacterCreationModal from "$lib/components/game/gm/CharacterCreationModal.svelte";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { page } from "$app/state";
 
-    let { characters, onRefresh } = $props<{
+    let { characters, players, onRefresh } = $props<{
         characters: any[];
+        players: any[];
         onRefresh: () => void;
     }>();
 
     let isCharacterModalOpen = $state(false);
     let selectedCharacter = $state<any>(null);
     let openMenuId = $state<string | null>(null);
+
+    // Assignment Modal State
+    let isAssignModalOpen = $state(false);
+    let characterToAssign = $state<any>(null);
+    let selectedPlayerId = $state<string>("");
 
     function handleCharacterCreated() {
         onRefresh();
@@ -28,6 +40,38 @@
     function openCreateModal() {
         selectedCharacter = null;
         isCharacterModalOpen = true;
+    }
+
+    function openAssignModal(character: any) {
+        characterToAssign = character;
+        selectedPlayerId = ""; // Reset selection
+        isAssignModalOpen = true;
+        openMenuId = null;
+    }
+
+    async function assignCharacter() {
+        if (!characterToAssign || !selectedPlayerId) return;
+
+        const gameId = page.params.id;
+        try {
+            const { data: tokenData } = await authClient.token();
+            if (tokenData?.token) {
+                await api.post(
+                    `/table/${gameId}/characters/${characterToAssign.id}/assign`,
+                    { player_id: selectedPlayerId },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenData.token}`,
+                        },
+                    },
+                );
+                onRefresh();
+                isAssignModalOpen = false;
+                characterToAssign = null;
+            }
+        } catch (error) {
+            console.error("Failed to assign character:", error);
+        }
     }
 
     async function deleteCharacter(character: any) {
@@ -146,6 +190,15 @@
                         <div
                             class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-stone-100 py-1 z-20 animate-in fade-in zoom-in duration-100 origin-top-right"
                         >
+                            {#if !character.is_npc}
+                                <button
+                                    onclick={() => openAssignModal(character)}
+                                    class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
+                                >
+                                    <UserPlus size={16} />
+                                    Assigner à un joueur
+                                </button>
+                            {/if}
                             <button
                                 onclick={() => openEditModal(character)}
                                 class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
@@ -181,3 +234,64 @@
     onCharacterCreated={handleCharacterCreated}
     character={selectedCharacter}
 />
+
+<!-- Assignment Modal -->
+{#if isAssignModalOpen}
+    <div
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+    >
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+        >
+            <div class="p-6 border-b border-stone-100">
+                <h3 class="text-xl font-bold text-dark-gray">
+                    Assigner {characterToAssign?.name}
+                </h3>
+                <p class="text-sm text-stone-500 mt-1">
+                    Sélectionnez un joueur pour ce personnage.
+                </p>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            for="player-select"
+                            class="block text-sm font-medium text-stone-700 mb-1"
+                        >
+                            Joueur
+                        </label>
+                        <select
+                            id="player-select"
+                            bind:value={selectedPlayerId}
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 outline-none transition-all"
+                        >
+                            <option value="" disabled selected>
+                                Choisir un joueur...
+                            </option>
+                            {#each players as player}
+                                <option value={player.user_id}
+                                    >{player.name}</option
+                                >
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 bg-stone-50 flex justify-end gap-3">
+                <button
+                    onclick={() => (isAssignModalOpen = false)}
+                    class="px-4 py-2 text-stone-600 font-medium hover:text-dark-gray transition-colors"
+                >
+                    Annuler
+                </button>
+                <button
+                    onclick={assignCharacter}
+                    disabled={!selectedPlayerId}
+                    class="px-4 py-2 bg-burnt-orange text-white rounded-xl font-medium shadow-md hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Assigner
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}

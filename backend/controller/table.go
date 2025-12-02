@@ -509,3 +509,40 @@ func DeleteCharacter(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Character deleted successfully"})
 }
+
+func AssignCharacter(c echo.Context) error {
+	gameID := c.Param("id")
+	charID := c.Param("charId")
+	if gameID == "" || charID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
+	}
+
+	var req struct {
+		PlayerID string `json:"player_id"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.PlayerID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Player ID is required")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	// Verify GM
+	game, err := service.GetTable(gameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+	if game.GmID != userID {
+		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can assign characters")
+	}
+
+	if err := service.AssignCharacterToPlayer(gameID, charID, req.PlayerID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to assign character").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Character assigned successfully"})
+}

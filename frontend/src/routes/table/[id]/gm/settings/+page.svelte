@@ -186,7 +186,11 @@
 
                 <!-- CHARACTERS TAB -->
                 {#if activeTab === "characters"}
-                    <CharactersTab {characters} onRefresh={refreshData} />
+                    <CharactersTab
+                        {characters}
+                        {players}
+                        onRefresh={refreshData}
+                    />
                 {/if}
 
                 <!-- INVITATIONS TAB -->

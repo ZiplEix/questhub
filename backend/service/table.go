@@ -262,9 +262,10 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 
 	players := []model.Player{}
 	query := `
-		SELECT u.id, u.name, COALESCE(u.image, ''), gp.joined_at
+		SELECT u.id, u.name, COALESCE(u.image, ''), gp.joined_at, c.name
 		FROM game_players gp
 		JOIN "user" u ON gp.user_id = u.id
+		LEFT JOIN characters c ON c.user_id = u.id AND c.game_id = gp.game_id
 		WHERE gp.game_id = $1
 		ORDER BY gp.joined_at ASC
 	`
@@ -276,8 +277,12 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 
 	for rows.Next() {
 		var player model.Player
-		if err := rows.Scan(&player.UserID, &player.Name, &player.AvatarURL, &player.JoinedAt); err != nil {
+		var charName sql.NullString
+		if err := rows.Scan(&player.UserID, &player.Name, &player.AvatarURL, &player.JoinedAt, &charName); err != nil {
 			return nil, err
+		}
+		if charName.Valid {
+			player.CharacterName = &charName.String
 		}
 		if player.UserID == game.GmID {
 			player.IsGM = true
@@ -300,11 +305,20 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 	if !gmInList {
 		// Fetch GM details
 		var gm model.Player
-		gmQuery := `SELECT id, name, COALESCE(image, '') FROM "user" WHERE id = $1`
-		err := database.DB.QueryRow(context.Background(), gmQuery, game.GmID).Scan(&gm.UserID, &gm.Name, &gm.AvatarURL)
+		var charName sql.NullString
+		gmQuery := `
+			SELECT u.id, u.name, COALESCE(u.image, ''), c.name
+			FROM "user" u
+			LEFT JOIN characters c ON c.user_id = u.id AND c.game_id = $2
+			WHERE u.id = $1
+		`
+		err := database.DB.QueryRow(context.Background(), gmQuery, game.GmID, gameID).Scan(&gm.UserID, &gm.Name, &gm.AvatarURL, &charName)
 		if err == nil {
 			gm.IsGM = true
 			gm.JoinedAt = game.CreatedAt // GM joined when game was created
+			if charName.Valid {
+				gm.CharacterName = &charName.String
+			}
 			// Prepend GM to list
 			players = append([]model.Player{gm}, players...)
 		}

@@ -132,7 +132,7 @@ func CreateCharacter(gameID, name, race string, maxHP int, isNPC bool, avatarFil
 	}
 
 	// Handle Inventory Images
-	for i, _ := range inventoryItems {
+	for i := range inventoryItems {
 		if file, ok := inventoryImages[i]; ok {
 			src, err := file.Open()
 			if err != nil {
@@ -255,7 +255,7 @@ func UpdateCharacter(characterID, gameID, name, race string, maxHP int, isNPC bo
 	// If an item has an image_url already set (from frontend), we keep it.
 	// If it has a new file in inventoryImages, we upload and set it.
 
-	for i, _ := range inventoryItems {
+	for i := range inventoryItems {
 		if file, ok := inventoryImages[i]; ok {
 			src, err := file.Open()
 			if err != nil {
@@ -330,4 +330,22 @@ func DeleteCharacter(characterID, gameID string) error {
 		return fmt.Errorf("character not found")
 	}
 	return nil
+}
+
+func AssignCharacterToPlayer(gameID, characterID, playerID string) error {
+	// Verify character exists and belongs to game
+	var currentUserID sql.NullString
+	queryCheck := `SELECT user_id FROM characters WHERE id = $1 AND game_id = $2`
+	err := database.DB.QueryRow(context.Background(), queryCheck, characterID, gameID).Scan(&currentUserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("character not found")
+		}
+		return err
+	}
+
+	// Update user_id
+	queryUpdate := `UPDATE characters SET user_id = $1 WHERE id = $2 AND game_id = $3`
+	_, err = database.DB.Exec(context.Background(), queryUpdate, playerID, characterID, gameID)
+	return err
 }

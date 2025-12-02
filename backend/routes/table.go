@@ -26,5 +26,6 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("/:id/characters", controller.GetGameCharacters)
 	g.POST("/:id/characters", controller.CreateCharacter)
 	g.PUT("/:id/characters/:charId", controller.UpdateCharacter)
+	g.POST("/:id/characters/:charId/assign", controller.AssignCharacter)
 	g.DELETE("/:id/characters/:charId", controller.DeleteCharacter)
 }

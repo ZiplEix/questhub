@@ -176,6 +176,11 @@
                                 </span>
                             {/if}
                         </div>
+                        {#if player.character_name}
+                            <p class="text-sm text-burnt-orange font-medium">
+                                Incarne {player.character_name}
+                            </p>
+                        {/if}
                         <p class="text-xs text-stone-500">
                             Rejoint le {new Date(
                                 player.joined_at,
