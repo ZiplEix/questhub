@@ -20,6 +20,8 @@ services:
     depends_on:
       - postgres
       - frontend
+    volumes:
+      - ./uploads:/app/uploads
 
   frontend:
     build: ./frontend
