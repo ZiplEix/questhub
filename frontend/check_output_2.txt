@@ -27,7 +27,7 @@ https://svelte.dev/e/a11y_consider_explicit_label (svelte)
             </button>
         </div>
 
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:313:21
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:487:21
 Warn: A form label must be associated with a control
 https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                 <div class="space-y-2">
@@ -36,7 +36,7 @@ https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                     >
                     <div class="flex bg-stone-100 p-1 rounded-xl">
 
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:338:21
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:528:21
 Warn: A form label must be associated with a control
 https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                 <div class="space-y-2">
@@ -45,7 +45,7 @@ https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                     >
                     <div class="flex gap-4 mb-2">
 
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:395:25
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:585:25
 Warn: A form label must be associated with a control
 https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                     <div class="flex justify-between items-center">
@@ -54,7 +54,7 @@ https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                         >
                         <button
 
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:441:25
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:631:25
 Warn: A form label must be associated with a control
 https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                     <div class="flex justify-between items-center">
@@ -63,48 +63,14 @@ https://svelte.dev/e/a11y_label_has_associated_control (svelte)
                         >
                         <button
 
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:22:9
-Error: Identifier 'characters' has already been declared
-https://svelte.dev/e/js_parse_error (svelte)
-    let isCharacterModalOpen = $state(false);
-    let characters = $state<any[]>([]);
-    let isModalOpen = $state(false);
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:15:11
-Error: Cannot redeclare block-scoped variable 'characters'. (ts)
-
-    let { characters, players, onRefresh } = $props<{
-        characters: any[];
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:22:9
-Error: Cannot redeclare block-scoped variable 'characters'. (ts)
-    let isCharacterModalOpen = $state(false);
-    let characters = $state<any[]>([]);
-    let isModalOpen = $state(false);
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:36:49
-Error: Cannot find name 'gameId'. (ts)
-        try {
-            const res = await api.get(`/table/${gameId}/characters`);
-            characters = await res.json();
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:37:36
-Error: Property 'json' does not exist on type 'AxiosResponse<any, any, {}>'. (ts)
-            const res = await api.get(`/table/${gameId}/characters`);
-            characters = await res.json();
-        } catch (error) {
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:115:42
-Error: Cannot find name 'gameId'. (ts)
-
-                await api.post(`/table/${gameId}/characters`, formData);
-                await loadCharacters();
-
-/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/settings/CharactersTab.svelte:343:16
-Error: Cannot find name 'selectedCharacter'. Did you mean 'deleteCharacter'? (ts)
-    onCharacterCreated={handleCharacterCreated}
-    character={selectedCharacter}
-/>
+/home/baptiste/projects/questhub/frontend/src/lib/components/game/gm/CharacterCreationModal.svelte:756:25
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-bold text-dark-gray"
+                            >Sorts</label
+                        >
+                        <button
 
 /home/baptiste/projects/questhub/frontend/src/lib/components/game/mj/GMTracker.svelte:53:21
 Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
@@ -147,5 +113,4 @@ https://svelte.dev/e/a11y_no_static_element_interactions (svelte)
                     </div>
 
 ====================================
-svelte-check found 7 errors and 7 warnings in 4 files
-error: script "check" exited with code 1
+svelte-check found 0 errors and 8 warnings in 3 files

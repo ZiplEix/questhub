@@ -9,10 +9,10 @@
         Download,
         Upload,
     } from "lucide-svelte";
-    import CharacterCreationModal from "$lib/components/game/gm/CharacterCreationModal.svelte";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { page } from "$app/state";
+    import { goto } from "$app/navigation";
 
     let { players, gameId } = $props<{
         players: any[];
@@ -20,8 +20,6 @@
     }>();
 
     let characters = $state<any[]>([]);
-    let isModalOpen = $state(false);
-    let editingCharacter = $state<any>(null);
     let fileInput: HTMLInputElement;
 
     let openMenuId = $state<string | null>(null);
@@ -46,21 +44,12 @@
         }
     }
 
-    function handleCharacterCreated() {
-        loadCharacters();
-        editingCharacter = null;
-        isModalOpen = false;
+    function openEditPage(character: any) {
+        goto(`/table/${gameId}/gm/characters/${character.id}/edit`);
     }
 
-    function openEditModal(character: any) {
-        editingCharacter = character;
-        isModalOpen = true;
-        openMenuId = null;
-    }
-
-    function openCreateModal() {
-        editingCharacter = null;
-        isModalOpen = true;
+    function openCreatePage() {
+        goto(`/table/${gameId}/gm/characters/create`);
     }
 
     function openAssignModal(character: any) {
@@ -86,9 +75,25 @@
                 const { id, game_id, user_id, created_at, ...cleanData } =
                     charData;
 
-                // Pre-fill the modal with imported data
-                editingCharacter = cleanData;
-                isModalOpen = true;
+                // Navigate to create page with imported data
+                // We'll use localStorage or similar because state might be lost or complex to handle in the form component if not designed for it.
+                // Actually, let's just use the state object in goto.
+                // But wait, the CharacterForm needs to read this state.
+                // Since I didn't implement state reading in CharacterForm/CreatePage, I should probably do that.
+                // Or easier: just pass the data via a store or simply navigate and let the user import on the create page?
+                // The user didn't explicitly ask to keep import on the list page, but it's a nice feature.
+                // Let's implement import on the create page instead?
+                // Or, let's try to pass it via state.
+
+                // For now, let's just move the import button to the create page?
+                // No, the user might want to import from the list.
+
+                // Let's use localStorage for simplicity to pass data to the new page
+                localStorage.setItem(
+                    "importedCharacter",
+                    JSON.stringify(cleanData),
+                );
+                goto(`/table/${gameId}/gm/characters/create?import=true`);
 
                 target.value = ""; // Reset input
             } catch (error) {
@@ -250,7 +255,7 @@
                 Importer
             </button>
             <button
-                onclick={openCreateModal}
+                onclick={openCreatePage}
                 class="flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white rounded-xl font-medium shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-sm"
             >
                 <Plus size={18} />
@@ -341,7 +346,7 @@
                                 Exporter
                             </button>
                             <button
-                                onclick={() => openEditModal(character)}
+                                onclick={() => openEditPage(character)}
                                 class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-dark-gray flex items-center gap-2"
                             >
                                 <Pencil size={16} />
@@ -368,13 +373,6 @@
         {/if}
     </div>
 </div>
-
-<CharacterCreationModal
-    isOpen={isModalOpen}
-    onClose={() => (isModalOpen = false)}
-    onCharacterCreated={handleCharacterCreated}
-    character={editingCharacter}
-/>
 
 <!-- Assignment Modal -->
 {#if isAssignModalOpen}

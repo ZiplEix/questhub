@@ -20,4 +20,14 @@ type Character struct {
 	Money      int             `json:"money"`
 	CreatedAt  time.Time       `json:"created_at"`
 	PlayerName *string         `json:"player_name,omitempty"` // Populated when joining with user table
+
+	// New fields
+	Initiative int             `json:"initiative"`
+	Age        string          `json:"age"`
+	Height     string          `json:"height"`
+	Weight     string          `json:"weight"`
+	MaxSpells  int             `json:"max_spells"`
+	Spells     json.RawMessage `json:"spells"`
+	Abilities  string          `json:"abilities"`
+	Experience int             `json:"experience"`
 }

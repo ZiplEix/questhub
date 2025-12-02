@@ -336,6 +336,43 @@ func GetGameCharacters(c echo.Context) error {
 	return c.JSON(http.StatusOK, characters)
 }
 
+func GetCharacter(c echo.Context) error {
+	gameID := c.Param("id")
+	charID := c.Param("charId")
+	if gameID == "" || charID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	// Verify GM or Owner
+	game, err := service.GetTable(gameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+
+	// Check if user is GM
+	isGM := game.GmID == userID
+
+	character, err := service.GetCharacter(gameID, charID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch character").SetInternal(err)
+	}
+	if character == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
+	}
+
+	// If not GM, check if user owns the character
+	if !isGM {
+		if character.UserID == nil || *character.UserID != userID {
+			return echo.NewHTTPError(http.StatusForbidden, "You can only view your own character or you must be the GM")
+		}
+	}
+
+	return c.JSON(http.StatusOK, character)
+}
+
 func CreateCharacter(c echo.Context) error {
 	gameID := c.Param("id")
 	if gameID == "" {
@@ -370,6 +407,14 @@ func CreateCharacter(c echo.Context) error {
 	stats := []byte(c.FormValue("stats"))
 	inventory := []byte(c.FormValue("inventory"))
 	money, _ := strconv.Atoi(c.FormValue("money"))
+	initiative, _ := strconv.Atoi(c.FormValue("initiative"))
+	age := c.FormValue("age")
+	height := c.FormValue("height")
+	weight := c.FormValue("weight")
+	maxSpells, _ := strconv.Atoi(c.FormValue("max_spells"))
+	spells := []byte(c.FormValue("spells"))
+	abilities := c.FormValue("abilities")
+	experience, _ := strconv.Atoi(c.FormValue("experience"))
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
@@ -465,7 +510,7 @@ func CreateCharacter(c echo.Context) error {
 
 	// Pass empty string for userID so the character is unassigned by default
 	// The GM can assign it later if needed.
-	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money)
+	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create character").SetInternal(err)
 	}
@@ -507,6 +552,14 @@ func UpdateCharacter(c echo.Context) error {
 	stats := []byte(c.FormValue("stats"))
 	inventory := []byte(c.FormValue("inventory"))
 	money, _ := strconv.Atoi(c.FormValue("money"))
+	initiative, _ := strconv.Atoi(c.FormValue("initiative"))
+	age := c.FormValue("age")
+	height := c.FormValue("height")
+	weight := c.FormValue("weight")
+	maxSpells, _ := strconv.Atoi(c.FormValue("max_spells"))
+	spells := []byte(c.FormValue("spells"))
+	abilities := c.FormValue("abilities")
+	experience, _ := strconv.Atoi(c.FormValue("experience"))
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
@@ -598,7 +651,7 @@ func UpdateCharacter(c echo.Context) error {
 		}
 	}
 
-	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money)
+	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update character").SetInternal(err)
 	}
