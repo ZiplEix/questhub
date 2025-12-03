@@ -29,12 +29,16 @@ func UploadImage(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() {
+		_ = src.Close()
+	}()
 
 	// Destination
 	// Create uploads directory if it doesn't exist
 	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-		os.Mkdir("uploads", 0755)
+		if err := os.Mkdir("uploads", 0755); err != nil {
+			return err
+		}
 	}
 
 	// Generate unique filename
@@ -46,7 +50,9 @@ func UploadImage(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer dst.Close()
+	defer func() {
+		_ = dst.Close()
+	}()
 
 	// Copy
 	if _, err = io.Copy(dst, src); err != nil {

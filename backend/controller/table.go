@@ -376,7 +376,9 @@ func CreateCharacter(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+		defer func() {
+			_ = src.Close()
+		}()
 
 		// Create uploads directory if not exists
 		if err := os.MkdirAll("uploads", 0755); err != nil {
@@ -392,7 +394,9 @@ func CreateCharacter(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		defer dst.Close()
+		defer func() {
+			_ = dst.Close()
+		}()
 
 		if _, err = io.Copy(dst, src); err != nil {
 			return err
@@ -419,7 +423,9 @@ func CreateCharacter(c echo.Context) error {
 					if err != nil {
 						continue
 					}
-					defer src.Close()
+					defer func() {
+						_ = src.Close()
+					}()
 
 					ext := filepath.Ext(invFile.Filename)
 					filename := fmt.Sprintf("inv_%d_%d%s", i, time.Now().UnixNano(), ext)
@@ -429,7 +435,9 @@ func CreateCharacter(c echo.Context) error {
 					if err != nil {
 						continue
 					}
-					defer dst.Close()
+					defer func() {
+						_ = dst.Close()
+					}()
 
 					if _, err = io.Copy(dst, src); err != nil {
 						continue
@@ -508,7 +516,9 @@ func UpdateCharacter(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+		defer func() {
+			_ = src.Close()
+		}()
 
 		// Create uploads directory if not exists
 		if err := os.MkdirAll("uploads", 0755); err != nil {
@@ -524,7 +534,9 @@ func UpdateCharacter(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		defer dst.Close()
+		defer func() {
+			_ = dst.Close()
+		}()
 
 		if _, err = io.Copy(dst, src); err != nil {
 			return err
@@ -551,7 +563,9 @@ func UpdateCharacter(c echo.Context) error {
 					if err != nil {
 						continue
 					}
-					defer src.Close()
+					defer func() {
+						_ = src.Close()
+					}()
 
 					ext := filepath.Ext(invFile.Filename)
 					filename := fmt.Sprintf("inv_%d_%d%s", i, time.Now().UnixNano(), ext)
@@ -561,7 +575,9 @@ func UpdateCharacter(c echo.Context) error {
 					if err != nil {
 						continue
 					}
-					defer dst.Close()
+					defer func() {
+						_ = dst.Close()
+					}()
 
 					if _, err = io.Copy(dst, src); err != nil {
 						continue

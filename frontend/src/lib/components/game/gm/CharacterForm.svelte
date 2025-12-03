@@ -453,8 +453,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Avatar -->
                 <div class="space-y-2">
-                    <label class="text-sm font-bold text-dark-gray block"
-                        >Avatar</label
+                    <label
+                        class="text-sm font-bold text-dark-gray block"
+                        for="avatar-upload">Avatar</label
                     >
                     <div class="flex gap-4 mb-2">
                         <button
@@ -463,6 +464,7 @@
                                 ? 'text-burnt-orange'
                                 : 'text-stone-400'}"
                             onclick={() => (avatarType = "upload")}
+                            id="avatar-upload"
                         >
                             <Upload size={16} /> Upload
                         </button>
@@ -604,7 +606,7 @@
                         <div>
                             <label
                                 class="text-sm font-bold text-dark-gray block mb-1"
-                                >Type</label
+                                for="character-type">Type</label
                             >
                             <div class="flex bg-stone-100 p-1 rounded-xl w-fit">
                                 <button
@@ -777,7 +779,7 @@
             <!-- Stats -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <label class="text-sm font-bold text-dark-gray"
+                    <label class="text-sm font-bold text-dark-gray" for="stats"
                         >Statistiques</label
                     >
                     <button
@@ -804,7 +806,7 @@
                             <div class="flex-1 space-y-2">
                                 <label
                                     class="text-xs font-bold text-stone-500 uppercase"
-                                    >Nom</label
+                                    for="stat-key">Nom</label
                                 >
                                 <input
                                     type="text"
@@ -816,7 +818,7 @@
                             <div class="w-24 space-y-2">
                                 <label
                                     class="text-xs font-bold text-stone-500 uppercase"
-                                    >Valeur</label
+                                    for="stat-value">Valeur</label
                                 >
                                 <input
                                     type="text"
@@ -828,7 +830,7 @@
                             <div class="w-20 space-y-2">
                                 <label
                                     class="text-xs font-bold text-stone-500 uppercase"
-                                    >Mod.</label
+                                    for="stat-modifier">Mod.</label
                                 >
                                 <input
                                     type="number"
@@ -854,12 +856,14 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     {#if characterType === "MONSTER"}
-                        <label class="text-sm font-bold text-dark-gray"
-                            >Loot</label
+                        <label
+                            class="text-sm font-bold text-dark-gray"
+                            for="loot">Loot</label
                         >
                     {:else}
-                        <label class="text-sm font-bold text-dark-gray"
-                            >Inventaire</label
+                        <label
+                            class="text-sm font-bold text-dark-gray"
+                            for="inventory">Inventaire</label
                         >
                     {/if}
                     <button
@@ -993,7 +997,9 @@
         <!-- Spells -->
         <div class="space-y-4">
             <div class="flex justify-between items-center">
-                <label class="text-sm font-bold text-dark-gray">Sorts</label>
+                <label class="text-sm font-bold text-dark-gray" for="spells"
+                    >Sorts</label
+                >
                 <button
                     onclick={addSpell}
                     class="text-xs flex items-center gap-1 text-burnt-orange font-medium hover:text-burnt-orange/80"

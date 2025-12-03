@@ -50,9 +50,12 @@
 
                 <!-- HP & Status -->
                 <div class="flex items-center justify-between gap-2">
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
                         class="flex items-center bg-black/30 rounded px-1.5 py-0.5 text-xs font-mono"
                         onclick={(e) => e.stopPropagation()}
+                        aria-label="HP"
                     >
                         <input
                             type="number"

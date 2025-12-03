@@ -166,7 +166,7 @@
                 >
                     <div class="flex items-start gap-4">
                         <div
-                            class="w-16 h-16 rounded-xl bg-stone-100 flex-shrink-0 overflow-hidden border border-stone-100"
+                            class="w-16 h-16 rounded-xl bg-stone-100 shrink-0 overflow-hidden border border-stone-100"
                         >
                             {#if monster.avatar_url}
                                 <img

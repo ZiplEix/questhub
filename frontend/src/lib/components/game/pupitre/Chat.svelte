@@ -118,6 +118,7 @@
             <button
                 onclick={sendMessage}
                 class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-burnt-orange hover:bg-burnt-orange/10 rounded-lg transition-colors"
+                aria-label="Envoyer le message"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
