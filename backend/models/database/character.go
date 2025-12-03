@@ -30,4 +30,6 @@ type Character struct {
 	Spells     json.RawMessage `json:"spells"`
 	Abilities  string          `json:"abilities"`
 	Experience int             `json:"experience"`
+	Type       string          `json:"type"`     // PLAYER, NPC, MONSTER
+	SubRace    *string         `json:"sub_race"` // Optional
 }

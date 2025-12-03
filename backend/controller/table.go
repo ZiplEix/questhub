@@ -373,6 +373,32 @@ func GetCharacter(c echo.Context) error {
 	return c.JSON(http.StatusOK, character)
 }
 
+func GetGameMonsters(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	// Verify GM
+	game, err := service.GetTable(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+	if game.GmID != userID {
+		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can view monsters")
+	}
+
+	characters, err := service.GetGameMonsters(id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch monsters").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, characters)
+}
+
 func CreateCharacter(c echo.Context) error {
 	gameID := c.Param("id")
 	if gameID == "" {
@@ -382,20 +408,13 @@ func CreateCharacter(c echo.Context) error {
 	claims := c.Get("claims").(jwt.MapClaims)
 	userID := claims["sub"].(string)
 
-	// Verify GM (or allow players to create their own characters? For now, let's stick to GM or maybe allow both but check logic later. The prompt implies GM and players freedom, but usually GM manages this or approves. Let's allow GM for now as per "GM settings page" context, but the prompt says "modulaire possible pour que les joeur et le game master soit aussi libre que possible". Let's allow anyone in the game to create a character, but maybe restrict assignment? For now, let's just allow creation.)
-	// Actually, the prompt says "système pour créer des personnage... pour que les joeur et le game master soit aussi libre que possible".
-	// Let's verify the user is part of the game (GM or Player).
 	game, err := service.GetTable(gameID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
 	}
 
-	// Check if user is GM or Player
+	// Check if user is GM
 	isGM := game.GmID == userID
-	// We should also check if they are a player if not GM, but for now let's assume if they can access the page they might be allowed.
-	// However, strictly speaking, we should verify.
-	// Let's stick to GM for this specific task as it's in "GM Settings", but the prompt mentions players.
-	// I'll allow GM for now as the UI is in GM settings. If players need to create, we can expose it elsewhere later.
 	if !isGM {
 		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can create characters via this endpoint for now")
 	}
@@ -415,6 +434,17 @@ func CreateCharacter(c echo.Context) error {
 	spells := []byte(c.FormValue("spells"))
 	abilities := c.FormValue("abilities")
 	experience, _ := strconv.Atoi(c.FormValue("experience"))
+	charType := c.FormValue("type")
+	subRace := c.FormValue("sub_race")
+
+	// Default type logic if not provided
+	if charType == "" {
+		if isNPC {
+			charType = "NPC"
+		} else {
+			charType = "PLAYER"
+		}
+	}
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
@@ -453,28 +483,22 @@ func CreateCharacter(c echo.Context) error {
 		}
 
 		// Construct full URL
-		// Assuming server is running on localhost:8080 or configured host
-		// In production, this should be configurable
 		scheme := c.Scheme()
 		host := c.Request().Host
 		avatarURL = fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
 	}
 
 	// Handle inventory images
-	// Parse inventory JSON to update image URLs
 	var inventoryItems []map[string]interface{}
 	if len(inventory) > 0 {
 		if err := json.Unmarshal(inventory, &inventoryItems); err != nil {
-			// Log error but continue
 			fmt.Println("Error unmarshalling inventory:", err)
 		} else {
 			updatedInventory := false
 			for i, item := range inventoryItems {
-				// Check for uploaded image for this item
 				formKey := fmt.Sprintf("inventory_image_%d", i)
 				invFile, err := c.FormFile(formKey)
 				if err == nil {
-					// Upload logic (similar to avatar)
 					src, err := invFile.Open()
 					if err != nil {
 						continue
@@ -508,9 +532,7 @@ func CreateCharacter(c echo.Context) error {
 		}
 	}
 
-	// Pass empty string for userID so the character is unassigned by default
-	// The GM can assign it later if needed.
-	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience)
+	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create character").SetInternal(err)
 	}
@@ -560,6 +582,17 @@ func UpdateCharacter(c echo.Context) error {
 	spells := []byte(c.FormValue("spells"))
 	abilities := c.FormValue("abilities")
 	experience, _ := strconv.Atoi(c.FormValue("experience"))
+	charType := c.FormValue("type")
+	subRace := c.FormValue("sub_race")
+
+	// Default type logic if not provided
+	if charType == "" {
+		if isNPC {
+			charType = "NPC"
+		} else {
+			charType = "PLAYER"
+		}
+	}
 
 	var maxHP int
 	if _, err := fmt.Sscanf(maxHPStr, "%d", &maxHP); err != nil {
@@ -604,20 +637,16 @@ func UpdateCharacter(c echo.Context) error {
 	}
 
 	// Handle inventory images
-	// Parse inventory JSON to update image URLs
 	var inventoryItems []map[string]interface{}
 	if len(inventory) > 0 {
 		if err := json.Unmarshal(inventory, &inventoryItems); err != nil {
-			// Log error but continue
 			fmt.Println("Error unmarshalling inventory:", err)
 		} else {
 			updatedInventory := false
 			for i, item := range inventoryItems {
-				// Check for uploaded image for this item
 				formKey := fmt.Sprintf("inventory_image_%d", i)
 				invFile, err := c.FormFile(formKey)
 				if err == nil {
-					// Upload logic (similar to avatar)
 					src, err := invFile.Open()
 					if err != nil {
 						continue
@@ -651,7 +680,7 @@ func UpdateCharacter(c echo.Context) error {
 		}
 	}
 
-	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience)
+	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update character").SetInternal(err)
 	}

@@ -13,6 +13,8 @@ export interface Character {
     money: number;
     created_at: string;
     player_name?: string;
+    type: "PLAYER" | "NPC" | "MONSTER";
+    sub_race?: string;
 
     // New fields
     initiative: number;
@@ -28,6 +30,7 @@ export interface Character {
 export interface InventoryItem {
     name: string;
     quantity: string;
+    description?: string;
     image_url?: string;
     icon_name?: string;
 }

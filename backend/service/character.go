@@ -49,7 +49,7 @@ func GetCharacter(gameID, charID string) (*model.Character, error) {
 	char := &model.Character{}
 	query := `
 		SELECT id, game_id, user_id, name, race, max_hp, current_hp, COALESCE(avatar_url, ''), stats, inventory, is_npc, money, created_at,
-		       initiative, age, height, weight, max_spells, spells, abilities, experience
+		       initiative, age, height, weight, max_spells, spells, abilities, experience, type, sub_race
 		FROM characters
 		WHERE game_id = $1 AND id = $2
 	`
@@ -75,6 +75,8 @@ func GetCharacter(gameID, charID string) (*model.Character, error) {
 		&char.Spells,
 		&char.Abilities,
 		&char.Experience,
+		&char.Type,
+		&char.SubRace,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -89,10 +91,10 @@ func GetGameCharacters(gameID string) ([]model.Character, error) {
 	characters := []model.Character{}
 	query := `
 		SELECT c.id, c.game_id, c.user_id, c.name, c.race, c.max_hp, c.current_hp, COALESCE(c.avatar_url, ''), c.stats, c.inventory, c.is_npc, c.money, c.created_at, u.name,
-		       c.initiative, c.age, c.height, c.weight, c.max_spells, c.spells, c.abilities, c.experience
+		       c.initiative, c.age, c.height, c.weight, c.max_spells, c.spells, c.abilities, c.experience, c.type, c.sub_race
 		FROM characters c
 		LEFT JOIN "user" u ON c.user_id = u.id
-		WHERE c.game_id = $1
+		WHERE c.game_id = $1 AND (c.type = 'PLAYER' OR c.type = 'NPC')
 		ORDER BY c.created_at DESC
 	`
 	rows, err := database.DB.Query(context.Background(), query, gameID)
@@ -105,7 +107,7 @@ func GetGameCharacters(gameID string) ([]model.Character, error) {
 		var char model.Character
 		var playerName sql.NullString
 		if err := rows.Scan(&char.ID, &char.GameID, &char.UserID, &char.Name, &char.Race, &char.MaxHP, &char.CurrentHP, &char.AvatarURL, &char.Stats, &char.Inventory, &char.IsNPC, &char.Money, &char.CreatedAt, &playerName,
-			&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience); err != nil {
+			&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience, &char.Type, &char.SubRace); err != nil {
 			return nil, err
 		}
 		if playerName.Valid {
@@ -117,14 +119,42 @@ func GetGameCharacters(gameID string) ([]model.Character, error) {
 	return characters, nil
 }
 
-type InventoryItem struct {
-	Name     string  `json:"name"`
-	Quantity string  `json:"quantity"`
-	ImageURL *string `json:"image_url,omitempty"`
-	IconName string  `json:"icon_name,omitempty"`
+func GetGameMonsters(gameID string) ([]model.Character, error) {
+	characters := []model.Character{}
+	query := `
+		SELECT c.id, c.game_id, c.user_id, c.name, c.race, c.max_hp, c.current_hp, COALESCE(c.avatar_url, ''), c.stats, c.inventory, c.is_npc, c.money, c.created_at,
+		       c.initiative, c.age, c.height, c.weight, c.max_spells, c.spells, c.abilities, c.experience, c.type, c.sub_race
+		FROM characters c
+		WHERE c.game_id = $1 AND c.type = 'MONSTER'
+		ORDER BY c.created_at DESC
+	`
+	rows, err := database.DB.Query(context.Background(), query, gameID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var char model.Character
+		if err := rows.Scan(&char.ID, &char.GameID, &char.UserID, &char.Name, &char.Race, &char.MaxHP, &char.CurrentHP, &char.AvatarURL, &char.Stats, &char.Inventory, &char.IsNPC, &char.Money, &char.CreatedAt,
+			&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience, &char.Type, &char.SubRace); err != nil {
+			return nil, err
+		}
+		characters = append(characters, char)
+	}
+
+	return characters, nil
 }
 
-func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, avatarURL string, stats, inventory []byte, money, initiative int, age, height, weight string, maxSpells int, spells []byte, abilities string, experience int) (*model.Character, error) {
+type InventoryItem struct {
+	Name        string  `json:"name"`
+	Quantity    string  `json:"quantity"`
+	Description string  `json:"description,omitempty"`
+	ImageURL    *string `json:"image_url,omitempty"`
+	IconName    string  `json:"icon_name,omitempty"`
+}
+
+func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, avatarURL string, stats, inventory []byte, money, initiative int, age, height, weight string, maxSpells int, spells []byte, abilities string, experience int, charType, subRace string) (*model.Character, error) {
 	char := &model.Character{
 		GameID:     gameID,
 		Name:       name,
@@ -144,6 +174,7 @@ func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, a
 		Spells:     spells,
 		Abilities:  abilities,
 		Experience: experience,
+		Type:       charType,
 	}
 
 	if userID != "" {
@@ -152,18 +183,21 @@ func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, a
 	if avatarURL != "" {
 		char.AvatarURL = &avatarURL
 	}
+	if subRace != "" {
+		char.SubRace = &subRace
+	}
 
 	query := `
 		INSERT INTO characters (game_id, user_id, name, race, max_hp, current_hp, is_npc, avatar_url, stats, inventory, money, created_at,
-		                        initiative, age, height, weight, max_spells, spells, abilities, experience)
+		                        initiative, age, height, weight, max_spells, spells, abilities, experience, type, sub_race)
 		VALUES ($1, NULLIF($2, ''), $3, $4, $5, $6, $7, NULLIF($8, ''), $9, $10, $11, $12,
-		        $13, $14, $15, $16, $17, $18, $19, $20)
+		        $13, $14, $15, $16, $17, $18, $19, $20, $21, NULLIF($22, ''))
 		RETURNING id
 	`
 
 	err := database.DB.QueryRow(context.Background(), query,
 		char.GameID, userID, char.Name, char.Race, char.MaxHP, char.CurrentHP, char.IsNPC, avatarURL, char.Stats, char.Inventory, char.Money, char.CreatedAt,
-		char.Initiative, char.Age, char.Height, char.Weight, char.MaxSpells, char.Spells, char.Abilities, char.Experience,
+		char.Initiative, char.Age, char.Height, char.Weight, char.MaxSpells, char.Spells, char.Abilities, char.Experience, char.Type, subRace,
 	).Scan(&char.ID)
 
 	if err != nil {
@@ -173,23 +207,24 @@ func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, a
 	return char, nil
 }
 
-func UpdateCharacter(id, gameID, name, race string, maxHP int, isNPC bool, avatarURL string, stats, inventory []byte, money, initiative int, age, height, weight string, maxSpells int, spells []byte, abilities string, experience int) (*model.Character, error) {
+func UpdateCharacter(id, gameID, name, race string, maxHP int, isNPC bool, avatarURL string, stats, inventory []byte, money, initiative int, age, height, weight string, maxSpells int, spells []byte, abilities string, experience int, charType, subRace string) (*model.Character, error) {
 	query := `
 		UPDATE characters
 		SET name = $1, race = $2, max_hp = $3, is_npc = $4, avatar_url = NULLIF($5, ''), stats = $6, inventory = $7, money = $8,
-		    initiative = $9, age = $10, height = $11, weight = $12, max_spells = $13, spells = $14, abilities = $15, experience = $16
-		WHERE id = $17 AND game_id = $18
+		    initiative = $9, age = $10, height = $11, weight = $12, max_spells = $13, spells = $14, abilities = $15, experience = $16,
+			type = $17, sub_race = NULLIF($18, '')
+		WHERE id = $19 AND game_id = $20
 		RETURNING id, game_id, user_id, name, race, max_hp, current_hp, COALESCE(avatar_url, ''), stats, inventory, is_npc, money, created_at,
-		          initiative, age, height, weight, max_spells, spells, abilities, experience
+		          initiative, age, height, weight, max_spells, spells, abilities, experience, type, sub_race
 	`
 
 	char := &model.Character{}
 	err := database.DB.QueryRow(context.Background(), query,
 		name, race, maxHP, isNPC, avatarURL, stats, inventory, money,
-		initiative, age, height, weight, maxSpells, spells, abilities, experience,
+		initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace,
 		id, gameID,
 	).Scan(&char.ID, &char.GameID, &char.UserID, &char.Name, &char.Race, &char.MaxHP, &char.CurrentHP, &char.AvatarURL, &char.Stats, &char.Inventory, &char.IsNPC, &char.Money, &char.CreatedAt,
-		&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience)
+		&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience, &char.Type, &char.SubRace)
 
 	if err != nil {
 		return nil, err

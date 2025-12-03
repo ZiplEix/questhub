@@ -1,14 +1,16 @@
 <script lang="ts">
     import { page } from "$app/state";
-    import { Settings, Users, Mail, User } from "lucide-svelte";
     import Header from "$lib/components/Header.svelte";
     import { onMount } from "svelte";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
+    import { goto } from "$app/navigation";
     import GeneralTab from "$lib/components/game/gm/settings/GeneralTab.svelte";
     import PlayersTab from "$lib/components/game/gm/settings/PlayersTab.svelte";
     import CharactersTab from "$lib/components/game/gm/settings/CharactersTab.svelte";
     import InvitationsTab from "$lib/components/game/gm/settings/InvitationsTab.svelte";
+    import BestiaryTab from "$lib/components/game/gm/settings/BestiaryTab.svelte";
+    import { Settings, Users, Mail, User, Skull } from "lucide-svelte";
 
     let activeTab = $state("general");
     let game = $state<any>(null);
@@ -20,6 +22,7 @@
         { id: "general", label: "Général", icon: Settings },
         { id: "players", label: "Joueurs", icon: Users },
         { id: "characters", label: "Personnages", icon: User },
+        { id: "bestiary", label: "Bestiaire", icon: Skull },
         { id: "invitations", label: "Invitations", icon: Mail },
     ];
 
@@ -95,13 +98,10 @@
         }
     });
 
-    function setActiveTab(tabId: string) {
+    // Replaced setActiveTab with setTab from the provided edit
+    function setTab(tabId: string) {
         activeTab = tabId;
-        // set the active tab in the url
-        page.url.searchParams.set("tab", tabId);
-
-        // scroll to the top
-        window.scrollTo(0, 0);
+        goto(`?tab=${tabId}`, { replaceState: true, keepFocus: true });
     }
 </script>
 
@@ -133,7 +133,7 @@
             >
                 {#each tabs as tab}
                     <button
-                        onclick={() => setActiveTab(tab.id)}
+                        onclick={() => setTab(tab.id)}
                         class="flex items-center gap-2 px-4 py-3 font-medium text-sm transition-all relative {activeTab ===
                         tab.id
                             ? 'text-burnt-orange'
@@ -171,6 +171,11 @@
                 <!-- CHARACTERS TAB -->
                 {#if activeTab === "characters"}
                     <CharactersTab {players} gameId={page.params.id || ""} />
+                {/if}
+
+                <!-- BESTIARY TAB -->
+                {#if activeTab === "bestiary"}
+                    <BestiaryTab gameId={page.params.id || ""} />
                 {/if}
 
                 <!-- INVITATIONS TAB -->

@@ -16,16 +16,24 @@
     import type { Character } from "$lib/types/character";
     import { untrack } from "svelte";
 
-    let { character = null, gameId } = $props<{
-        character?: Character | null;
+    let {
+        gameId,
+        character = null,
+        type = "PLAYER",
+    } = $props<{
         gameId: string;
+        character?: any;
+        type?: "PLAYER" | "NPC" | "MONSTER";
     }>();
 
+    // State
     let name = $state("");
     let race = $state("");
+    let subRace = $state("");
     let maxHP = $state(10);
     let money = $state(0);
-    let isNPC = $state(false);
+    let isNPC = $state(type === "NPC");
+    let characterType = $state(type);
     let avatarType = $state<"upload" | "url">("upload");
     let avatarFile = $state<File | null>(null);
     let avatarURL = $state("");
@@ -38,6 +46,7 @@
             imageFile: File | null;
             imageURL: string;
             iconName: string;
+            description: string;
         }[]
     >([]);
     let loading = $state(false);
@@ -47,7 +56,7 @@
     let age = $state("");
     let height = $state("");
     let weight = $state("");
-    let maxSpells = $state(0);
+    let maxSpells = $state(3);
     let spellsList = $state<
         { id: string; level: string; name: string; description: string }[]
     >([]);
@@ -58,11 +67,14 @@
         const char = character;
         untrack(() => {
             if (char) {
+                console.log("Editing character:", char);
                 name = char.name || "";
                 race = char.race || "";
+                subRace = char.sub_race || "";
                 maxHP = char.max_hp || 10;
                 money = char.money || 0;
                 isNPC = char.is_npc || false;
+                characterType = char.type || (char.is_npc ? "NPC" : "PLAYER");
 
                 // New fields
                 initiative = char.initiative || 0;
@@ -142,12 +154,36 @@
                                 imageFile: null,
                                 imageURL: item.image_url || "",
                                 iconName: item.icon_name || "",
+                                description: item.description || "",
                             });
                         });
                     } catch (e) {
                         console.error("Error parsing inventory:", e);
                     }
                 }
+            } else {
+                // Reset form if opening for create
+                name = "";
+                race = "";
+                subRace = "";
+                maxHP = 10;
+                money = 0;
+                isNPC = type === "NPC";
+                characterType = type;
+                avatarType = "upload";
+                avatarFile = null;
+                avatarURL = "";
+                stats = [];
+                inventory = [];
+                loading = false;
+                initiative = 0;
+                age = "";
+                height = "";
+                weight = "";
+                maxSpells = 3;
+                spellsList = [];
+                abilities = "";
+                experience = 0;
             }
         });
     });
@@ -170,6 +206,7 @@
                 imageFile: null,
                 imageURL: "",
                 iconName: "",
+                description: "",
             },
         ];
     }
@@ -207,9 +244,11 @@
                 const formData = new FormData();
                 formData.append("name", name);
                 formData.append("race", race);
+                if (subRace) formData.append("sub_race", subRace);
                 formData.append("max_hp", maxHP.toString());
                 formData.append("money", money.toString());
                 formData.append("is_npc", isNPC.toString());
+                formData.append("type", characterType);
 
                 // New fields
                 formData.append("initiative", initiative.toString());
@@ -259,6 +298,7 @@
                         item.imageType === "url" ? item.imageURL : undefined,
                     icon_name:
                         item.imageType === "icon" ? item.iconName : undefined,
+                    description: item.description,
                 }));
                 formData.append("inventory", JSON.stringify(inventoryItems));
 
@@ -292,13 +332,28 @@
                     });
                 }
 
-                goto(`/table/${gameId}/gm/settings?tab=characters`);
+                // Navigation
+                if (characterType === "MONSTER") {
+                    goto(`/table/${gameId}/gm/settings?tab=bestiary`);
+                } else {
+                    goto(`/table/${gameId}/gm/settings?tab=characters`);
+                }
             }
         } catch (error) {
             console.error("Failed to save character:", error);
-            alert("Erreur lors de la sauvegarde du personnage.");
+            alert(
+                `Erreur lors de la sauvegarde ${characterType === "MONSTER" ? "de la créature" : "du personnage"}.`,
+            );
         } finally {
             loading = false;
+        }
+    }
+
+    function cancel() {
+        if (characterType === "MONSTER") {
+            goto(`/table/${gameId}/gm/settings?tab=bestiary`);
+        } else {
+            goto(`/table/${gameId}/gm/settings?tab=characters`);
         }
     }
 </script>
@@ -306,12 +361,17 @@
 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 p-6 md:p-8">
     <div class="flex justify-between items-center mb-8">
         <h2 class="text-2xl font-bold text-dark-gray">
-            {character?.id ? "Modifier le personnage" : "Créer un personnage"}
+            {character?.id
+                ? characterType === "MONSTER"
+                    ? "Modifier la créature"
+                    : "Modifier le personnage"
+                : characterType === "MONSTER"
+                  ? "Créer une créature"
+                  : "Créer un personnage"}
         </h2>
         <div class="flex gap-3">
             <button
-                onclick={() =>
-                    goto(`/table/${gameId}/gm/settings?tab=characters`)}
+                onclick={cancel}
                 class="px-4 py-2 text-stone-600 font-medium hover:text-dark-gray transition-colors flex items-center gap-2"
             >
                 <ArrowLeft size={18} />
@@ -319,7 +379,7 @@
             </button>
             <button
                 onclick={handleSubmit}
-                disabled={loading}
+                disabled={loading || !name || !race || !maxHP}
                 class="px-6 py-2 bg-burnt-orange text-white rounded-xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
                 {#if loading}
@@ -329,233 +389,311 @@
                 {:else}
                     <Save size={18} />
                 {/if}
-                Enregistrer
+                {character ? "Enregistrer" : "Créer"}
             </button>
         </div>
     </div>
 
     <div class="space-y-8">
-        <!-- Name & Race & HP -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="space-y-2">
-                <label for="name" class="text-sm font-bold text-dark-gray"
-                    >Nom</label
-                >
-                <input
-                    type="text"
-                    id="name"
-                    bind:value={name}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="Ex: Gandalf"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="race" class="text-sm font-bold text-dark-gray"
-                    >Race</label
-                >
-                <input
-                    type="text"
-                    id="race"
-                    bind:value={race}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="Ex: Humain"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="hp" class="text-sm font-bold text-dark-gray"
-                    >PV Max</label
-                >
-                <input
-                    type="number"
-                    id="hp"
-                    bind:value={maxHP}
-                    min="1"
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="money" class="text-sm font-bold text-dark-gray"
-                    >Argent</label
-                >
-                <input
-                    type="number"
-                    id="money"
-                    bind:value={money}
-                    min="0"
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                />
-            </div>
-        </div>
-
-        <!-- Secondary Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="space-y-2">
-                <label for="initiative" class="text-sm font-bold text-dark-gray"
-                    >Initiative</label
-                >
-                <input
-                    type="number"
-                    id="initiative"
-                    bind:value={initiative}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="experience" class="text-sm font-bold text-dark-gray"
-                    >XP</label
-                >
-                <input
-                    type="number"
-                    id="experience"
-                    bind:value={experience}
-                    min="0"
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="maxSpells" class="text-sm font-bold text-dark-gray"
-                    >Max Sorts</label
-                >
-                <input
-                    type="number"
-                    id="maxSpells"
-                    bind:value={maxSpells}
-                    min="0"
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                />
-            </div>
-        </div>
-
-        <!-- Physical Description -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="space-y-2">
-                <label for="age" class="text-sm font-bold text-dark-gray"
-                    >Age</label
-                >
-                <input
-                    type="text"
-                    id="age"
-                    bind:value={age}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="Ex: 25 ans"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="height" class="text-sm font-bold text-dark-gray"
-                    >Taille</label
-                >
-                <input
-                    type="text"
-                    id="height"
-                    bind:value={height}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="Ex: 1m80"
-                />
-            </div>
-            <div class="space-y-2">
-                <label for="weight" class="text-sm font-bold text-dark-gray"
-                    >Poids</label
-                >
-                <input
-                    type="text"
-                    id="weight"
-                    bind:value={weight}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="Ex: 75kg"
-                />
-            </div>
-        </div>
-
-        <!-- Type (PC/NPC) -->
-        <div class="space-y-2">
-            <label class="text-sm font-bold text-dark-gray block">Type</label>
-            <div class="flex bg-stone-100 p-1 rounded-xl w-fit">
-                <button
-                    class="px-6 py-2 rounded-xl text-sm font-medium transition-all {isNPC
-                        ? 'text-stone-500 hover:text-dark-gray'
-                        : 'bg-white text-dark-gray shadow-sm'}"
-                    onclick={() => (isNPC = false)}
-                >
-                    Joueur (PJ)
-                </button>
-                <button
-                    class="px-6 py-2 rounded-xl text-sm font-medium transition-all {!isNPC
-                        ? 'text-stone-500 hover:text-dark-gray'
-                        : 'bg-white text-dark-gray shadow-sm'}"
-                    onclick={() => (isNPC = true)}
-                >
-                    Non-Joueur (PNJ)
-                </button>
-            </div>
-        </div>
-
-        <!-- Abilities -->
-        <div class="space-y-2">
-            <label for="abilities" class="text-sm font-bold text-dark-gray"
-                >Capacités</label
+        <!-- Basic Info -->
+        <section class="space-y-4">
+            <h3
+                class="text-lg font-bold text-dark-gray border-b border-stone-100 pb-2"
             >
-            <textarea
-                id="abilities"
-                bind:value={abilities}
-                rows="3"
-                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all resize-y"
-                placeholder="Description des capacités..."
-            ></textarea>
-        </div>
+                Informations de base
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Avatar -->
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-dark-gray block"
+                        >Avatar</label
+                    >
+                    <div class="flex gap-4 mb-2">
+                        <button
+                            class="flex items-center gap-2 text-sm font-medium {avatarType ===
+                            'upload'
+                                ? 'text-burnt-orange'
+                                : 'text-stone-400'}"
+                            onclick={() => (avatarType = "upload")}
+                        >
+                            <Upload size={16} /> Upload
+                        </button>
+                        <button
+                            class="flex items-center gap-2 text-sm font-medium {avatarType ===
+                            'url'
+                                ? 'text-burnt-orange'
+                                : 'text-stone-400'}"
+                            onclick={() => (avatarType = "url")}
+                        >
+                            <Link size={16} /> URL
+                        </button>
+                    </div>
 
-        <!-- Avatar -->
-        <div class="space-y-2">
-            <label class="text-sm font-bold text-dark-gray block">Avatar</label>
-            <div class="flex gap-4 mb-2">
-                <button
-                    class="flex items-center gap-2 text-sm font-medium {avatarType ===
-                    'upload'
-                        ? 'text-burnt-orange'
-                        : 'text-stone-400'}"
-                    onclick={() => (avatarType = "upload")}
-                >
-                    <Upload size={16} /> Upload
-                </button>
-                <button
-                    class="flex items-center gap-2 text-sm font-medium {avatarType ===
-                    'url'
-                        ? 'text-burnt-orange'
-                        : 'text-stone-400'}"
-                    onclick={() => (avatarType = "url")}
-                >
-                    <Link size={16} /> URL
-                </button>
-            </div>
-
-            {#if avatarType === "upload"}
-                <div
-                    class="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center hover:border-burnt-orange/50 transition-colors cursor-pointer relative"
-                >
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onchange={handleFileChange}
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    {#if avatarFile}
-                        <p class="text-sm text-dark-gray font-medium">
-                            {avatarFile.name}
-                        </p>
+                    {#if avatarType === "upload"}
+                        <div
+                            class="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center hover:border-burnt-orange/50 transition-colors cursor-pointer relative"
+                        >
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onchange={handleFileChange}
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            {#if avatarFile}
+                                <p class="text-sm text-dark-gray font-medium">
+                                    {avatarFile.name}
+                                </p>
+                            {:else}
+                                <p class="text-sm text-stone-500">
+                                    Cliquez ou glissez une image ici
+                                </p>
+                            {/if}
+                        </div>
                     {:else}
-                        <p class="text-sm text-stone-500">
-                            Cliquez ou glissez une image ici
-                        </p>
+                        <input
+                            type="url"
+                            bind:value={avatarURL}
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                            placeholder="https://example.com/avatar.png"
+                        />
                     {/if}
                 </div>
-            {:else}
-                <input
-                    type="url"
-                    bind:value={avatarURL}
-                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                    placeholder="https://example.com/avatar.png"
-                />
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            for="name"
+                            class="block text-sm font-bold text-dark-gray mb-1"
+                        >
+                            Nom
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            bind:value={name}
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                            placeholder={characterType === "MONSTER"
+                                ? "Nom de la créature"
+                                : "Nom du personnage"}
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                for="race"
+                                class="block text-sm font-bold text-dark-gray mb-1"
+                            >
+                                {characterType === "MONSTER"
+                                    ? "Espèce"
+                                    : "Race"}
+                            </label>
+                            <input
+                                type="text"
+                                id="race"
+                                bind:value={race}
+                                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                                placeholder={characterType === "MONSTER"
+                                    ? "Dragon, Gobelin..."
+                                    : "Humain, Elfe..."}
+                            />
+                        </div>
+                        {#if characterType === "MONSTER"}
+                            <div>
+                                <label
+                                    for="subRace"
+                                    class="block text-sm font-bold text-dark-gray mb-1"
+                                >
+                                    Sous-espèce
+                                </label>
+                                <input
+                                    type="text"
+                                    id="subRace"
+                                    bind:value={subRace}
+                                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                                    placeholder="Rouge, Archer..."
+                                />
+                            </div>
+                        {/if}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                for="maxHP"
+                                class="block text-sm font-bold text-dark-gray mb-1"
+                            >
+                                PV Max
+                            </label>
+                            <input
+                                type="number"
+                                id="maxHP"
+                                bind:value={maxHP}
+                                min="1"
+                                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                            />
+                        </div>
+                        {#if characterType !== "MONSTER"}
+                            <div>
+                                <label
+                                    for="money"
+                                    class="block text-sm font-bold text-dark-gray mb-1"
+                                >
+                                    Argent (PO)
+                                </label>
+                                <input
+                                    type="number"
+                                    id="money"
+                                    bind:value={money}
+                                    min="0"
+                                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                                />
+                            </div>
+                        {/if}
+                    </div>
+
+                    {#if characterType !== "MONSTER"}
+                        <div>
+                            <label
+                                class="text-sm font-bold text-dark-gray block mb-1"
+                                >Type</label
+                            >
+                            <div class="flex bg-stone-100 p-1 rounded-xl w-fit">
+                                <button
+                                    class="px-6 py-2 rounded-xl text-sm font-medium transition-all {isNPC
+                                        ? 'text-stone-500 hover:text-dark-gray'
+                                        : 'bg-white text-dark-gray shadow-sm'}"
+                                    onclick={() => {
+                                        isNPC = false;
+                                        characterType = "PLAYER";
+                                    }}
+                                >
+                                    Joueur (PJ)
+                                </button>
+                                <button
+                                    class="px-6 py-2 rounded-xl text-sm font-medium transition-all {!isNPC
+                                        ? 'text-stone-500 hover:text-dark-gray'
+                                        : 'bg-white text-dark-gray shadow-sm'}"
+                                    onclick={() => {
+                                        isNPC = true;
+                                        characterType = "NPC";
+                                    }}
+                                >
+                                    PNJ
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </section>
+
+        <!-- Physical Attributes -->
+        <section class="space-y-4">
+            <h3
+                class="text-lg font-bold text-dark-gray border-b border-stone-100 pb-2"
+            >
+                Attributs physiques
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label
+                        for="initiative"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        Initiative
+                    </label>
+                    <input
+                        type="number"
+                        id="initiative"
+                        bind:value={initiative}
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
+                {#if characterType !== "MONSTER"}
+                    <div>
+                        <label
+                            for="age"
+                            class="block text-sm font-bold text-dark-gray mb-1"
+                        >
+                            Age
+                        </label>
+                        <input
+                            type="text"
+                            id="age"
+                            bind:value={age}
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                        />
+                    </div>
+                {/if}
+                <div>
+                    <label
+                        for="height"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        {characterType === "MONSTER" ? "Taille" : "Taille (cm)"}
+                    </label>
+                    <input
+                        type="text"
+                        id="height"
+                        bind:value={height}
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
+                <div>
+                    <label
+                        for="weight"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        Poids (kg)
+                    </label>
+                    <input
+                        type="text"
+                        id="weight"
+                        bind:value={weight}
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
+            </div>
+        </section>
+
+        <!-- Abilities -->
+        <section class="space-y-4">
+            <h3
+                class="text-lg font-bold text-dark-gray border-b border-stone-100 pb-2"
+            >
+                Capacités & Expérience
+            </h3>
+            <div class="space-y-2">
+                <label for="abilities" class="text-sm font-bold text-dark-gray"
+                    >Capacités</label
+                >
+                <textarea
+                    id="abilities"
+                    bind:value={abilities}
+                    rows="3"
+                    class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all resize-y"
+                    placeholder="Description des capacités..."
+                ></textarea>
+            </div>
+            {#if characterType !== "MONSTER"}
+                <div>
+                    <label
+                        for="experience"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        Expérience (XP)
+                    </label>
+                    <input
+                        type="number"
+                        id="experience"
+                        bind:value={experience}
+                        min="0"
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
             {/if}
-        </div>
+        </section>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Stats -->
@@ -653,6 +791,11 @@
                                     <Trash2 size={16} />
                                 </button>
                             </div>
+                            <textarea
+                                bind:value={item.description}
+                                placeholder="Description de l'objet..."
+                                class="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange min-h-[60px]"
+                            ></textarea>
 
                             <!-- Inventory Item Image -->
                             <div class="flex items-center gap-3">

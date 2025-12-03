@@ -24,6 +24,7 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("/:id/players", controller.GetGamePlayers)
 	g.DELETE("/:id/players/:userId", controller.RemovePlayer)
 	g.GET("/:id/characters", controller.GetGameCharacters)
+	g.GET("/:id/monsters", controller.GetGameMonsters)
 	g.POST("/:id/characters", controller.CreateCharacter)
 	g.GET("/:id/characters/:charId", controller.GetCharacter)
 	g.PUT("/:id/characters/:charId", controller.UpdateCharacter)
