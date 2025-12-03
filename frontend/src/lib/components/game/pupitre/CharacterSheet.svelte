@@ -152,11 +152,11 @@
                         >
                             {stat.key}
                         </div>
-                        <div class="font-bold text-dark-gray text-sm">
+                        <div class="font-bold text-dark-gray text-lg">
                             {stat.value}
                         </div>
                         <div
-                            class="text-base font-bold font-mono text-burnt-orange"
+                            class="text-xs font-bold font-mono text-burnt-orange"
                         >
                             {#if !isNaN(stat.mod)}
                                 {stat.mod >= 0 ? "+" : ""}{stat.mod}

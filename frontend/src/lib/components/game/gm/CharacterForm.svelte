@@ -322,7 +322,7 @@
 
                 if (avatarType === "upload" && avatarFile) {
                     formData.append("avatar", avatarFile);
-                } else if (avatarType === "url" && avatarURL) {
+                } else if (avatarURL) {
                     formData.append("avatar_url", avatarURL);
                 }
 
@@ -336,7 +336,6 @@
                     }),
                     {},
                 );
-                console.log("Sending stats:", statsObj);
                 formData.append("stats", JSON.stringify(statsObj));
 
                 // Prepare inventory items
