@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Sword, Wind, Footprints, Shield } from "lucide-svelte";
+    import { Sword, Wind, Footprints, Shield, Hand } from "lucide-svelte";
     import { getContext } from "svelte";
 
     const { showToast } = getContext<any>("toast");
@@ -10,6 +10,7 @@
     ];
 
     let actions = [
+        { name: "Se déplacer", icon: Footprints },
         { name: "Esquiver", icon: Shield },
         { name: "Foncer", icon: Wind },
         { name: "Se désengager", icon: Footprints },
@@ -23,9 +24,21 @@
     function handleAction(action: any) {
         showToast(`🏃 ${action.name}`, "info");
     }
+
+    function requestSpeech() {
+        showToast("✋ Demande de parole envoyée au MJ", "info");
+    }
 </script>
 
 <div class="p-4 space-y-6">
+    <!-- Speech Request -->
+    <button
+        onclick={requestSpeech}
+        class="w-full bg-linear-to-r from-burnt-orange to-orange-600 text-white p-4 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3 font-bold text-lg"
+    >
+        <Hand size={24} />
+        Demander la parole
+    </button>
     <!-- Attacks -->
     <div>
         <h3

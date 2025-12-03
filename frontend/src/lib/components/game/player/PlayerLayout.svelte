@@ -32,7 +32,7 @@
     <div class="flex-1 flex overflow-hidden relative">
         <!-- Toast Layer (Center Screen) -->
         <div
-            class="absolute inset-0 pointer-events-none z-50 flex items-center justify-center"
+            class="absolute inset-0 pointer-events-none z-100 flex items-center justify-center"
         >
             {#if toast.visible}
                 <ToastNotification message={toast.message} type={toast.type} />

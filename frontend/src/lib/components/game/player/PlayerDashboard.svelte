@@ -1,5 +1,6 @@
 <script lang="ts">
     import QuickDice from "./QuickDice.svelte";
+    import ActionTab from "./ActionTab.svelte";
 
     // Shared components from GM view
     import CharacterSheet from "../pupitre/CharacterSheet.svelte";
@@ -20,6 +21,7 @@
 
     const tabs = [
         { id: "fiche", label: "Fiche" },
+        { id: "action", label: "Action" },
         { id: "sac", label: "Sac" },
         { id: "notes", label: "Notes" },
     ];
@@ -95,6 +97,8 @@
     <div class="flex-1 overflow-y-auto bg-stone-50/50 relative">
         {#if activeTab === "fiche"}
             <CharacterSheet {character} />
+        {:else if activeTab === "action"}
+            <ActionTab />
         {:else if activeTab === "sac"}
             <Inventory {character} />
         {:else if activeTab === "notes"}
