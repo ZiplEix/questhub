@@ -728,10 +728,6 @@ func AssignCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	if req.PlayerID == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Player ID is required")
-	}
-
 	claims := c.Get("claims").(jwt.MapClaims)
 	userID := claims["sub"].(string)
 

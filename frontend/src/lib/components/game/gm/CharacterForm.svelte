@@ -58,7 +58,13 @@
     let weight = $state("");
     let maxSpells = $state(3);
     let spellsList = $state<
-        { id: string; level: string; name: string; description: string }[]
+        {
+            id: string;
+            level: string;
+            name: string;
+            description: string;
+            charges: string;
+        }[]
     >([]);
     let abilities = $state("");
     let experience = $state(0);
@@ -99,6 +105,7 @@
                                                 level,
                                                 name: spell,
                                                 description: "",
+                                                charges: "",
                                             });
                                         } else {
                                             spellsList.push({
@@ -107,6 +114,7 @@
                                                 name: spell.name,
                                                 description:
                                                     spell.description || "",
+                                                charges: spell.charges || "",
                                             });
                                         }
                                     });
@@ -218,7 +226,13 @@
     function addSpell() {
         spellsList = [
             ...spellsList,
-            { id: crypto.randomUUID(), level: "0", name: "", description: "" },
+            {
+                id: crypto.randomUUID(),
+                level: "0",
+                name: "",
+                description: "",
+                charges: "",
+            },
         ];
     }
 
@@ -262,7 +276,7 @@
                 // Spells
                 const spellsObj: Record<
                     string,
-                    { name: string; description: string }[]
+                    { name: string; description: string; charges: string }[]
                 > = {};
                 spellsList.forEach((spell) => {
                     if (spell.name) {
@@ -272,6 +286,7 @@
                         spellsObj[spell.level].push({
                             name: spell.name,
                             description: spell.description,
+                            charges: spell.charges,
                         });
                     }
                 });
@@ -747,9 +762,15 @@
             <!-- Inventory -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <label class="text-sm font-bold text-dark-gray"
-                        >Inventaire</label
-                    >
+                    {#if characterType === "MONSTER"}
+                        <label class="text-sm font-bold text-dark-gray"
+                            >Loot</label
+                        >
+                    {:else}
+                        <label class="text-sm font-bold text-dark-gray"
+                            >Inventaire</label
+                        >
+                    {/if}
                     <button
                         onclick={addInventoryItem}
                         class="text-xs flex items-center gap-1 text-burnt-orange font-medium hover:text-burnt-orange/80"
@@ -762,7 +783,11 @@
                     <p
                         class="text-sm text-stone-400 italic bg-stone-50 p-4 rounded-xl border border-stone-100 text-center"
                     >
-                        Inventaire vide.
+                        {#if characterType === "MONSTER"}
+                            Loot vide.
+                        {:else}
+                            Inventaire vide.
+                        {/if}
                     </p>
                 {/if}
 
@@ -928,15 +953,24 @@
                                 <Trash2 size={16} />
                             </button>
                         </div>
-                        <textarea
-                            bind:value={spell.description}
-                            placeholder="Description du sort..."
-                            rows="2"
-                            class="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange resize-none"
-                        ></textarea>
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                bind:value={spell.charges}
+                                placeholder="Charges (ex: 3/jour)"
+                                class="w-1/3 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange"
+                            />
+                            <textarea
+                                bind:value={spell.description}
+                                placeholder="Description du sort..."
+                                rows="1"
+                                class="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange resize-none"
+                            ></textarea>
+                        </div>
                     </div>
                 {/each}
             </div>
         </div>
     </div>
 </div>
+```

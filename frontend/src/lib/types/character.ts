@@ -22,7 +22,7 @@ export interface Character {
     height: string;
     weight: string;
     max_spells: number;
-    spells: Record<string, { name: string; description: string }[]>;
+    spells: Record<string, { name: string; description: string; charges: string }[]>;
     abilities: string;
     experience: number;
 }
