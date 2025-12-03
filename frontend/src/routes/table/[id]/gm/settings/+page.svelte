@@ -79,6 +79,12 @@
     }
 
     onMount(async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get("tab");
+        if (tab && tabs.find((t) => t.id === tab)) {
+            activeTab = tab;
+        }
+
         const gameId = page.params.id;
         if (gameId) {
             try {
@@ -98,10 +104,11 @@
         }
     });
 
-    // Replaced setActiveTab with setTab from the provided edit
     function setTab(tabId: string) {
         activeTab = tabId;
-        goto(`?tab=${tabId}`, { replaceState: true, keepFocus: true });
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tabId);
+        goto(url.toString(), { replaceState: true, keepFocus: true });
     }
 </script>
 
