@@ -32,4 +32,6 @@ type Character struct {
 	Experience int             `json:"experience"`
 	Type       string          `json:"type"`     // PLAYER, NPC, MONSTER
 	SubRace    *string         `json:"sub_race"` // Optional
+	ArmorClass int             `json:"armor_class"`
+	Speed      int             `json:"speed"`
 }

@@ -6,8 +6,10 @@
     import Notes from "./pupitre/Notes.svelte";
     import DiceTray from "./DiceTray.svelte";
 
+    import type { Character } from "$lib/types/character";
+
     let activeTab = $state("chat");
-    let { onRoll } = $props();
+    let { onRoll, character } = $props<{ onRoll: any; character: Character }>();
 
     const tabs = [
         { id: "chat", icon: MessageSquare, label: "Chat" },
@@ -41,9 +43,9 @@
         {#if activeTab === "chat"}
             <Chat />
         {:else if activeTab === "sheet"}
-            <CharacterSheet />
+            <CharacterSheet {character} />
         {:else if activeTab === "inventory"}
-            <Inventory />
+            <Inventory {character} />
         {:else if activeTab === "notes"}
             <Notes />
         {/if}

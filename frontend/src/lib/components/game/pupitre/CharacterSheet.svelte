@@ -1,144 +1,237 @@
 <script lang="ts">
-    import { Shield, Heart, Zap, Sword } from "lucide-svelte";
+    import { Shield, Heart, Zap, Sword, Book, Swords } from "lucide-svelte";
+    import type { Character } from "$lib/types/character";
 
-    let stats = {
-        str: 16,
-        dex: 14,
-        con: 15,
-        int: 10,
-        wis: 12,
-        cha: 8,
-    };
+    let { character } = $props<{ character: Character }>();
 
-    let skills = [
-        { name: "Athlétisme", mod: "+5" },
-        { name: "Perception", mod: "+3" },
-        { name: "Discrétion", mod: "+4" },
-    ];
+    let stats = $derived(
+        character.stats
+            ? Object.entries(character.stats).map(([key, data]) => {
+                  let value = "10";
+                  let mod = 0;
 
-    let equipment = [
-        { name: "Épée longue", damage: "1d8 + 3", type: "slashing" },
-        { name: "Arc court", damage: "1d6 + 2", type: "piercing" },
-    ];
+                  if (
+                      typeof data === "object" &&
+                      data !== null &&
+                      "value" in data
+                  ) {
+                      const statData = data as {
+                          value: number;
+                          modifier: number;
+                      };
+                      value = statData.value?.toString() || "10";
+                      mod = statData.modifier || 0;
+                  } else {
+                      value = String(data);
+                  }
+
+                  return {
+                      key,
+                      value,
+                      mod,
+                  };
+              })
+            : [],
+    );
+
+    let spellsByLevel = $derived(
+        character.spells
+            ? (Object.entries(character.spells).sort(([a], [b]) =>
+                  a.localeCompare(b),
+              ) as [
+                  string,
+                  { name: string; description: string; charges: string }[],
+              ][])
+            : [],
+    );
+
+    let hpPercent = $derived((character.current_hp / character.max_hp) * 100);
 </script>
 
 <div class="h-full overflow-y-auto p-4 space-y-6">
-    <!-- Header Stats -->
-    <div class="grid grid-cols-3 gap-3">
-        <div
-            class="bg-white p-3 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center"
-        >
-            <Shield size={20} class="text-stone-400 mb-1" />
-            <span class="text-2xl font-display font-bold text-dark-gray"
-                >16</span
-            >
-            <span class="text-[10px] uppercase font-bold text-stone-400"
-                >CA</span
-            >
+    <!-- Vital Header Section -->
+    <div class="bg-white rounded-2xl p-4 border border-stone-100 shadow-sm">
+        <div class="flex items-center gap-4 mb-4">
+            <img
+                src={character.avatar_url ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name}`}
+                alt={character.name}
+                class="w-16 h-16 rounded-2xl bg-stone-100 shadow-sm border-2 border-white object-cover"
+            />
+            <div>
+                <h2 class="font-display font-bold text-2xl text-dark-gray">
+                    {character.name}
+                </h2>
+                <div class="text-sm text-stone-500 font-medium">
+                    {character.race}
+                    {character.sub_race ? `(${character.sub_race})` : ""}
+                    {#if character.experience}
+                        • {character.experience} XP
+                    {/if}
+                </div>
+            </div>
         </div>
-        <div
-            class="bg-white p-3 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center"
-        >
-            <Heart size={20} class="text-red-400 mb-1" />
-            <span class="text-2xl font-display font-bold text-dark-gray"
-                >45</span
+
+        <!-- HP Bar -->
+        <div class="mb-4">
+            <div class="flex justify-between text-sm font-bold mb-1">
+                <span class="text-stone-400">Points de Vie</span>
+                <span
+                    class={character.current_hp < character.max_hp / 3
+                        ? "text-red-500"
+                        : "text-green-600"}
+                >
+                    {character.current_hp} / {character.max_hp}
+                </span>
+            </div>
+            <div
+                class="h-4 bg-stone-100 rounded-full overflow-hidden border border-stone-200"
             >
-            <span class="text-[10px] uppercase font-bold text-stone-400"
-                >PV Max</span
-            >
+                <div
+                    class="h-full rounded-full transition-all duration-500 {character.current_hp <
+                    character.max_hp / 3
+                        ? 'bg-red-500'
+                        : 'bg-green-500'}"
+                    style="width: {hpPercent}%"
+                ></div>
+            </div>
         </div>
-        <div
-            class="bg-white p-3 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center"
-        >
-            <Zap size={20} class="text-yellow-400 mb-1" />
-            <span class="text-2xl font-display font-bold text-dark-gray"
-                >30</span
+
+        <!-- Defenses -->
+        <div class="grid grid-cols-3 gap-3">
+            <div
+                class="flex flex-col items-center p-2 bg-stone-50 rounded-xl border border-stone-100"
             >
-            <span class="text-[10px] uppercase font-bold text-stone-400"
-                >Vitesse</span
+                <Shield size={16} class="text-stone-400 mb-1" />
+                <span class="font-bold text-lg text-dark-gray"
+                    >{character.armor_class}</span
+                >
+                <span class="text-[10px] uppercase font-bold text-stone-400"
+                    >CA</span
+                >
+            </div>
+            <div
+                class="flex flex-col items-center p-2 bg-stone-50 rounded-xl border border-stone-100"
             >
+                <Zap size={16} class="text-stone-400 mb-1" />
+                <span class="font-bold text-lg text-dark-gray"
+                    >{character.speed}</span
+                >
+                <span class="text-[10px] uppercase font-bold text-stone-400"
+                    >Vitesse</span
+                >
+            </div>
+            <div
+                class="flex flex-col items-center p-2 bg-stone-50 rounded-xl border border-stone-100"
+            >
+                <Swords size={16} class="text-stone-400 mb-1" />
+                <span class="font-bold text-lg text-dark-gray"
+                    >{character.initiative}</span
+                >
+                <span class="text-[10px] uppercase font-bold text-stone-400"
+                    >Init</span
+                >
+            </div>
         </div>
     </div>
 
     <!-- Ability Scores -->
-    <div>
-        <h3
-            class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
-        >
-            Caractéristiques
-        </h3>
-        <div class="grid grid-cols-3 gap-2">
-            {#each Object.entries(stats) as [stat, value]}
-                <div class="bg-stone-50 p-2 rounded-lg text-center">
-                    <div class="text-[10px] uppercase font-bold text-stone-400">
-                        {stat}
-                    </div>
-                    <div class="font-bold text-dark-gray">{value}</div>
-                    <div class="text-xs font-mono text-burnt-orange">
-                        +{Math.floor((value - 10) / 2)}
-                    </div>
-                </div>
-            {/each}
-        </div>
-    </div>
-
-    <!-- Quick Actions / Weapons -->
-    <div>
-        <h3
-            class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
-        >
-            Attaques
-        </h3>
-        <div class="space-y-2">
-            {#each equipment as item}
-                <button
-                    class="w-full bg-white p-3 rounded-xl border border-stone-100 shadow-sm hover:border-burnt-orange/30 hover:shadow-md transition-all flex items-center justify-between group"
-                >
-                    <div class="flex items-center gap-3">
+    {#if stats.length > 0}
+        <div>
+            <h3
+                class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
+            >
+                Caractéristiques
+            </h3>
+            <div class="grid grid-cols-3 gap-2">
+                {#each stats as stat}
+                    <div class="bg-stone-50 p-2 rounded-lg text-center">
                         <div
-                            class="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-burnt-orange/10 group-hover:text-burnt-orange transition-colors"
+                            class="text-[10px] uppercase font-bold text-stone-400 truncate"
+                            title={stat.key}
                         >
-                            <Sword size={16} />
+                            {stat.key}
                         </div>
-                        <div class="text-left">
-                            <div class="font-bold text-dark-gray text-sm">
-                                {item.name}
-                            </div>
-                            <div class="text-[10px] text-stone-400">
-                                {item.type}
-                            </div>
+                        <div class="font-bold text-dark-gray text-sm">
+                            {stat.value}
+                        </div>
+                        <div
+                            class="text-base font-bold font-mono text-burnt-orange"
+                        >
+                            {#if !isNaN(stat.mod)}
+                                {stat.mod >= 0 ? "+" : ""}{stat.mod}
+                            {/if}
                         </div>
                     </div>
-                    <div
-                        class="font-mono font-bold text-dark-gray text-sm bg-stone-50 px-2 py-1 rounded"
-                    >
-                        {item.damage}
-                    </div>
-                </button>
-            {/each}
+                {/each}
+            </div>
         </div>
-    </div>
+    {/if}
 
-    <!-- Skills -->
-    <div>
-        <h3
-            class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
-        >
-            Compétences
-        </h3>
-        <div class="space-y-1">
-            {#each skills as skill}
-                <div
-                    class="flex items-center justify-between p-2 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors"
-                >
-                    <span class="text-sm font-medium text-dark-gray"
-                        >{skill.name}</span
-                    >
-                    <span class="font-mono text-sm font-bold text-stone-500"
-                        >{skill.mod}</span
-                    >
-                </div>
-            {/each}
+    <!-- Abilities / Skills (Text) -->
+    {#if character.abilities}
+        <div>
+            <h3
+                class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
+            >
+                Capacités
+            </h3>
+            <div
+                class="bg-white p-4 rounded-xl border border-stone-100 text-sm text-stone-600 whitespace-pre-wrap"
+            >
+                {character.abilities}
+            </div>
         </div>
-    </div>
+    {/if}
+
+    <!-- Spells -->
+    {#if spellsByLevel.length > 0}
+        <div>
+            <h3
+                class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
+            >
+                Sorts
+            </h3>
+            <div class="space-y-4">
+                {#each spellsByLevel as [level, spells]}
+                    <div>
+                        <h4
+                            class="text-xs font-bold text-burnt-orange mb-2 flex items-center gap-2"
+                        >
+                            <Book size={12} />
+                            Niveau {level}
+                        </h4>
+                        <div class="space-y-2">
+                            {#each spells as spell}
+                                <div
+                                    class="bg-white p-3 rounded-xl border border-stone-100 shadow-sm"
+                                >
+                                    <div
+                                        class="flex justify-between items-start mb-1"
+                                    >
+                                        <span
+                                            class="font-bold text-dark-gray text-sm"
+                                            >{spell.name}</span
+                                        >
+                                        {#if spell.charges}
+                                            <span
+                                                class="text-[10px] font-mono bg-stone-100 px-1.5 py-0.5 rounded text-stone-500"
+                                            >
+                                                {spell.charges} charges
+                                            </span>
+                                        {/if}
+                                    </div>
+                                    {#if spell.description}
+                                        <p class="text-xs text-stone-500">
+                                            {spell.description}
+                                        </p>
+                                    {/if}
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        </div>
+    {/if}
 </div>

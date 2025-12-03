@@ -350,6 +350,8 @@ func CreateCharacter(c echo.Context) error {
 	experience, _ := strconv.Atoi(c.FormValue("experience"))
 	charType := c.FormValue("type")
 	subRace := c.FormValue("sub_race")
+	armorClass, _ := strconv.Atoi(c.FormValue("armor_class"))
+	speed, _ := strconv.Atoi(c.FormValue("speed"))
 
 	// Default type logic if not provided
 	if charType == "" {
@@ -446,7 +448,7 @@ func CreateCharacter(c echo.Context) error {
 		}
 	}
 
-	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace)
+	char, err := service.CreateCharacter(gameID, "", name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace, armorClass, speed)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create character").SetInternal(err)
 	}
@@ -480,6 +482,8 @@ func UpdateCharacter(c echo.Context) error {
 	experience, _ := strconv.Atoi(c.FormValue("experience"))
 	charType := c.FormValue("type")
 	subRace := c.FormValue("sub_race")
+	armorClass, _ := strconv.Atoi(c.FormValue("armor_class"))
+	speed, _ := strconv.Atoi(c.FormValue("speed"))
 
 	// Default type logic if not provided
 	if charType == "" {
@@ -576,7 +580,7 @@ func UpdateCharacter(c echo.Context) error {
 		}
 	}
 
-	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace)
+	char, err := service.UpdateCharacter(charID, gameID, name, race, maxHP, isNPC, avatarURL, stats, inventory, money, initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace, armorClass, speed)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update character").SetInternal(err)
 	}

@@ -17,6 +17,7 @@
     let isDashboardOpen = $state(true);
     let loading = $state(true);
     let game = $state<any>(null);
+    let character = $state<any>(null);
     let error = $state<string | null>(null);
 
     function toggleDashboard() {
@@ -34,6 +35,18 @@
                     },
                 });
                 game = response.data;
+
+                if (game.current_character_id) {
+                    const charResponse = await api.get(
+                        `/table/${gameId}/characters/${game.current_character_id}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${tokenData.token}`,
+                            },
+                        },
+                    );
+                    character = charResponse.data;
+                }
             }
         } catch (e) {
             console.error(e);
@@ -98,7 +111,7 @@
                 >
                     <div class="w-full h-full min-w-[350px]">
                         <!-- Prevent content squashing -->
-                        <PlayerDashboard />
+                        <PlayerDashboard {character} />
                     </div>
                 </div>
             </div>

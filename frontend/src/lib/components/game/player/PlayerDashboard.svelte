@@ -1,20 +1,18 @@
 <script lang="ts">
-    import VitalHeader from "./VitalHeader.svelte";
-    import ActionTab from "./ActionTab.svelte";
     import QuickDice from "./QuickDice.svelte";
 
     // Shared components from GM view
     import CharacterSheet from "../pupitre/CharacterSheet.svelte";
     import Inventory from "../pupitre/Inventory.svelte";
-    import Notes from "../pupitre/Notes.svelte";
+    import type { Character } from "$lib/types/character";
 
-    let activeTab = $state("action");
+    let { character } = $props<{ character: Character }>();
+
+    let activeTab = $state("fiche");
 
     const tabs = [
-        { id: "action", label: "Action" },
         { id: "fiche", label: "Fiche" },
         { id: "sac", label: "Sac" },
-        { id: "notes", label: "Notes" },
     ];
 </script>
 
@@ -38,15 +36,10 @@
 
     <!-- 2. Tab Content (Scrollable) -->
     <div class="flex-1 overflow-y-auto bg-stone-50/50 relative">
-        {#if activeTab === "action"}
-            <ActionTab />
-        {:else if activeTab === "fiche"}
-            <VitalHeader />
-            <CharacterSheet />
+        {#if activeTab === "fiche"}
+            <CharacterSheet {character} />
         {:else if activeTab === "sac"}
-            <Inventory />
-        {:else if activeTab === "notes"}
-            <Notes />
+            <Inventory {character} />
         {/if}
     </div>
 

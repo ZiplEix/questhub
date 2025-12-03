@@ -7,7 +7,7 @@ export interface Character {
     max_hp: number;
     current_hp: number;
     avatar_url?: string;
-    stats: Record<string, string>;
+    stats: Record<string, { value: number; modifier: number }>;
     inventory: InventoryItem[];
     is_npc: boolean;
     money: number;
@@ -25,6 +25,8 @@ export interface Character {
     spells: Record<string, { name: string; description: string; charges: string }[]>;
     abilities: string;
     experience: number;
+    armor_class: number;
+    speed: number;
 }
 
 export interface InventoryItem {

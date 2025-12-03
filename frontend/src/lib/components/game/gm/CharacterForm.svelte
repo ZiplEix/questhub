@@ -37,7 +37,16 @@
     let avatarType = $state<"upload" | "url">("upload");
     let avatarFile = $state<File | null>(null);
     let avatarURL = $state("");
-    let stats = $state<{ key: string; value: string }[]>([]);
+    let stats = $state<Array<{ key: string; value: string; modifier: string }>>(
+        [
+            { key: "Force", value: "10", modifier: "0" },
+            { key: "Dextérité", value: "10", modifier: "0" },
+            { key: "Constitution", value: "10", modifier: "0" },
+            { key: "Intelligence", value: "10", modifier: "0" },
+            { key: "Sagesse", value: "10", modifier: "0" },
+            { key: "Charisme", value: "10", modifier: "0" },
+        ],
+    );
     let inventory = $state<
         {
             name: string;
@@ -53,6 +62,8 @@
 
     // New fields
     let initiative = $state(0);
+    let armorClass = $state(10);
+    let speed = $state(30);
     let age = $state("");
     let height = $state("");
     let weight = $state("");
@@ -84,6 +95,8 @@
 
                 // New fields
                 initiative = char.initiative || 0;
+                armorClass = char.armor_class || 10;
+                speed = char.speed || 30;
                 age = char.age || "";
                 height = char.height || "";
                 weight = char.weight || "";
@@ -138,9 +151,20 @@
                 stats = [];
                 if (char.stats && typeof char.stats === "object") {
                     try {
-                        Object.entries(char.stats).forEach(([key, value]) => {
-                            stats.push({ key, value: String(value) });
-                        });
+                        stats = Object.entries(char.stats).map(
+                            ([key, data]) => {
+                                const statData = data as {
+                                    value: number;
+                                    modifier: number;
+                                };
+                                return {
+                                    key,
+                                    value: statData.value?.toString() || "10",
+                                    modifier:
+                                        statData.modifier?.toString() || "0",
+                                };
+                            },
+                        );
                     } catch (e) {
                         console.error("Error parsing stats:", e);
                     }
@@ -185,6 +209,8 @@
                 inventory = [];
                 loading = false;
                 initiative = 0;
+                armorClass = 10;
+                speed = 30;
                 age = "";
                 height = "";
                 weight = "";
@@ -197,7 +223,7 @@
     });
 
     function addStat() {
-        stats = [...stats, { key: "", value: "" }];
+        stats.push({ key: "", value: "10", modifier: "0" });
     }
 
     function removeStat(index: number) {
@@ -266,6 +292,8 @@
 
                 // New fields
                 formData.append("initiative", initiative.toString());
+                formData.append("armor_class", armorClass.toString());
+                formData.append("speed", speed.toString());
                 formData.append("age", age);
                 formData.append("height", height);
                 formData.append("weight", weight);
@@ -298,11 +326,17 @@
                     formData.append("avatar_url", avatarURL);
                 }
 
-                // Convert stats array to object
-                const statsObj: Record<string, string> = {};
-                stats.forEach((stat) => {
-                    if (stat.key) statsObj[stat.key] = stat.value;
-                });
+                const statsObj = stats.reduce(
+                    (acc, curr) => ({
+                        ...acc,
+                        [curr.key]: {
+                            value: parseInt(curr.value) || 10,
+                            modifier: parseInt(curr.modifier) || 0,
+                        },
+                    }),
+                    {},
+                );
+                console.log("Sending stats:", statsObj);
                 formData.append("stats", JSON.stringify(statsObj));
 
                 // Prepare inventory items
@@ -590,6 +624,8 @@
                                         ? 'text-stone-500 hover:text-dark-gray'
                                         : 'bg-white text-dark-gray shadow-sm'}"
                                     onclick={() => {
+                                        // The statsObj calculation was not used here and caused a type error if modifier was undefined.
+                                        // Removing it as it's not needed for the button's primary function.
                                         isNPC = true;
                                         characterType = "NPC";
                                     }}
@@ -622,6 +658,34 @@
                         type="number"
                         id="initiative"
                         bind:value={initiative}
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
+                <div>
+                    <label
+                        for="armorClass"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        Classe d'Armure (CA)
+                    </label>
+                    <input
+                        type="number"
+                        id="armorClass"
+                        bind:value={armorClass}
+                        class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                    />
+                </div>
+                <div>
+                    <label
+                        for="speed"
+                        class="block text-sm font-bold text-dark-gray mb-1"
+                    >
+                        Vitesse (m)
+                    </label>
+                    <input
+                        type="number"
+                        id="speed"
+                        bind:value={speed}
                         class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
                     />
                 </div>
@@ -733,27 +797,55 @@
                     </p>
                 {/if}
 
-                <div class="space-y-2">
+                <div class="space-y-4">
                     {#each stats as stat, i}
-                        <div class="flex gap-2">
-                            <input
-                                type="text"
-                                bind:value={stat.key}
-                                placeholder="Nom (ex: Force)"
-                                class="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange"
-                            />
-                            <input
-                                type="text"
-                                bind:value={stat.value}
-                                placeholder="Valeur (ex: 15)"
-                                class="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange"
-                            />
-                            <button
-                                onclick={() => removeStat(i)}
-                                class="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                        <div
+                            class="p-4 bg-stone-50 rounded-xl border border-stone-100 flex gap-4 items-start"
+                        >
+                            <div class="flex-1 space-y-2">
+                                <label
+                                    class="text-xs font-bold text-stone-500 uppercase"
+                                    >Nom</label
+                                >
+                                <input
+                                    type="text"
+                                    bind:value={stat.key}
+                                    placeholder="Nom (ex: Force)"
+                                    class="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange"
+                                />
+                            </div>
+                            <div class="w-24 space-y-2">
+                                <label
+                                    class="text-xs font-bold text-stone-500 uppercase"
+                                    >Valeur</label
+                                >
+                                <input
+                                    type="text"
+                                    bind:value={stat.value}
+                                    placeholder="10"
+                                    class="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange text-center"
+                                />
+                            </div>
+                            <div class="w-20 space-y-2">
+                                <label
+                                    class="text-xs font-bold text-stone-500 uppercase"
+                                    >Mod.</label
+                                >
+                                <input
+                                    type="number"
+                                    bind:value={stat.modifier}
+                                    placeholder="+0"
+                                    class="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:border-burnt-orange text-center font-mono"
+                                />
+                            </div>
+                            <div class="pt-6">
+                                <button
+                                    onclick={() => removeStat(i)}
+                                    class="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
                     {/each}
                 </div>
