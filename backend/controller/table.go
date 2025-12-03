@@ -125,17 +125,7 @@ func GetPendingInvitations(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can view invitations")
-	}
+	// Verify GM - Handled by middleware
 
 	invitations, err := service.GetPendingInvitations(gameID)
 	if err != nil {
@@ -153,17 +143,7 @@ func AcceptInvitation(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or user ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can accept invitations")
-	}
+	// Verify GM - Handled by middleware
 
 	if err := service.AcceptInvitation(gameID, targetUserID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept invitation").SetInternal(err)
@@ -180,17 +160,7 @@ func DeclineInvitation(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or user ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can decline invitations")
-	}
+	// Verify GM - Handled by middleware
 
 	if err := service.DeclineInvitation(gameID, targetUserID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to decline invitation").SetInternal(err)
@@ -224,17 +194,7 @@ func RegenerateInviteCode(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can regenerate the invite code")
-	}
+	// Verify GM - Handled by middleware
 
 	newCode, err := service.RegenerateInviteCode(id)
 	if err != nil {
@@ -256,18 +216,7 @@ func GetGamePlayers(c echo.Context) error {
 	// The requirement says "GM settings page", so let's restrict to GM for now to be safe,
 	// but usually players can see other players. Let's stick to GM check as it's for the settings page.
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	game, err := service.GetTable(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-
-	if game.GmID != userID {
-		// Check if user is a player? For now let's just restrict to GM as requested context is GM settings
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can view players in settings")
-	}
+	// Verify GM - Handled by middleware
 
 	players, err := service.GetGamePlayers(id)
 	if err != nil {
@@ -285,16 +234,13 @@ func RemovePlayer(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or player ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
+	// Verify GM - Handled by middleware
+	// We still need game object for GM ID check in RemovePlayer logic below?
+	// Actually RemovePlayer service doesn't check GM ID, it just removes.
+	// But we need to know who the GM is to prevent removing the GM.
 	game, err := service.GetTable(gameID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can remove players")
 	}
 
 	// Prevent removing GM
@@ -316,17 +262,7 @@ func GetGameCharacters(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can view characters")
-	}
+	// Verify GM - Handled by middleware
 
 	characters, err := service.GetGameCharacters(id)
 	if err != nil {
@@ -379,17 +315,7 @@ func GetGameMonsters(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can view monsters")
-	}
+	// Verify GM - Handled by middleware
 
 	characters, err := service.GetGameMonsters(id)
 	if err != nil {
@@ -405,19 +331,7 @@ func CreateCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-
-	// Check if user is GM
-	isGM := game.GmID == userID
-	if !isGM {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can create characters via this endpoint for now")
-	}
+	// Verify GM - Handled by middleware
 
 	name := c.FormValue("name")
 	race := c.FormValue("race")
@@ -547,25 +461,7 @@ func UpdateCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM or Owner
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-
-	// Check if user is GM
-	isGM := game.GmID == userID
-
-	// If not GM, check if user owns the character
-	if !isGM {
-		char, err := service.GetUserCharacter(gameID, userID)
-		if err != nil || char.ID != charID {
-			return echo.NewHTTPError(http.StatusForbidden, "You can only update your own character")
-		}
-	}
+	// Verify GM - Handled by middleware
 
 	name := c.FormValue("name")
 	race := c.FormValue("race")
@@ -695,17 +591,7 @@ func DeleteCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can delete characters")
-	}
+	// Verify GM - Handled by middleware
 
 	if err := service.DeleteCharacter(charID, gameID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete character").SetInternal(err)
@@ -728,17 +614,7 @@ func AssignCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
-
-	// Verify GM
-	game, err := service.GetTable(gameID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
-	}
-	if game.GmID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "Only the GM can assign characters")
-	}
+	// Verify GM - Handled by middleware
 
 	if err := service.AssignCharacterToPlayer(gameID, charID, req.PlayerID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to assign character").SetInternal(err)
