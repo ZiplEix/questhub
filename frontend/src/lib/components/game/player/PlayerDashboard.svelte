@@ -11,8 +11,17 @@
     import { Loader2, CheckCircle, AlertCircle } from "lucide-svelte";
 
     import { onMount } from "svelte";
+    import Chat from "../shared/Chat.svelte";
 
-    let { character } = $props<{ character: Character }>();
+    let {
+        character,
+        players = [],
+        currentUserId = "",
+    } = $props<{
+        character: Character;
+        players?: any[];
+        currentUserId?: string;
+    }>();
 
     let activeTab = $state("fiche");
     let notes = $state("");
@@ -24,6 +33,7 @@
         { id: "action", label: "Action" },
         { id: "sac", label: "Sac" },
         { id: "notes", label: "Notes" },
+        { id: "chat", label: "Chat" },
     ];
 
     onMount(async () => {
@@ -98,7 +108,7 @@
         {#if activeTab === "fiche"}
             <CharacterSheet {character} />
         {:else if activeTab === "action"}
-            <ActionTab />
+            <ActionTab characterName={character.name} />
         {:else if activeTab === "sac"}
             <Inventory {character} />
         {:else if activeTab === "notes"}
@@ -129,6 +139,8 @@
                     placeholder="Prenez des notes ici..."
                 ></textarea>
             </div>
+        {:else if activeTab === "chat"}
+            <Chat {players} {currentUserId} senderName={character.name} />
         {/if}
     </div>
 

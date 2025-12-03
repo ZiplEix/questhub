@@ -9,16 +9,19 @@
         ShieldAlert,
         User,
     } from "lucide-svelte";
-    import { onMount } from "svelte";
+    import { onMount, onDestroy, untrack } from "svelte";
     import { page } from "$app/state";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
+    import { websocketStore, fetchHistory } from "$lib/websocket";
 
     let isDashboardOpen = $state(true);
     let loading = $state(true);
     let game = $state<any>(null);
     let character = $state<any>(null);
+    let players = $state<any[]>([]);
     let error = $state<string | null>(null);
+    let currentUserId = $state("");
 
     function toggleDashboard() {
         isDashboardOpen = !isDashboardOpen;
@@ -28,10 +31,20 @@
         const gameId = page.params.id;
         try {
             const { data: tokenData } = await authClient.token();
-            if (tokenData?.token) {
+            const token = tokenData?.token;
+            if (typeof token === "string") {
+                // Fetch chat history
+                // @ts-ignore
+                fetchHistory(gameId, token);
+
+                const { data: sessionData } = await authClient.getSession();
+                if (sessionData?.user) {
+                    currentUserId = sessionData.user.id;
+                }
+
                 const response = await api.get(`/table/${gameId}`, {
                     headers: {
-                        Authorization: `Bearer ${tokenData.token}`,
+                        Authorization: `Bearer ${token}`,
                     },
                 });
                 game = response.data;
@@ -41,18 +54,58 @@
                         `/table/${gameId}/characters/${game.current_character_id}`,
                         {
                             headers: {
-                                Authorization: `Bearer ${tokenData.token}`,
+                                Authorization: `Bearer ${token}`,
                             },
                         },
                     );
                     character = charResponse.data;
                 }
+
+                // Fetch characters for chat
+                const charsResponse = await api.get(
+                    `/table/${gameId}/characters`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    },
+                );
+
+                const characterList = charsResponse.data
+                    .filter(
+                        (c: any) => c.user_id && c.user_id !== currentUserId,
+                    )
+                    .map((c: any) => ({
+                        id: c.user_id,
+                        name: c.name,
+                    }));
+
+                // Add GM if current user is not GM
+                if (game.gm_id !== currentUserId) {
+                    characterList.unshift({ id: game.gm_id, name: "GM" });
+                }
+
+                players = characterList;
             }
         } catch (e) {
             console.error(e);
             error = "Impossible de charger la partie.";
         } finally {
             loading = false;
+        }
+    });
+
+    // React to WebSocket messages
+    $effect(() => {
+        const lastMessage =
+            $websocketStore.messages[$websocketStore.messages.length - 1];
+        if (lastMessage && lastMessage.type === "CHARACTER_UPDATE") {
+            const updatedChar = lastMessage.payload;
+            untrack(() => {
+                if (character && character.id === updatedChar.id) {
+                    character = updatedChar;
+                }
+            });
         }
     });
 </script>
@@ -111,7 +164,11 @@
                 >
                     <div class="w-full h-full min-w-[350px]">
                         <!-- Prevent content squashing -->
-                        <PlayerDashboard {character} />
+                        <PlayerDashboard
+                            {character}
+                            {players}
+                            {currentUserId}
+                        />
                     </div>
                 </div>
             </div>

@@ -6,22 +6,19 @@
     import MonsterDrawer from "$lib/components/game/mj/MonsterDrawer.svelte";
 
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
+    import { onMount } from "svelte";
+    import { page } from "$app/state";
+    import { authClient } from "$lib/auth-client";
+    import { fetchHistory } from "$lib/websocket";
+    import { api } from "$lib/api";
 
     let selectedMonster = $state<any>(null);
     let isLeftPanelOpen = $state(true);
     let isRightPanelOpen = $state(true);
+    let currentUserId = $state("");
 
     // Lifted state for entities
-    let entities = $state([
-        {
-            id: 1,
-            name: "Eldric",
-            type: "player",
-            hp: 24,
-            maxHp: 24,
-            init: 18,
-            status: [],
-        },
+    let entities = $state<any[]>([
         {
             id: 2,
             name: "Gobelin Chef",
@@ -30,15 +27,6 @@
             maxHp: 20,
             init: 12,
             status: ["invisible"],
-        },
-        {
-            id: 3,
-            name: "Lyra",
-            type: "player",
-            hp: 18,
-            maxHp: 18,
-            init: 10,
-            status: [],
         },
         {
             id: 4,
@@ -71,14 +59,62 @@
         };
         entities.push(newMonster);
         // Sort by initiative (simple desc sort)
-        entities.sort((a, b) => b.init - a.init);
+        entities.sort((a: any, b: any) => b.init - a.init);
     }
+
+    onMount(async () => {
+        const gameId = page.params.id;
+        try {
+            const { data: tokenData } = await authClient.token();
+            const token = tokenData?.token;
+            if (typeof token === "string") {
+                // Fetch chat history
+                // @ts-ignore
+                fetchHistory(gameId, token);
+
+                const { data: sessionData } = await authClient.getSession();
+                if (sessionData?.user) {
+                    currentUserId = sessionData.user.id;
+                }
+
+                // Fetch characters (players)
+                const charsResponse = await api.get(
+                    `/table/${gameId}/characters`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    },
+                );
+                const realPlayers = charsResponse.data
+                    .filter((c: any) => c.user_id) // Only characters assigned to a user
+                    .map((c: any) => ({
+                        id: c.id,
+                        name: c.name,
+                        type: "player",
+                        hp: c.current_hp,
+                        maxHp: c.max_hp,
+                        init: c.initiative,
+                        status: [],
+                        userId: c.user_id, // Important for chat targeting
+                    }));
+
+                // Add real players to entities, removing any existing players to avoid duplicates
+                entities = [
+                    ...entities.filter((e) => e.type !== "player"),
+                    ...realPlayers,
+                ];
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    });
 </script>
 
 <GMLayout>
     <!-- LEFT COLUMN: Flow Controller -->
     <aside
-        class="flex-shrink-0 z-20 shadow-xl relative transition-all duration-500 ease-in-out overflow-hidden"
+        class="shrink-0 z-20 shadow-xl relative transition-all duration-500 ease-in-out overflow-hidden"
         style="width: {isLeftPanelOpen
             ? '300px'
             : '0px'}; opacity: {isLeftPanelOpen ? '1' : '0'};"
@@ -133,13 +169,13 @@
 
     <!-- RIGHT COLUMN: Omni-Tool -->
     <aside
-        class="flex-shrink-0 z-20 shadow-xl relative transition-all duration-500 ease-in-out overflow-hidden"
+        class="shrink-0 z-20 shadow-xl relative transition-all duration-500 ease-in-out overflow-hidden"
         style="width: {isRightPanelOpen
             ? '400px'
             : '0px'}; opacity: {isRightPanelOpen ? '1' : '0'};"
     >
         <div class="w-[400px] h-full">
-            <GMOmniTool onSpawn={spawnMonster} />
+            <GMOmniTool onSpawn={spawnMonster} {entities} {currentUserId} />
         </div>
     </aside>
 </GMLayout>

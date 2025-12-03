@@ -10,6 +10,7 @@ import (
 	model "questhub/models/database"
 	"questhub/models/request"
 	"questhub/service"
+	"questhub/websocket"
 	"strconv"
 	"strings"
 	"time"
@@ -601,7 +602,26 @@ func UpdateCharacter(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update character").SetInternal(err)
 	}
 
+	// Broadcast update to the character owner
+	if char.UserID != nil && websocket.GlobalHub != nil {
+		msg := map[string]any{
+			"type":    "CHARACTER_UPDATE",
+			"payload": char,
+		}
+		msgBytes, _ := json.Marshal(msg)
+		websocket.GlobalHub.BroadcastToUser(*char.UserID, msgBytes)
+	}
+
 	return c.JSON(http.StatusOK, char)
+}
+
+func GetChatHistory(c echo.Context) error {
+	gameID := c.Param("id")
+	messages, err := service.GetGameMessages(gameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch chat history").SetInternal(err)
+	}
+	return c.JSON(http.StatusOK, messages)
 }
 
 func DeleteCharacter(c echo.Context) error {

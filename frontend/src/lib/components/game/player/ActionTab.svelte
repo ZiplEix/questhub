@@ -1,6 +1,10 @@
 <script lang="ts">
     import { Sword, Wind, Footprints, Shield, Hand } from "lucide-svelte";
+    import { sendMessage } from "$lib/websocket";
+    import { page } from "$app/state";
     import { getContext } from "svelte";
+
+    let { characterName = "Joueur" } = $props<{ characterName?: string }>();
 
     const { showToast } = getContext<any>("toast");
 
@@ -16,6 +20,8 @@
         { name: "Se désengager", icon: Footprints },
     ];
 
+    let cooldown = $state(false);
+
     function handleAttack(attack: any) {
         showToast(`⚔️ Attaque : ${attack.name}`, "combat");
         // Logic to roll dice would go here
@@ -26,7 +32,21 @@
     }
 
     function requestSpeech() {
+        if (cooldown) return;
+
+        const gameId = page.params.id;
+        sendMessage({
+            type: "EVENT",
+            game_id: gameId,
+            content: "demande la parole !",
+            sender_name: characterName,
+        });
+
         showToast("✋ Demande de parole envoyée au MJ", "info");
+        cooldown = true;
+        setTimeout(() => {
+            cooldown = false;
+        }, 3000);
     }
 </script>
 
@@ -34,10 +54,11 @@
     <!-- Speech Request -->
     <button
         onclick={requestSpeech}
-        class="w-full bg-linear-to-r from-burnt-orange to-orange-600 text-white p-4 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3 font-bold text-lg"
+        disabled={cooldown}
+        class="w-full bg-linear-to-r from-burnt-orange to-orange-600 text-white p-4 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
     >
         <Hand size={24} />
-        Demander la parole
+        {cooldown ? "Attendez..." : "Demander la parole"}
     </button>
     <!-- Attacks -->
     <div>

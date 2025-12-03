@@ -14,6 +14,8 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("", controller.GetGames)
 	g.POST("/join", controller.JoinTable)
 	g.GET("/:id", controller.GetTable)
+	g.GET("/:id/players", controller.GetGamePlayers)
+	g.GET("/:id/characters", controller.GetGameCharacters)
 
 	// GM only routes
 	gmGroup := g.Group("/:id", middleware.RequireGM)
@@ -22,9 +24,8 @@ func initTableRoutes(e *echo.Echo) {
 	gmGroup.POST("/invitations/:userId/accept", controller.AcceptInvitation)
 	gmGroup.POST("/invitations/:userId/decline", controller.DeclineInvitation)
 	gmGroup.POST("/invite-code", controller.RegenerateInviteCode)
-	gmGroup.GET("/players", controller.GetGamePlayers)
+	gmGroup.POST("/invite-code", controller.RegenerateInviteCode)
 	gmGroup.DELETE("/players/:userId", controller.RemovePlayer)
-	gmGroup.GET("/characters", controller.GetGameCharacters)
 	gmGroup.GET("/monsters", controller.GetGameMonsters)
 	gmGroup.POST("/characters", controller.CreateCharacter)
 	gmGroup.PUT("/characters/:charId", controller.UpdateCharacter)
@@ -35,4 +36,5 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("/:id/characters/:charId", controller.GetCharacter)
 	g.GET("/:id/characters/:charId/notes", controller.GetCharacterNotes)
 	g.PUT("/:id/characters/:charId/notes", controller.UpdateCharacterNotes)
+	g.GET("/:id/chat", controller.GetChatHistory)
 }

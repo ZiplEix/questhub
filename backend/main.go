@@ -13,6 +13,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"questhub/websocket"
 )
 
 func main() {
@@ -43,8 +45,27 @@ func main() {
 	e.Use(middleware.CORS())
 	e.Use(middleware.Logger())
 
-	// Add Better Logs middleware
-	e.Use(echo.WrapMiddleware(httpmw.Middleware))
+	// Add Better Logs middleware with skipper for WebSocket
+	betterLogsMdw := echo.WrapMiddleware(httpmw.Middleware)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Skip for WebSocket route to allow hijacking
+			if c.Request().URL.Path == "/ws" {
+				return next(c)
+			}
+			return betterLogsMdw(next)(c)
+		}
+	})
+
+	// WebSocket Hub
+	hub := websocket.NewHub()
+	websocket.GlobalHub = hub
+	go hub.Run()
+
+	// WebSocket Route (Protected)
+	e.GET("/ws", func(c echo.Context) error {
+		return websocket.ServeWs(hub, c)
+	}, mdw.JWTMiddleware)
 
 	// Serve static files
 	e.Static("/uploads", "uploads")

@@ -37,17 +37,22 @@ func InitJWKS(authURL string) error {
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		tokenStr := ""
 		header := c.Request().Header.Get("Authorization")
-		if header == "" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "missing Authorization header")
+		if header != "" {
+			parts := strings.Split(header, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenStr = parts[1]
+			}
 		}
 
-		parts := strings.Split(header, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "invalid Authorization header")
+		if tokenStr == "" {
+			tokenStr = c.QueryParam("token")
 		}
 
-		tokenStr := parts[1]
+		if tokenStr == "" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "missing token")
+		}
 
 		token, err := jwt.Parse(tokenStr, jwks.Keyfunc)
 		if err != nil || !token.Valid {

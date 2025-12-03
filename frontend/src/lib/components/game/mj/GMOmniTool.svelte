@@ -7,7 +7,7 @@
     import SceneSelector from "./SceneSelector.svelte";
     import Notes from "../pupitre/Notes.svelte";
 
-    let { onSpawn } = $props();
+    let { onSpawn, entities = [], currentUserId = "" } = $props();
 
     let activeTab = $state("chat");
 
@@ -39,7 +39,7 @@
     <!-- Content -->
     <div class="flex-1 overflow-hidden relative">
         {#if activeTab === "chat"}
-            <GMChat />
+            <GMChat {entities} {currentUserId} />
         {:else if activeTab === "bestiary"}
             <Bestiary {onSpawn} />
         {:else if activeTab === "scenes"}
