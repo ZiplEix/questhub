@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-
     let {
         backgroundUrl = "https://placehold.co/600x400/F2CC8F/3D405B?text=Map",
     } = $props();

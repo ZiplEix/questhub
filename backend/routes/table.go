@@ -33,4 +33,6 @@ func initTableRoutes(e *echo.Echo) {
 
 	// Mixed access routes (GM or Owner) - handled in controller
 	g.GET("/:id/characters/:charId", controller.GetCharacter)
+	g.GET("/:id/characters/:charId/notes", controller.GetCharacterNotes)
+	g.PUT("/:id/characters/:charId/notes", controller.UpdateCharacterNotes)
 }

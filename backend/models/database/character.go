@@ -35,3 +35,8 @@ type Character struct {
 	ArmorClass int             `json:"armor_class"`
 	Speed      int             `json:"speed"`
 }
+
+type CharacterNote struct {
+	CharacterID string `json:"character_id"`
+	Content     string `json:"content"`
+}

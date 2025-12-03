@@ -626,3 +626,89 @@ func AssignCharacter(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Character assigned successfully"})
 }
+
+func GetCharacterNotes(c echo.Context) error {
+	gameID := c.Param("id")
+	charID := c.Param("charId")
+	if gameID == "" || charID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	// Verify GM or Owner
+	game, err := service.GetTable(gameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+
+	isGM := game.GmID == userID
+
+	character, err := service.GetCharacter(gameID, charID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch character").SetInternal(err)
+	}
+	if character == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
+	}
+
+	if !isGM {
+		if character.UserID == nil || *character.UserID != userID {
+			return echo.NewHTTPError(http.StatusForbidden, "You can only view notes for your own character or you must be the GM")
+		}
+	}
+
+	notes, err := service.GetCharacterNotes(charID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch notes").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"content": notes})
+}
+
+func UpdateCharacterNotes(c echo.Context) error {
+	gameID := c.Param("id")
+	charID := c.Param("charId")
+	if gameID == "" || charID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID or character ID")
+	}
+
+	var req struct {
+		Content string `json:"content"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	// Verify GM or Owner
+	game, err := service.GetTable(gameID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
+	}
+
+	isGM := game.GmID == userID
+
+	character, err := service.GetCharacter(gameID, charID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch character").SetInternal(err)
+	}
+	if character == nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
+	}
+
+	if !isGM {
+		if character.UserID == nil || *character.UserID != userID {
+			return echo.NewHTTPError(http.StatusForbidden, "You can only update notes for your own character or you must be the GM")
+		}
+	}
+
+	if err := service.UpdateCharacterNotes(charID, req.Content); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update notes").SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Notes updated successfully"})
+}

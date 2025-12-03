@@ -269,3 +269,27 @@ func AssignCharacterToPlayer(gameID, characterID, playerID string) error {
 	_, err = database.DB.Exec(context.Background(), queryUpdate, playerID, characterID, gameID)
 	return err
 }
+
+func GetCharacterNotes(charID string) (string, error) {
+	var content string
+	query := `SELECT content FROM character_notes WHERE character_id = $1`
+	err := database.DB.QueryRow(context.Background(), query, charID).Scan(&content)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil // No notes found, return empty string
+		}
+		return "", err
+	}
+	return content, nil
+}
+
+func UpdateCharacterNotes(charID, content string) error {
+	query := `
+		INSERT INTO character_notes (character_id, content)
+		VALUES ($1, $2)
+		ON CONFLICT (character_id) DO UPDATE
+		SET content = EXCLUDED.content
+	`
+	_, err := database.DB.Exec(context.Background(), query, charID, content)
+	return err
+}
