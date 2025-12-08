@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Send, Dices, EyeOff, MessageSquare } from "lucide-svelte";
-    import { websocketStore, sendMessage } from "$lib/websocket";
+    import { websocketStore } from "$lib/websocket";
+    import { sendMessage } from "$lib/chat";
     import { page } from "$app/state";
     import { untrack } from "svelte";
 
@@ -37,6 +38,8 @@
         if (!newMessage.trim()) return;
 
         const gameId = page.params.id;
+        if (!gameId) return;
+
         let type = "CHAT_GLOBAL";
         let targetId = whisperTarget;
 

@@ -11,14 +11,7 @@ export const websocketStore = writable<{
 
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-
-export function sendMessage(message: any) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(message));
-    } else {
-        console.error("WebSocket is not connected");
-    }
-}
+// Export store for usage
 
 export async function fetchHistory(gameId: string, token: string) {
     try {

@@ -748,3 +748,44 @@ func UpdateCharacterNotes(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Notes updated successfully"})
 }
+
+func SendMessage(c echo.Context) error {
+	gameID := c.Param("id")
+	if gameID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
+	}
+
+	var req struct {
+		Content    string  `json:"content"`
+		Type       string  `json:"type"`
+		TargetID   *string `json:"target_id,omitempty"`
+		SenderName string  `json:"sender_name"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	claims := c.Get("claims").(jwt.MapClaims)
+	senderID := claims["sub"].(string)
+
+	msg := model.ChatMessage{
+		GameID:     gameID,
+		SenderID:   senderID,
+		SenderName: req.SenderName,
+		Content:    req.Content,
+		Type:       req.Type,
+		TargetID:   req.TargetID,
+		CreatedAt:  time.Now(),
+	}
+
+	if err := service.SaveMessage(msg); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save message").SetInternal(err)
+	}
+
+	if websocket.GlobalHub != nil {
+		msgBytes, _ := json.Marshal(msg)
+		websocket.GlobalHub.Broadcast(msgBytes)
+	}
+
+	return c.JSON(http.StatusOK, msg)
+}

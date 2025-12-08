@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Sword, Wind, Footprints, Shield, Hand } from "lucide-svelte";
-    import { sendMessage } from "$lib/websocket";
+    import { sendMessage } from "$lib/chat";
     import { page } from "$app/state";
     import { getContext } from "svelte";
 
@@ -35,6 +35,8 @@
         if (cooldown) return;
 
         const gameId = page.params.id;
+        if (!gameId) return;
+
         sendMessage({
             type: "EVENT",
             game_id: gameId,

@@ -16,6 +16,7 @@ func initTableRoutes(e *echo.Echo) {
 	g.GET("/:id", controller.GetTable)
 	g.GET("/:id/players", controller.GetGamePlayers)
 	g.GET("/:id/characters", controller.GetGameCharacters)
+	g.POST("/:id/chat", controller.SendMessage)
 
 	// GM only routes
 	gmGroup := g.Group("/:id", middleware.RequireGM)
