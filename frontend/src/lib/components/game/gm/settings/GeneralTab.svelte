@@ -2,7 +2,7 @@
     import { page } from "$app/state";
     import { api } from "$lib/api";
     import { authClient } from "$lib/auth-client";
-    import { Save, Copy, RefreshCw, Check } from "lucide-svelte";
+    import { Save, Copy, RefreshCw, Check, Play, Pause } from "lucide-svelte";
 
     let { game = $bindable() } = $props();
 
@@ -42,6 +42,35 @@
             }
         } catch (error) {
             console.error("Failed to regenerate invite code:", error);
+        }
+    }
+
+    async function updateGameState(newState: string) {
+        if (game.state === newState) return;
+
+        const gameId = page.params.id;
+        // Optimistic update
+        const oldState = game.state;
+        game.state = newState;
+
+        try {
+            const { data: tokenData } = await authClient.token();
+            if (tokenData?.token) {
+                await api.put(
+                    `/table/${gameId}/state`,
+                    { state: newState },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokenData.token}`,
+                        },
+                    },
+                );
+            }
+        } catch (error) {
+            console.error("Failed to update game state:", error);
+            // Revert on error
+            game.state = oldState;
+            alert("Erreur lors de la mise à jour du statut");
         }
     }
 </script>
@@ -92,6 +121,38 @@
         <p class="text-xs text-stone-500">
             Partagez ce lien avec vos joueurs pour qu'ils puissent rejoindre la
             partie.
+        </p>
+    </div>
+
+    <div class="space-y-2">
+        <label class="text-sm font-bold text-dark-gray block" for="gameState"
+            >Status de la partie</label
+        >
+        <div class="flex gap-4">
+            <button
+                onclick={() => updateGameState("ongoing")}
+                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all {game.state ===
+                'ongoing'
+                    ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-emerald-200 hover:text-emerald-600'}"
+            >
+                <Play size={20} />
+                <span class="font-medium">En cours</span>
+            </button>
+            <button
+                onclick={() => updateGameState("paused")}
+                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all {game.state ===
+                'paused'
+                    ? 'bg-amber-50 border-amber-500 text-amber-700'
+                    : 'bg-white border-stone-200 text-stone-500 hover:border-amber-200 hover:text-amber-600'}"
+            >
+                <Pause size={20} />
+                <span class="font-medium">En pause</span>
+            </button>
+        </div>
+        <p class="text-xs text-stone-500">
+            Mettre la partie en pause empêche les joueurs d'envoyer des messages
+            ou d'interagir avec la table.
         </p>
     </div>
 

@@ -36,16 +36,17 @@ func CreateTable(name, gmID, imageURL string) (*model.Game, error) {
 		InviteCode: inviteCode,
 		IsActive:   true,
 		ImageURL:   imageURL,
+		State:      "paused", // Default state
 		CreatedAt:  time.Now(),
 	}
 
 	query := `
-		INSERT INTO games (name, gm_id, invite_code, is_active, image_url, created_at)
-		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6)
+		INSERT INTO games (name, gm_id, invite_code, is_active, image_url, state, created_at)
+		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, $7)
 		RETURNING id
 	`
 
-	err = database.DB.QueryRow(context.Background(), query, game.Name, game.GmID, game.InviteCode, game.IsActive, game.ImageURL, game.CreatedAt).Scan(&game.ID)
+	err = database.DB.QueryRow(context.Background(), query, game.Name, game.GmID, game.InviteCode, game.IsActive, game.ImageURL, game.State, game.CreatedAt).Scan(&game.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +57,12 @@ func CreateTable(name, gmID, imageURL string) (*model.Game, error) {
 func GetTable(id string) (*model.Game, error) {
 	game := &model.Game{}
 	query := `
-		SELECT id, name, gm_id, invite_code, is_active, COALESCE(image_url, ''), created_at
+		SELECT id, name, gm_id, invite_code, is_active, COALESCE(image_url, ''), COALESCE(state, 'paused'), created_at
 		FROM games
 		WHERE id = $1
 	`
 	err := database.DB.QueryRow(context.Background(), query, id).Scan(
-		&game.ID, &game.Name, &game.GmID, &game.InviteCode, &game.IsActive, &game.ImageURL, &game.CreatedAt,
+		&game.ID, &game.Name, &game.GmID, &game.InviteCode, &game.IsActive, &game.ImageURL, &game.State, &game.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func GetTable(id string) (*model.Game, error) {
 func GetGames(userID string) ([]model.Game, error) {
 	games := []model.Game{}
 	query := `
-		SELECT DISTINCT g.id, g.name, g.gm_id, u.name, g.invite_code, g.is_active, COALESCE(g.image_url, ''), g.created_at
+		SELECT DISTINCT g.id, g.name, g.gm_id, u.name, g.invite_code, g.is_active, COALESCE(g.image_url, ''), COALESCE(g.state, 'ongoing'), g.created_at
 		FROM games g
 		JOIN "user" u ON g.gm_id = u.id
 		LEFT JOIN game_players gp ON g.id = gp.game_id
@@ -87,7 +88,7 @@ func GetGames(userID string) ([]model.Game, error) {
 
 	for rows.Next() {
 		var game model.Game
-		if err := rows.Scan(&game.ID, &game.Name, &game.GmID, &game.GmName, &game.InviteCode, &game.IsActive, &game.ImageURL, &game.CreatedAt); err != nil {
+		if err := rows.Scan(&game.ID, &game.Name, &game.GmID, &game.GmName, &game.InviteCode, &game.IsActive, &game.ImageURL, &game.State, &game.CreatedAt); err != nil {
 			return nil, err
 		}
 		games = append(games, game)
@@ -329,5 +330,15 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 
 func RemovePlayer(gameID, userID string) error {
 	_, err := database.DB.Exec(context.Background(), "DELETE FROM game_players WHERE game_id = $1 AND user_id = $2", gameID, userID)
+	return err
+}
+
+func UpdateGameState(gameID, state string) error {
+	query := `
+		UPDATE games
+		SET state = $1
+		WHERE id = $2
+	`
+	_, err := database.DB.Exec(context.Background(), query, state, gameID)
 	return err
 }

@@ -8,6 +8,7 @@
         ChevronLeft,
         ShieldAlert,
         User,
+        Pause,
     } from "lucide-svelte";
     import { onMount, onDestroy, untrack } from "svelte";
     import { page } from "$app/state";
@@ -99,13 +100,21 @@
     $effect(() => {
         const lastMessage =
             $websocketStore.messages[$websocketStore.messages.length - 1];
-        if (lastMessage && lastMessage.type === "CHARACTER_UPDATE") {
-            const updatedChar = lastMessage.payload;
-            untrack(() => {
-                if (character && character.id === updatedChar.id) {
-                    character = updatedChar;
-                }
-            });
+        if (lastMessage) {
+            if (lastMessage.type === "CHARACTER_UPDATE") {
+                const updatedChar = lastMessage.payload;
+                untrack(() => {
+                    if (character && character.id === updatedChar.id) {
+                        character = updatedChar;
+                    }
+                });
+            } else if (lastMessage.type === "GAME_STATE_UPDATE") {
+                untrack(() => {
+                    if (game && game.id === lastMessage.game_id) {
+                        game.state = lastMessage.state;
+                    }
+                });
+            }
         }
     });
 </script>
@@ -127,6 +136,16 @@
 {:else if game}
     {#if game.is_gm || game.current_character_id}
         <PlayerLayout>
+            {#if game.state === "paused"}
+                <div
+                    class="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-amber-100/90 backdrop-blur-sm border border-amber-200 text-amber-800 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none select-none"
+                >
+                    <Pause size={16} class="fill-amber-800/20" />
+                    <span class="font-bold text-sm tracking-wide uppercase"
+                        >Partie en pause</span
+                    >
+                </div>
+            {/if}
             <div class="relative w-full h-full flex overflow-hidden">
                 <!-- Left Zone: Immersion (Flexible) -->
                 <div

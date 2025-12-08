@@ -802,10 +802,48 @@ func SendMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save message").SetInternal(err)
 	}
 
+	// Broadcast via WebSocket
 	if websocket.GlobalHub != nil {
 		msgBytes, _ := json.Marshal(msg)
 		websocket.GlobalHub.Broadcast(msgBytes)
 	}
 
 	return c.JSON(http.StatusOK, msg)
+}
+
+func UpdateTableState(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Missing game ID")
+	}
+
+	var req struct {
+		State string `json:"state"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.State != "ongoing" && req.State != "paused" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid state. Must be 'ongoing' or 'paused'")
+	}
+
+	// Verify GM - Handled by middleware
+
+	if err := service.UpdateGameState(id, req.State); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update game state").SetInternal(err)
+	}
+
+	// Optional: Broadcast state change via WS?
+	if websocket.GlobalHub != nil {
+		msg := map[string]string{
+			"type":    "GAME_STATE_UPDATE",
+			"game_id": id,
+			"state":   req.State,
+		}
+		msgBytes, _ := json.Marshal(msg)
+		websocket.GlobalHub.Broadcast(msgBytes)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"state": req.State})
 }

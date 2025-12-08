@@ -10,7 +10,6 @@ import (
 
 // ServeWs handles websocket requests from the peer.
 func ServeWs(hub *Hub, c echo.Context) error {
-	log.Println("ServeWs: New connection request")
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true // Allow all origins for now, configure as needed
 	}
@@ -21,13 +20,9 @@ func ServeWs(hub *Hub, c echo.Context) error {
 	if ok {
 		if sub, ok := claims["sub"].(string); ok {
 			userID = sub
-			log.Printf("ServeWs: UserID extracted: %s", userID)
 		}
-	} else {
-		log.Println("ServeWs: No claims found in context")
 	}
 
-	log.Println("ServeWs: Upgrading connection...")
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Println(err)
