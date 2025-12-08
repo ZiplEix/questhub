@@ -44,6 +44,7 @@ type GameResponse struct {
 	*model.Game
 	CurrentCharacterID *string `json:"current_character_id"`
 	IsGM               bool    `json:"is_gm"`
+	DebugMsg           string  `json:"debug_msg,omitempty"`
 }
 
 func GetTable(c echo.Context) error {
@@ -66,13 +67,32 @@ func GetTable(c echo.Context) error {
 	}
 
 	// Fetch user character
-	character, err := service.GetUserCharacter(id, userID)
-	if err != nil {
-		// Log error but don't fail the request?
-		// Or fail? Let's just log and continue for now, assuming no character
-		fmt.Printf("Failed to fetch user character: %v\n", err)
-	} else if character != nil {
-		response.CurrentCharacterID = &character.ID
+	// If GM, ensure GM character exists
+	// Fetch user character
+	// If GM, ensure GM character exists
+	if response.IsGM {
+		gmChar, err := service.EnsureGMCharacter(id, userID)
+		if err != nil {
+			fmt.Printf("Failed to ensure GM character: %v\n", err)
+			response.DebugMsg = fmt.Sprintf("Failed to ensure GM character: %v", err)
+		} else if gmChar != nil {
+			response.CurrentCharacterID = &gmChar.ID
+			response.DebugMsg = fmt.Sprintf("GM Character ensured: %s", gmChar.ID)
+		} else {
+			response.DebugMsg = "EnsureGMCharacter returned nil char"
+		}
+	} else {
+		// Regular player character fetch
+		character, err := service.GetUserCharacter(id, userID)
+		if err != nil {
+			fmt.Printf("Failed to fetch user character: %v\n", err)
+			response.DebugMsg = fmt.Sprintf("Failed to fetch user character: %v", err)
+		} else if character != nil {
+			response.CurrentCharacterID = &character.ID
+			response.DebugMsg = fmt.Sprintf("User character found: %s", character.ID)
+		} else {
+			response.DebugMsg = "No character found for user"
+		}
 	}
 
 	return c.JSON(http.StatusOK, response)

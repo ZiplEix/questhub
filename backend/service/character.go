@@ -4,16 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"questhub/database"
 	model "questhub/models/database"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func GetUserCharacter(gameID, userID string) (*model.Character, error) {
 	char := &model.Character{}
+	// ... query ...
 	query := `
 		SELECT id, game_id, user_id, name, avatar_url, stats, inventory, is_npc, created_at,
-		       initiative, age, height, weight, max_spells, spells, abilities, experience, armor_class, speed
+		       initiative, age, height, weight, max_spells, spells, abilities, experience, armor_class, speed,
+		       type, sub_race
 		FROM characters
 		WHERE game_id = $1 AND user_id = $2
 	`
@@ -37,11 +42,14 @@ func GetUserCharacter(gameID, userID string) (*model.Character, error) {
 		&char.Experience,
 		&char.ArmorClass,
 		&char.Speed,
+		&char.Type,
+		&char.SubRace,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == sql.ErrNoRows || err == pgx.ErrNoRows {
 			return nil, nil // No character found, not an error
 		}
+		log.Printf("[GetUserCharacter] Scan error: %v\n", err)
 		return nil, err
 	}
 	return char, nil
@@ -202,11 +210,12 @@ func CreateCharacter(gameID, userID, name, race string, maxHP int, isNPC bool, a
 	`
 
 	err := database.DB.QueryRow(context.Background(), query,
-		char.GameID, userID, char.Name, char.Race, char.MaxHP, char.CurrentHP, char.IsNPC, avatarURL, char.Stats, char.Inventory, char.Money, char.CreatedAt,
-		char.Initiative, char.Age, char.Height, char.Weight, char.MaxSpells, char.Spells, char.Abilities, char.Experience, char.Type, subRace, char.ArmorClass, char.Speed,
+		char.GameID, userID, char.Name, char.Race, char.MaxHP, char.CurrentHP, char.IsNPC, avatarURL, string(char.Stats), string(char.Inventory), char.Money, char.CreatedAt,
+		char.Initiative, char.Age, char.Height, char.Weight, char.MaxSpells, string(char.Spells), char.Abilities, char.Experience, char.Type, subRace, char.ArmorClass, char.Speed,
 	).Scan(&char.ID)
 
 	if err != nil {
+		log.Printf("[CreateCharacter] DB Error: %v\n", err)
 		return nil, err
 	}
 
@@ -226,8 +235,8 @@ func UpdateCharacter(id, gameID, name, race string, maxHP int, isNPC bool, avata
 
 	char := &model.Character{}
 	err := database.DB.QueryRow(context.Background(), query,
-		name, race, maxHP, isNPC, avatarURL, stats, inventory, money,
-		initiative, age, height, weight, maxSpells, spells, abilities, experience, charType, subRace, armorClass, speed,
+		name, race, maxHP, isNPC, avatarURL, string(stats), string(inventory), money,
+		initiative, age, height, weight, maxSpells, string(spells), abilities, experience, charType, subRace, armorClass, speed,
 		id, gameID,
 	).Scan(&char.ID, &char.GameID, &char.UserID, &char.Name, &char.Race, &char.MaxHP, &char.CurrentHP, &char.AvatarURL, &char.Stats, &char.Inventory, &char.IsNPC, &char.Money, &char.CreatedAt,
 		&char.Initiative, &char.Age, &char.Height, &char.Weight, &char.MaxSpells, &char.Spells, &char.Abilities, &char.Experience, &char.Type, &char.SubRace, &char.ArmorClass, &char.Speed)
@@ -292,4 +301,53 @@ func UpdateCharacterNotes(charID, content string) error {
 	`
 	_, err := database.DB.Exec(context.Background(), query, charID, content)
 	return err
+}
+
+func EnsureGMCharacter(gameID, manualGMID string) (*model.Character, error) {
+	log.Printf("[EnsureGMCharacter] Checking for GM char. GameID=%s, UserID=%s\n", gameID, manualGMID)
+	// Check if character already exists for GM
+	char, err := GetUserCharacter(gameID, manualGMID)
+	if err != nil {
+		log.Printf("[EnsureGMCharacter] Error getting user character: %v\n", err)
+		return nil, err
+	}
+	if char != nil {
+		log.Printf("[EnsureGMCharacter] Found existing character: %s\n", char.ID)
+		return char, nil
+	}
+
+	log.Printf("[EnsureGMCharacter] Creating new hidden GM character...\n")
+
+	// Create hidden character for GM
+	// We use "GM_HIDDEN" as type to easily filter it out if needed, though GetGameCharacters filters by PLAYER/NPC usually.
+	newChar, err := CreateCharacter(
+		gameID,
+		manualGMID,
+		"GM Notes",
+		"Game Master",
+		1,            // HP
+		false,        // isNPC (technically no, but...)
+		"",           // avatar
+		[]byte("{}"), // stats (NOT NULL constraint)
+		[]byte("[]"), // inventory (NOT NULL constraint)
+		0,            // money
+		0,            // initiative
+		"",           // age
+		"",           // height
+		"",           // weight
+		0,            // maxSpells
+		[]byte("{}"), // spells
+		"",           // abilities
+		0,            // experience
+		"GM_HIDDEN",  // type
+		"",           // subRace
+		10,           // armorClass
+		30,           // speed
+	)
+	if err != nil {
+		log.Printf("[EnsureGMCharacter] Error creating character: %v\n", err)
+		return nil, err
+	}
+	log.Printf("[EnsureGMCharacter] Created character: %s\n", newChar.ID)
+	return newChar, nil
 }

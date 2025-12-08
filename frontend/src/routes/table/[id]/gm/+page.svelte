@@ -16,6 +16,7 @@
     let isLeftPanelOpen = $state(true);
     let isRightPanelOpen = $state(true);
     let currentUserId = $state("");
+    let gmCharacterId = $state("");
 
     // Lifted state for entities
     let entities = $state<any[]>([
@@ -71,6 +72,22 @@
                 // Fetch chat history
                 // @ts-ignore
                 fetchHistory(gameId, token);
+
+                // Fetch table data to get GM character ID
+                const tableResponse = await api.get(`/table/${gameId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                console.log("GM Page: Table Response", tableResponse.data);
+                if (tableResponse.data.current_character_id) {
+                    gmCharacterId = tableResponse.data.current_character_id;
+                    console.log("GM Page: Set gmCharacterId", gmCharacterId);
+                } else {
+                    console.warn(
+                        "GM Page: No current_character_id found in table response",
+                    );
+                }
 
                 const { data: sessionData } = await authClient.getSession();
                 if (sessionData?.user) {
@@ -175,7 +192,12 @@
             : '0px'}; opacity: {isRightPanelOpen ? '1' : '0'};"
     >
         <div class="w-[400px] h-full">
-            <GMOmniTool onSpawn={spawnMonster} {entities} {currentUserId} />
+            <GMOmniTool
+                onSpawn={spawnMonster}
+                {entities}
+                {currentUserId}
+                {gmCharacterId}
+            />
         </div>
     </aside>
 </GMLayout>

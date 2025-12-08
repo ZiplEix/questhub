@@ -5,9 +5,15 @@
     import GMChat from "./GMChat.svelte";
     import Bestiary from "./Bestiary.svelte";
     import SceneSelector from "./SceneSelector.svelte";
-    import Notes from "../pupitre/Notes.svelte";
+    import NotesTab from "../shared/NotesTab.svelte";
+    import { page } from "$app/state";
 
-    let { onSpawn, entities = [], currentUserId = "" } = $props();
+    let {
+        onSpawn,
+        entities = [],
+        currentUserId = "",
+        gmCharacterId = "",
+    } = $props();
 
     let activeTab = $state("chat");
 
@@ -21,17 +27,17 @@
 
 <div class="h-full flex flex-col bg-white border-l border-stone-200 shadow-xl">
     <!-- Tabs Header -->
-    <div class="flex border-b border-stone-200 bg-stone-50">
+    <div class="flex p-2 gap-2 bg-white border-b border-stone-100">
         {#each tabs as tab}
             <button
                 onclick={() => (activeTab = tab.id)}
-                class="flex-1 py-3 flex flex-col items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider transition-colors border-b-2
+                class="flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2
                 {activeTab === tab.id
-                    ? 'border-burnt-orange text-burnt-orange bg-white'
-                    : 'border-transparent text-stone-400 hover:text-stone-600 hover:bg-stone-100'}"
+                    ? 'bg-dark-gray text-white shadow-md'
+                    : 'bg-stone-50 text-stone-400 hover:bg-stone-100'}"
             >
-                <tab.icon size={18} />
-                {tab.label}
+                <tab.icon size={16} />
+                <span>{tab.label}</span>
             </button>
         {/each}
     </div>
@@ -45,7 +51,10 @@
         {:else if activeTab === "scenes"}
             <SceneSelector />
         {:else if activeTab === "notes"}
-            <Notes />
+            <NotesTab
+                characterId={gmCharacterId}
+                gameId={page.params.id || ""}
+            />
         {/if}
     </div>
 </div>
