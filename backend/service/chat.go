@@ -14,14 +14,15 @@ func SaveMessage(msg model.ChatMessage) error {
 	return err
 }
 
-func GetGameMessages(gameID string) ([]model.ChatMessage, error) {
+func GetGameMessages(gameID, userID string) ([]model.ChatMessage, error) {
 	rows, err := database.DB.Query(context.Background(),
 		`SELECT id, game_id, sender_id, sender_name, content, type, target_id, created_at
 		FROM messages
 		WHERE game_id = $1
+		AND (type != 'CHAT_PRIVATE' OR sender_id = $2 OR target_id = $2)
 		ORDER BY created_at ASC
 		LIMIT 100`, // Limit to last 100 messages for now
-		gameID)
+		gameID, userID)
 	if err != nil {
 		return nil, err
 	}

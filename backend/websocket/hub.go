@@ -119,3 +119,16 @@ func (h *Hub) BroadcastToUser(userID string, message []byte) {
 func (h *Hub) Broadcast(message []byte) {
 	h.broadcast <- message
 }
+
+func (h *Hub) BroadcastToGame(gameID string, msg interface{}) {
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("Error marshaling broadcast message: %v", err)
+		return
+	}
+	// We use the existing broadcast channel which handles game routing inside Run()
+	// But wait, Run() expects a raw byte slice and UNMARSHALS it to find game_id.
+	// So we just need to ensure the `msg` has `game_id` field.
+	// The Controller creates `ChatMessage` which has `game_id` JSON tag.
+	h.broadcast <- bytes
+}

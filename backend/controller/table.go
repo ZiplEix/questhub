@@ -637,7 +637,9 @@ func UpdateCharacter(c echo.Context) error {
 
 func GetChatHistory(c echo.Context) error {
 	gameID := c.Param("id")
-	messages, err := service.GetGameMessages(gameID)
+	claims := c.Get("claims").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+	messages, err := service.GetGameMessages(gameID, userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch chat history").SetInternal(err)
 	}

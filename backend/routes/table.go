@@ -5,6 +5,7 @@ import (
 	"questhub/middleware"
 
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 func initTableRoutes(e *echo.Echo) {
@@ -27,6 +28,8 @@ func initTableRoutes(e *echo.Echo) {
 	gameGroup.GET("/players", controller.GetGamePlayers)
 	gameGroup.GET("/characters", controller.GetGameCharacters)
 	gameGroup.POST("/chat", controller.SendMessage)
+	gameGroup.POST("/chat", controller.SendMessage)
+	gameGroup.GET("/roll", controller.RollDice, echoMiddleware.RateLimiterWithConfig(middleware.DiceRollRateLimitConfig))
 
 	// GM only routes (RequireGM applies ON TOP of CheckGameState if we nest, or we can separate)
 	// If we use gameGroup.Group, CheckGameState runs first. GM is bypassed in CheckGameState, so it's fine.

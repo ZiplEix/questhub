@@ -1,5 +1,6 @@
 <script lang="ts">
     import { MessageSquare, Ghost, Map, NotebookPen } from "lucide-svelte";
+    import QuickDice from "../player/QuickDice.svelte";
 
     // Components
     import GMChat from "./GMChat.svelte";
@@ -57,4 +58,7 @@
             />
         {/if}
     </div>
+
+    <!-- Quick Dice (Sticky Bottom) -->
+    <QuickDice isGM={true} />
 </div>
