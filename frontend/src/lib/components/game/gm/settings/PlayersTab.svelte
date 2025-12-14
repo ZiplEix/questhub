@@ -176,7 +176,7 @@
                                 </span>
                             {/if}
                         </div>
-                        {#if player.character_name}
+                        {#if player.character_name && !player.is_gm}
                             <p class="text-sm text-burnt-orange font-medium">
                                 Incarne {player.character_name}
                             </p>
