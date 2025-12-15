@@ -693,7 +693,7 @@ func GetCharacterNotes(c echo.Context) error {
 	}
 
 	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
+	requestingUserID := claims["sub"].(string)
 
 	// Verify GM or Owner
 	game, err := service.GetTable(gameID)
@@ -701,7 +701,7 @@ func GetCharacterNotes(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
 	}
 
-	isGM := game.GmID == userID
+	isGM := game.GmID == requestingUserID
 
 	character, err := service.GetCharacter(gameID, charID)
 	if err != nil {
@@ -711,13 +711,24 @@ func GetCharacterNotes(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
 	}
 
-	if !isGM {
-		if character.UserID == nil || *character.UserID != userID {
+	targetUserID := requestingUserID
+	if isGM {
+		// If GM is viewing, they want to see the owner's notes
+		if character.UserID != nil {
+			targetUserID = *character.UserID
+		} else {
+			// Character has no user, so no player notes exist.
+			// Attempting to fetch notes for "no user" is invalid or we can return empty.
+			return c.JSON(http.StatusOK, map[string]string{"content": ""})
+		}
+	} else {
+		// If not GM, must own the character
+		if character.UserID == nil || *character.UserID != requestingUserID {
 			return echo.NewHTTPError(http.StatusForbidden, "You can only view notes for your own character or you must be the GM")
 		}
 	}
 
-	notes, err := service.GetCharacterNotes(charID)
+	notes, err := service.GetNotes(gameID, targetUserID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch notes").SetInternal(err)
 	}
@@ -740,7 +751,7 @@ func UpdateCharacterNotes(c echo.Context) error {
 	}
 
 	claims := c.Get("claims").(jwt.MapClaims)
-	userID := claims["sub"].(string)
+	requestingUserID := claims["sub"].(string)
 
 	// Verify GM or Owner
 	game, err := service.GetTable(gameID)
@@ -748,7 +759,7 @@ func UpdateCharacterNotes(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Game not found")
 	}
 
-	isGM := game.GmID == userID
+	isGM := game.GmID == requestingUserID
 
 	character, err := service.GetCharacter(gameID, charID)
 	if err != nil {
@@ -758,13 +769,23 @@ func UpdateCharacterNotes(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
 	}
 
-	if !isGM {
-		if character.UserID == nil || *character.UserID != userID {
+	targetUserID := requestingUserID
+	if isGM {
+		// If GM is updating, they update the owner's notes
+		if character.UserID != nil {
+			targetUserID = *character.UserID
+		} else {
+			// Cannot update notes for unassigned character as notes are tied to Player+Game
+			return echo.NewHTTPError(http.StatusBadRequest, "Cannot add notes to an unassigned character (notes are linked to players)")
+		}
+	} else {
+		// If not GM, must own the character
+		if character.UserID == nil || *character.UserID != requestingUserID {
 			return echo.NewHTTPError(http.StatusForbidden, "You can only update notes for your own character or you must be the GM")
 		}
 	}
 
-	if err := service.UpdateCharacterNotes(charID, req.Content); err != nil {
+	if err := service.UpdateNotes(gameID, targetUserID, req.Content); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update notes").SetInternal(err)
 	}
 

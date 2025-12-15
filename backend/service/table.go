@@ -266,7 +266,8 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 		SELECT u.id, u.name, COALESCE(u.image, ''), gp.joined_at, c.name
 		FROM game_players gp
 		JOIN "user" u ON gp.user_id = u.id
-		LEFT JOIN characters c ON c.user_id = u.id AND c.game_id = gp.game_id
+		LEFT JOIN game_characters gc ON gc.user_id = u.id AND gc.game_id = gp.game_id
+		LEFT JOIN characters c ON gc.character_id = c.id
 		WHERE gp.game_id = $1
 		ORDER BY gp.joined_at ASC
 	`
@@ -310,7 +311,8 @@ func GetGamePlayers(gameID string) ([]model.Player, error) {
 		gmQuery := `
 			SELECT u.id, u.name, COALESCE(u.image, ''), c.name
 			FROM "user" u
-			LEFT JOIN characters c ON c.user_id = u.id AND c.game_id = $2
+			LEFT JOIN game_characters gc ON gc.user_id = u.id AND gc.game_id = $2
+			LEFT JOIN characters c ON gc.character_id = c.id
 			WHERE u.id = $1
 		`
 		err := database.DB.QueryRow(context.Background(), gmQuery, game.GmID, gameID).Scan(&gm.UserID, &gm.Name, &gm.AvatarURL, &charName)

@@ -7,8 +7,8 @@ import (
 
 type Character struct {
 	ID         string          `json:"id"`
-	GameID     string          `json:"game_id"`
-	UserID     *string         `json:"user_id"` // Pointer because it can be NULL
+	GameID     string          `json:"game_id"` // Populated via game_characters join
+	UserID     *string         `json:"user_id"` // Populated via game_characters join
 	Name       string          `json:"name"`
 	Race       string          `json:"race"`
 	MaxHP      int             `json:"max_hp"`
@@ -36,7 +36,8 @@ type Character struct {
 	Speed      int             `json:"speed"`
 }
 
-type CharacterNote struct {
-	CharacterID string `json:"character_id"`
-	Content     string `json:"content"`
+type Note struct {
+	GameID  string `json:"game_id"`
+	UserID  string `json:"user_id"`
+	Content string `json:"content"`
 }

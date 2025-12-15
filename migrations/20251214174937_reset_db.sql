@@ -15,6 +15,22 @@ CREATE TABLE IF NOT EXISTS games (
 
 CREATE INDEX IF NOT EXISTS idx_games_gm_id ON games(gm_id);
 
+-- TEMPLATES: Blueprints for shareable content
+CREATE TABLE IF NOT EXISTS templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_by TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    type VARCHAR(50) NOT NULL, -- 'CHARACTER', 'NPC', 'MONSTER', 'CREATURE'
+    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    is_public BOOLEAN DEFAULT FALSE,
+    uses INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_type ON templates(type);
+CREATE INDEX IF NOT EXISTS idx_templates_public ON templates(is_public);
+
 -- TABLE DE LIAISON JOUEURS <-> PARTIES
 CREATE TABLE IF NOT EXISTS game_players (
     game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
@@ -27,9 +43,8 @@ CREATE TABLE IF NOT EXISTS game_players (
 
 CREATE TABLE IF NOT EXISTS characters (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-    user_id TEXT REFERENCES "user"(id) ON DELETE SET NULL, -- NULL = PNJ ou Perso non assigné
-    
+    -- Removed game_id and user_id to decouple
+
     name TEXT NOT NULL,
     avatar_url TEXT,
 
@@ -60,7 +75,20 @@ CREATE TABLE IF NOT EXISTS characters (
     speed INTEGER DEFAULT 30
 );
 
-CREATE INDEX IF NOT EXISTS idx_characters_game_id ON characters(game_id);
+-- New Table: Links a character instance to a game and potentially a user
+CREATE TABLE IF NOT EXISTS game_characters (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    character_id UUID NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES "user"(id) ON DELETE SET NULL, -- NULL if unassigned or pure NPC managed by GM?
+    
+    assigned_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(game_id, character_id) -- A character instance can only be in a game once
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_characters_game_id ON game_characters(game_id);
+CREATE INDEX IF NOT EXISTS idx_game_characters_user_id ON game_characters(user_id);
 
 CREATE TABLE IF NOT EXISTS game_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,9 +100,13 @@ CREATE TABLE IF NOT EXISTS game_invitations (
     UNIQUE(game_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS character_notes (
-    character_id UUID PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
-    content TEXT DEFAULT ''
+-- Renamed from character_notes to notes, linked to Game + User
+CREATE TABLE IF NOT EXISTS notes (
+    game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    content TEXT DEFAULT '',
+    
+    PRIMARY KEY (game_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -96,9 +128,11 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS character_notes;
+DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS game_invitations;
+DROP TABLE IF EXISTS game_characters;
 DROP TABLE IF EXISTS characters;
 DROP TABLE IF EXISTS game_players;
+DROP TABLE IF EXISTS templates;
 DROP TABLE IF EXISTS games;
 -- +goose StatementEnd
