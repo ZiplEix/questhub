@@ -133,7 +133,7 @@
                             Dashboard
                         </a>
                         <a
-                            href="/profile"
+                            href="/me"
                             class="flex items-center gap-3 px-4 py-2.5 text-sm text-dark-gray hover:bg-stone-50 transition-colors"
                             onclick={closeMenu}
                         >

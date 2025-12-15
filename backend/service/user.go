@@ -43,7 +43,7 @@ func GetUserStats(userID string) (*UserStats, error) {
 
 	// Count characters created
 	err = database.DB.QueryRow(context.Background(), `
-		SELECT COUNT(*) FROM characters WHERE user_id = $1
+		SELECT COUNT(*) FROM game_characters WHERE user_id = $1
 	`, userID).Scan(&stats.CharactersCreated)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count characters: %w", err)
@@ -56,11 +56,12 @@ func GetUserCampaigns(userID string) ([]UserCampaign, error) {
 	rows, err := database.DB.Query(context.Background(), `
 		SELECT 
 			g.id, g.name, COALESCE(g.image_url, ''), 
-			c.name, COALESCE(c.avatar_url, ''), c.created_at
+			c.name, COALESCE(c.avatar_url, ''), gc.assigned_at
 		FROM characters c
-		JOIN games g ON g.id = c.game_id
-		WHERE c.user_id = $1
-		ORDER BY c.created_at DESC
+		JOIN game_characters gc ON c.id = gc.character_id
+		JOIN games g ON g.id = gc.game_id
+		WHERE gc.user_id = $1
+		ORDER BY gc.assigned_at DESC
 	`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query user campaigns: %w", err)

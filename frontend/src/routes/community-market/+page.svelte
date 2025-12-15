@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import Header from "$lib/components/Header.svelte";
+    import { Search, PackageOpen } from "lucide-svelte";
 
     // Mock Data
     interface Template {
@@ -100,20 +101,10 @@
                 <div
                     class="flex items-center gap-4 w-full px-6 py-4 bg-white rounded-full shadow-sm border border-stone-200 group-focus-within:border-burnt-orange group-focus-within:ring-4 group-focus-within:ring-burnt-orange/10 transition-all duration-300"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 text-gray-400 group-focus-within:text-burnt-orange transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                    </svg>
+                    <Search
+                        size={24}
+                        class="text-gray-400 group-focus-within:text-burnt-orange transition-colors"
+                    />
                     <input
                         type="text"
                         placeholder="Rechercher des modèles..."
@@ -210,7 +201,7 @@
                             </div>
 
                             <button
-                                class="bg-burnt-orange/10 text-burnt-orange px-4 py-2 rounded-lg text-sm font-bold hover:bg-burnt-orange hover:text-white transition-all hover:cursor-pointer"
+                                class="bg-burnt-orange/10 text-burnt-orange px-4 py-2 rounded-xl text-sm font-bold hover:bg-burnt-orange hover:text-white transition-all hover:cursor-pointer"
                             >
                                 Voir
                             </button>
@@ -221,8 +212,11 @@
         </div>
 
         {#if filteredTemplates.length === 0}
-            <div class="text-center py-20 opacity-50">
-                <p class="text-xl">
+            <div
+                class="text-center py-24 opacity-50 flex flex-col items-center gap-4"
+            >
+                <PackageOpen size={48} strokeWidth={1.5} />
+                <p class="text-xl font-medium">
                     Aucun modèle trouvé correspondant à vos critères.
                 </p>
             </div>

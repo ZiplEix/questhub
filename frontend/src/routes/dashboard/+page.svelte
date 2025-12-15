@@ -310,23 +310,23 @@
                         Image de couverture (optionnel)
                     </label>
 
-                    <div class="flex gap-4 mb-4">
+                    <div class="flex p-1 bg-stone-100 rounded-xl mb-4">
                         <button
                             type="button"
-                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {imageType ===
+                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-all {imageType ===
                             'url'
-                                ? 'bg-dark-gray text-white'
-                                : 'bg-stone-100 text-dark-gray hover:bg-stone-200'}"
+                                ? 'bg-white text-dark-gray shadow-sm rounded-xl'
+                                : 'text-stone-500 hover:text-dark-gray'}"
                             onclick={() => (imageType = "url")}
                         >
                             Lien URL
                         </button>
                         <button
                             type="button"
-                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {imageType ===
+                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-all {imageType ===
                             'upload'
-                                ? 'bg-dark-gray text-white'
-                                : 'bg-stone-100 text-dark-gray hover:bg-stone-200'}"
+                                ? 'bg-white text-dark-gray shadow-sm rounded-xl'
+                                : 'text-stone-500 hover:text-dark-gray'}"
                             onclick={() => (imageType = "upload")}
                         >
                             Upload

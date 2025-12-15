@@ -85,7 +85,7 @@
     }
 </script>
 
-<div class="min-h-screen bg-stone-50">
+<div class="min-h-screen bg-cream">
     <Header />
 
     <main class="max-w-7xl mx-auto px-4 md:px-8 py-12">
@@ -258,7 +258,7 @@
                                         </div>
                                         <a
                                             href="/table/{camp.game_id}"
-                                            class="px-4 py-2 bg-dark-gray text-white rounded-lg text-sm hover:bg-opacity-90 transition-opacity"
+                                            class="px-4 py-2 bg-dark-gray text-white rounded-xl text-sm hover:bg-opacity-90 transition-opacity"
                                         >
                                             Rejoindre
                                         </a>

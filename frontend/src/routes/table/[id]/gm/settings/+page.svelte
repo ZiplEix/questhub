@@ -112,7 +112,7 @@
     }
 </script>
 
-<div class="min-h-screen bg-stone-50">
+<div class="min-h-screen bg-cream">
     <Header />
 
     <main class="max-w-4xl mx-auto p-6 md:p-12">
