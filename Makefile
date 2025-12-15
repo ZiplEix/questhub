@@ -39,3 +39,8 @@ migrate-up:
 .PHONY: migrate-down
 migrate-down:
 	@cd migrations && go run ./down/down.go --dsn $(POSTGRES_URL) --dir .
+
+## migrate-auth:	Run auth migrations
+.PHONY: migrate-auth
+migrate-auth:
+	@cd frontend && bunx @better-auth/cli migrate
