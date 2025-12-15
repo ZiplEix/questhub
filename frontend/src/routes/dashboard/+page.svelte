@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { Dice5, LogOut, Archive, ArchiveRestore, X } from "lucide-svelte";
+    import {
+        Dice5,
+        LogOut,
+        Archive,
+        ArchiveRestore,
+        X,
+        Store,
+    } from "lucide-svelte";
     import GameCard from "$lib/components/GameCard.svelte";
     import Header from "$lib/components/Header.svelte";
     import { api } from "$lib/api";
@@ -176,6 +183,14 @@
             </div>
 
             <div class="flex gap-4">
+                <a
+                    href="/community-market"
+                    class="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-medium transition-all bg-white text-dark-gray border border-stone-200 hover:bg-stone-50 hover:text-burnt-orange hover:border-burnt-orange/30"
+                >
+                    <Store size={18} />
+                    Marché
+                </a>
+
                 <button
                     class="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-medium transition-all border {showArchived
                         ? 'bg-dark-gray text-white border-dark-gray'

@@ -3,6 +3,7 @@
     import Hero from "$lib/components/Hero.svelte";
     import FeatureCard from "$lib/components/FeatureCard.svelte";
     import PreviewSection from "$lib/components/PreviewSection.svelte";
+    import MarketplacePreview from "$lib/components/MarketplacePreview.svelte";
     import Footer from "$lib/components/Footer.svelte";
     import { Sword, Backpack, Book } from "lucide-svelte";
 </script>
@@ -10,7 +11,7 @@
 <div class="min-h-screen flex flex-col">
     <Header />
 
-    <main class="flex-grow">
+    <main class="grow">
         <Hero />
 
         <section class="w-full max-w-7xl mx-auto px-4 md:px-8 py-12">
@@ -32,6 +33,8 @@
                 />
             </div>
         </section>
+
+        <MarketplacePreview />
 
         <PreviewSection />
     </main>
