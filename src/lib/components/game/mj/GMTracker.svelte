@@ -2,30 +2,14 @@
     import { Swords, EyeOff, Droplets, Skull } from "lucide-svelte";
 
     let { entities = [], onSelect } = $props();
-
-    // Mock data
-    let gameMode = $state<"freeplay" | "combat">("combat");
 </script>
 
 <div
     class="h-full flex flex-col bg-stone-800 text-stone-200 border-r border-stone-700"
 >
-    <!-- Mode Switch -->
-    <div class="p-4 border-b border-stone-700">
-        <button
-            class="w-full py-3 rounded-xl font-display font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2
-            {gameMode === 'combat'
-                ? 'bg-red-600 text-white hover:bg-red-500'
-                : 'bg-green-600 text-white hover:bg-green-500'}"
-            onclick={() =>
-                (gameMode = gameMode === "combat" ? "freeplay" : "combat")}
-        >
-            {#if gameMode === "combat"}
-                <Swords size={20} /> COMBAT
-            {:else}
-                FREEPLAY
-            {/if}
-        </button>
+    <!-- Entity List Header -->
+    <div class="p-4 border-b border-stone-700 font-display font-bold text-center text-stone-400 tracking-wider text-sm">
+        INITIATIVE ET MONSTRES
     </div>
 
     <!-- Entity List -->
@@ -41,8 +25,7 @@
                 onclick={() => onSelect?.(entity)}
             >
                 <div class="flex justify-between items-start mb-1">
-                    <span class="font-bold text-sm truncate">{entity.name}</span
-                    >
+                    <span class="font-bold text-sm truncate">{entity.name}</span>
                     <span class="text-xs font-mono text-stone-400"
                         >Init: {entity.init}</span
                     >
@@ -70,24 +53,15 @@
                     </div>
 
                     <div class="flex gap-1">
-                        {#if entity.status.includes("invisible")}
+                        {#if entity.status && entity.status.includes("invisible")}
                             <EyeOff size={12} class="text-blue-400" />
                         {/if}
-                        {#if entity.status.includes("dead")}
+                        {#if entity.status && entity.status.includes("dead")}
                             <Skull size={12} class="text-stone-500" />
                         {/if}
                     </div>
                 </div>
             </button>
         {/each}
-    </div>
-
-    <!-- Next Turn -->
-    <div class="p-4 border-t border-stone-700 bg-stone-800">
-        <button
-            class="w-full py-3 bg-burnt-orange hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg transition-colors"
-        >
-            NEXT TURN
-        </button>
     </div>
 </div>

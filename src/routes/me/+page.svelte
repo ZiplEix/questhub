@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchUserStats, fetchUserCampaigns } from "$lib/api";
+    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
     import Header from "$lib/components/Header.svelte";
@@ -8,8 +8,8 @@
         User,
         Activity,
         Swords,
-        BookOpen,
         Skull,
+        BookOpen,
         Mail,
     } from "lucide-svelte";
     import type { SessionUser } from "$lib/types/session-user";
@@ -18,14 +18,16 @@
     let user = $state<SessionUser | null>(null);
     let stats = $state<any>(null);
     let campaigns = $state<any[]>([]);
+    let characters = $state<any[]>([]);
+    let monsters = $state<any[]>([]);
     let loading = $state(true);
 
     const tabs = [
         { id: "general", label: "Informations", icon: User },
         { id: "stats", label: "Statistiques", icon: Activity },
         { id: "campaigns", label: "Campagnes", icon: Swords },
-        { id: "bestiary", label: "Bestiaire", icon: BookOpen },
         { id: "characters", label: "Personnages", icon: Skull },
+        { id: "bestiary", label: "Bestiaire", icon: BookOpen },
     ];
 
     onMount(async () => {
@@ -43,7 +45,7 @@
             }
             user = data.user;
 
-            await Promise.all([fetchStats(), fetchCampaigns()]);
+            await Promise.all([fetchStats(), fetchCampaigns(), fetchCharacters(), fetchMonsters()]);
         } catch (e) {
             console.error(e);
         } finally {
@@ -51,6 +53,7 @@
         }
     });
 
+    // Tab switcher
     function setTab(tabId: string) {
         activeTab = tabId;
         const url = new URL(window.location.href);
@@ -71,6 +74,22 @@
             campaigns = await fetchUserCampaigns();
         } catch (e) {
             console.error("Failed to fetch campaigns", e);
+        }
+    }
+
+    async function fetchCharacters() {
+        try {
+            characters = await fetchUserCharacters();
+        } catch (e) {
+            console.error("Failed to fetch characters", e);
+        }
+    }
+
+    async function fetchMonsters() {
+        try {
+            monsters = await fetchUserMonsters();
+        } catch (e) {
+            console.error("Failed to fetch monsters", e);
         }
     }
 </script>
@@ -263,72 +282,211 @@
                     </div>
                 {/if}
 
-                <!-- Bestiary (Mock) -->
-                {#if activeTab === "bestiary"}
-                    <div
-                        class="animate-in fade-in slide-in-from-bottom-4 duration-300"
-                    >
-                        <div
-                            class="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-50 pointer-events-none"
-                        >
-                            {#each Array(4) as _}
-                                <div
-                                    class="p-4 rounded-2xl border border-stone-100 bg-stone-50"
-                                >
-                                    <div
-                                        class="h-4 bg-stone-200 rounded w-1/3 mb-2"
-                                    ></div>
-                                    <div
-                                        class="h-32 bg-stone-200 rounded-xl mb-2"
-                                    ></div>
-                                    <div
-                                        class="h-3 bg-stone-200 rounded w-full"
-                                    ></div>
-                                </div>
-                            {/each}
-                        </div>
-                        <div class="text-center mt-8 text-dark-gray/60">
-                            <p>Fonctionnalité à venir...</p>
-                        </div>
-                    </div>
-                {/if}
-
-                <!-- Characters (Mock) -->
+                <!-- Characters Tab -->
                 {#if activeTab === "characters"}
                     <div
                         class="animate-in fade-in slide-in-from-bottom-4 duration-300"
                     >
-                        <div
-                            class="grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-50 pointer-events-none"
-                        >
-                            {#each Array(4) as _}
-                                <div
-                                    class="p-4 rounded-2xl border border-stone-100 bg-stone-50"
-                                >
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div
-                                            class="w-12 h-12 bg-stone-200 rounded-full"
-                                        ></div>
-                                        <div
-                                            class="h-4 bg-stone-200 rounded w-1/3"
-                                        ></div>
+                        {#if characters.length > 0}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {#each characters as char}
+                                    <div
+                                        class="bg-white rounded-2xl border border-stone-100 p-5 shadow-xs hover:shadow-md hover:border-burnt-orange/20 transition-all flex flex-col justify-between h-full group"
+                                    >
+                                        <div class="space-y-4">
+                                            <!-- Top section -->
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex items-center gap-4">
+                                                    <img
+                                                        src={char.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${char.name}`}
+                                                        alt={char.name}
+                                                        class="w-16 h-16 rounded-xl object-cover bg-stone-50 border-2 border-stone-100"
+                                                    />
+                                                    <div>
+                                                        <h3
+                                                            class="font-display font-bold text-xl text-dark-gray group-hover:text-burnt-orange transition-colors"
+                                                        >
+                                                            {char.name}
+                                                        </h3>
+                                                        <p class="text-stone-400 text-sm font-medium">
+                                                            {char.race} {char.sub_race ? `(${char.sub_race})` : ''}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {#if char.association_type === 'assigned'}
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                                                            Attribué
+                                                        </span>
+                                                    {:else}
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+                                                            Créé (MJ)
+                                                        </span>
+                                                    {/if}
+                                                </div>
+                                            </div>
+ 
+                                            <!-- Vitals (HP & XP/Level) -->
+                                            <div class="space-y-2 bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                                <div class="flex justify-between text-xs font-bold text-stone-500">
+                                                    <span>Points de Vie</span>
+                                                    <span>{char.current_hp} / {char.max_hp} PV</span>
+                                                </div>
+                                                <div class="h-2 bg-stone-200 rounded-full overflow-hidden">
+                                                    <div
+                                                        class="h-full rounded-full transition-all duration-300 {char.current_hp < char.max_hp / 3 ? 'bg-red-500' : 'bg-green-500'}"
+                                                        style="width: {(char.current_hp / char.max_hp) * 100}%"
+                                                    ></div>
+                                                </div>
+                                                {#if char.experience !== undefined}
+                                                    <div class="flex justify-between text-[11px] text-stone-400 font-semibold pt-1 border-t border-stone-200/50 mt-1">
+                                                        <span>Expérience</span>
+                                                        <span>{char.experience} XP</span>
+                                                    </div>
+                                                {/if}
+                                            </div>
+ 
+                                            <!-- Associated Game info -->
+                                            {#if char.game}
+                                                <div class="flex items-center gap-2 pt-2">
+                                                    <img
+                                                        src={char.game.image_url || `https://placehold.co/100x100/3D405B/F9F7F2?text=${char.game.name}`}
+                                                        alt={char.game.name}
+                                                        class="w-6 h-6 rounded-md object-cover"
+                                                    />
+                                                    <span class="text-xs font-medium text-stone-500 truncate">
+                                                        Partie : <span class="font-semibold text-dark-gray">{char.game.name}</span>
+                                                    </span>
+                                                </div>
+                                            {/if}
+                                        </div>
+ 
+                                        <!-- Join button -->
+                                        <div class="pt-5 mt-4 border-t border-stone-100/60 flex justify-end">
+                                            <a
+                                                href="/table/{char.game_id || char.game?.id}"
+                                                class="px-4 py-2 bg-burnt-orange text-white rounded-xl text-sm font-bold shadow-xs hover:bg-opacity-90 hover:shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                                            >
+                                                {#if char.association_type === 'assigned'}
+                                                    Jouer ce personnage
+                                                {:else}
+                                                    Rejoindre la partie (MJ)
+                                                {/if}
+                                            </a>
+                                        </div>
                                     </div>
-                                    <div class="space-y-2">
-                                        <div
-                                            class="h-3 bg-stone-200 rounded w-full"
-                                        ></div>
-                                        <div
-                                            class="h-3 bg-stone-200 rounded w-5/6"
-                                        ></div>
-                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="text-center py-20 bg-stone-50/50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center gap-4">
+                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-stone-300 shadow-sm border border-stone-100">
+                                    <Skull size={32} />
                                 </div>
-                            {/each}
-                        </div>
-                        <div class="text-center mt-8 text-dark-gray/60">
-                            <p>Fonctionnalité à venir...</p>
-                        </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-dark-gray text-lg">Aucun personnage</h4>
+                                    <p class="text-stone-400 text-sm max-w-sm">
+                                        Vous n'avez aucun personnage pour le moment. Rejoignez une partie ou demandez à votre Maître du Jeu de vous en assigner un !
+                                    </p>
+                                </div>
+                            </div>
+                        {/if}
                     </div>
                 {/if}
+
+                <!-- Bestiary Tab -->
+                {#if activeTab === "bestiary"}
+                    <div
+                        class="animate-in fade-in slide-in-from-bottom-4 duration-300"
+                    >
+                        {#if monsters.length > 0}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {#each monsters as monster}
+                                    <div
+                                        class="bg-white rounded-2xl border border-stone-100 p-5 shadow-xs hover:shadow-md hover:border-burnt-orange/20 transition-all flex flex-col justify-between h-full group"
+                                    >
+                                        <div class="space-y-4">
+                                            <!-- Top section -->
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex items-center gap-4">
+                                                    <img
+                                                        src={monster.avatar_url || `https://api.dicebear.com/9.x/bottts/svg?seed=${monster.name}`}
+                                                        alt={monster.name}
+                                                        class="w-16 h-16 rounded-xl object-cover bg-stone-50 border-2 border-stone-100"
+                                                    />
+                                                    <div>
+                                                        <h3
+                                                            class="font-display font-bold text-xl text-dark-gray group-hover:text-burnt-orange transition-colors"
+                                                        >
+                                                            {monster.name}
+                                                        </h3>
+                                                        <p class="text-stone-400 text-sm font-medium">
+                                                            {monster.race || 'Monstre'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Vitals (HP & AC) -->
+                                            <div class="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded-xl border border-stone-100 text-center">
+                                                <div>
+                                                    <span class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold">Classe d'armure</span>
+                                                    <span class="text-lg font-bold text-dark-gray">{monster.armor_class ?? 10}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold">Points de Vie Max</span>
+                                                    <span class="text-lg font-bold text-dark-gray">{monster.max_hp} PV</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Associated Game info -->
+                                            {#if monster.game}
+                                                <div class="flex items-center gap-2 pt-2">
+                                                    <img
+                                                        src={monster.game.image_url || `https://placehold.co/100x100/3D405B/F9F7F2?text=${monster.game.name}`}
+                                                        alt={monster.game.name}
+                                                        class="w-6 h-6 rounded-md object-cover"
+                                                    />
+                                                    <span class="text-xs font-medium text-stone-500 truncate font-semibold">
+                                                        Partie : <span class="font-bold text-dark-gray">{monster.game.name}</span>
+                                                    </span>
+                                                </div>
+                                            {/if}
+                                        </div>
+
+                                        <!-- Actions -->
+                                        <div class="pt-5 mt-4 border-t border-stone-100/60 flex justify-between items-center gap-2">
+                                            <a
+                                                href="/table/{monster.game_id || monster.game?.id}/gm/settings?tab=bestiary"
+                                                class="text-xs font-bold text-stone-500 hover:text-burnt-orange transition-colors"
+                                            >
+                                                Modifier le monstre
+                                            </a>
+                                            <a
+                                                href="/table/{monster.game_id || monster.game?.id}"
+                                                class="px-3 py-1.5 bg-dark-gray text-white rounded-lg text-xs font-bold shadow-xs hover:bg-opacity-90 hover:shadow-md transition-all"
+                                            >
+                                                Aller à la table
+                                            </a>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="text-center py-20 bg-stone-50/50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center gap-4">
+                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-stone-300 shadow-sm border border-stone-100">
+                                    <BookOpen size={32} />
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-dark-gray text-lg">Aucun monstre créé</h4>
+                                    <p class="text-stone-400 text-sm max-w-sm">
+                                        Vous n'avez pas encore créé de monstre. Allez dans les paramètres d'une partie dont vous êtes le GM pour en ajouter au bestiaire !
+                                    </p>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
             </div>
         {/if}
     </main>

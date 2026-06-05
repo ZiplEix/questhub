@@ -245,8 +245,8 @@
                         <p class="text-xs text-stone-500">
                             {#if character.is_npc}
                                 PNJ
-                            {:else if character.player_name}
-                                Joué par {character.player_name}
+                            {:else if character.user_id && players.find((p: any) => p.user_id === character.user_id)}
+                                Joué par {players.find((p: any) => p.user_id === character.user_id).name}
                             {:else}
                                 Non assigné
                             {/if}

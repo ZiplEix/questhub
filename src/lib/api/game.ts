@@ -105,7 +105,7 @@ export async function createGame(name: string, imageUrl?: string): Promise<Game>
             image_url: imageUrl || null,
             gm_id: user.id,
             invite_code: inviteCode,
-            state: 'ongoing'
+            state: 'paused'
         })
         .select()
         .single();

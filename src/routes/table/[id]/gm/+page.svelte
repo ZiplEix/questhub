@@ -19,26 +19,7 @@
     let gmCharacterId = $state("");
 
     // Lifted state for entities
-    let entities = $state<any[]>([
-        {
-            id: 2,
-            name: "Gobelin Chef",
-            type: "monster",
-            hp: 15,
-            maxHp: 20,
-            init: 12,
-            status: ["invisible"],
-        },
-        {
-            id: 4,
-            name: "Gobelin 2",
-            type: "monster",
-            hp: 0,
-            maxHp: 7,
-            init: 5,
-            status: ["dead"],
-        },
-    ]);
+    let entities = $state<any[]>([]);
 
     function handleSelectMonster(monster: any) {
         selectedMonster = monster;

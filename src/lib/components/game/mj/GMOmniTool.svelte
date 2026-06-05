@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { MessageSquare, Ghost, Map, NotebookPen } from "lucide-svelte";
+    import { MessageSquare, Ghost, NotebookPen } from "lucide-svelte";
     import QuickDice from "../player/QuickDice.svelte";
 
     // Components
     import GMChat from "./GMChat.svelte";
     import Bestiary from "./Bestiary.svelte";
-    import SceneSelector from "./SceneSelector.svelte";
     import NotesTab from "../shared/NotesTab.svelte";
     import { page } from "$app/state";
 
@@ -21,7 +20,6 @@
     const tabs = [
         { id: "chat", icon: MessageSquare, label: "Chat" },
         { id: "bestiary", icon: Ghost, label: "Bestiaire" },
-        { id: "scenes", icon: Map, label: "Scènes" },
         { id: "notes", icon: NotebookPen, label: "Notes" },
     ];
 </script>
@@ -49,8 +47,6 @@
             <GMChat {entities} {currentUserId} />
         {:else if activeTab === "bestiary"}
             <Bestiary {onSpawn} />
-        {:else if activeTab === "scenes"}
-            <SceneSelector />
         {:else if activeTab === "notes"}
             <NotesTab
                 characterId={gmCharacterId}
