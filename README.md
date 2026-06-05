@@ -2,46 +2,33 @@
 
 ![QuestHub Banner](https://via.placeholder.com/1200x400?text=QuestHub+Preview)
 
-> **A modern, powerful platform for managing tabletop RPG campaigns with real-time capabilities.**
+> **A modern, powerful platform for managing tabletop RPG campaigns with real-time capabilities, powered by SvelteKit and Supabase.**
 
-![Go](https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go)
 ![SvelteKit](https://img.shields.io/badge/SvelteKit-2.0-FF3E00?style=for-the-badge&logo=svelte)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=for-the-badge&logo=postgresql)
-![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker)
+![Supabase](https://img.shields.io/badge/Supabase-Enabled-3ECF8E?style=for-the-badge&logo=supabase)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 ## 📖 Overview
 
-**QuestHub** is a comprehensive Virtual Tabletop (VTT) and campaign management companion designed to streamline the TTRPG experience for Game Masters and Players alike. Built with performance and real-time interaction in mind, it bridges the gap between complex campaign organization and fluid in-game action.
+**QuestHub** is a comprehensive Virtual Tabletop (VTT) and campaign management companion designed to streamline the TTRPG experience for Game Masters and Players alike. Built with performance and real-time interaction in mind, it provides a seamless campaign organizer and real-time gaming environment.
 
-Whether you're tracking character stats, managing intricate inventory systems, or rolling dice in real-time with your party, QuestHub provides a seamless, responsive interface powered by a robust backend.
-
-## ✨ Key Features
-
--   **Real-Time Interactivity**: Instant updates for dice rolls, chat messages, and game state changes using WebSockets.
--   **Campaign Management**: Centralized hub for campaign notes, NPCs, locations, and lore.
--   **Dynamic Character Sheets**: Fully customizable character sheets with automated stat calculations and inventory tracking.
--   **Game Master Tools**: robust suite of GM tools including initiative tracking, secret rolls, and player management.
--   **Modern UI/UX**: A sleek, accessible, and responsive interface built with SvelteKit and TailwindCSS v4.
--   **Secure Authentication**: Integrated user management system.
+---
 
 ## 🛠 Tech Stack
 
-### Backend
--   **Language**: [Go (Golang)](https://go.dev/)
--   **Framework**: [Echo](https://echo.labstack.com/) - High performance, extensible web framework.
--   **Database**: [PostgreSQL](https://www.postgresql.org/) - Robust relational database with `pgx` driver.
--   **Real-time**: [Gorilla WebSocket](https://github.com/gorilla/websocket) - Efficient WebSocket implementation for Go.
-
 ### Frontend
--   **Framework**: [SvelteKit](https://kit.svelte.dev/) - Full-stack framework for building performant web apps.
--   **Language**: TypeScript - For type-safe, maintainable code.
--   **Styling**: [TailwindCSS v4](https://tailwindcss.com/) - Utility-first CSS framework for rapid UI development.
--   **Auth**: [Better Auth](https://www.better-auth.com/) - Comprehensive authentication solution.
+-   **Framework**: [SvelteKit](https://kit.svelte.dev/) - Svelte 5, full-stack Svelte framework.
+-   **Styling**: [TailwindCSS v4](https://tailwindcss.com/) - Utility-first CSS.
+-   **Type Safety**: TypeScript.
 
-### DevOps & Infrastructure
--   **Containerization**: Docker & Docker Compose for consistent environments.
--   **Tooling**: Makefiles for automated tasks (migrations, builds, dev server).
+### Backend (Serverless / Managed)
+-   **Database**: [PostgreSQL](https://www.postgresql.org/) hosted on Supabase.
+-   **Authentication**: Supabase Auth (Email + Google Social login).
+-   **Real-time**: Supabase Realtime Channels (heartbeats, Broadcast, and Change Data Capture).
+-   **Storage**: Supabase Storage (for campaign assets and avatars).
+-   **Access Control**: Row Level Security (RLS) policies defined in database schema.
+
+---
 
 ## 🚀 Getting Started
 
@@ -49,11 +36,10 @@ Follow these instructions to set up the project locally for development and test
 
 ### Prerequisites
 
--   [Docker](https://www.docker.com/) & Docker Compose
--   [Go](https://go.dev/dl/) (v1.24+)
--   [Node.js](https://nodejs.org/) or [Bun](https://bun.sh/) (for frontend)
+-   [Bun](https://bun.sh/) (highly recommended) or Node.js.
+-   A [Supabase Cloud](https://supabase.com/) project.
 
-### Installation
+### Installation & Database Setup
 
 1.  **Clone the repository**
     ```bash
@@ -61,66 +47,59 @@ Follow these instructions to set up the project locally for development and test
     cd questhub
     ```
 
-2.  **Environment Setup**
-    Ensure you have the necessary environment variables set up. Check `.env.example` if available, or confirm `backend/.env` and `frontend/.env` configurations.
-
-### Running with Docker (Recommended)
-
-The easiest way to get everything running is using Docker Compose.
-
-```bash
-make db
-```
-*This command starts the PostgreSQL database container.*
-
-To run the full stack:
-```bash
-docker-compose up --build
-```
-
-### Manual Development Setup
-
-If you prefer to run services individually:
-
-1.  **Start Database**
+2.  **Initialize local Supabase CLI**
+    If you haven't linked the CLI to your project yet:
     ```bash
-    make db
+    bunx supabase link --project-ref <your-project-ref>
     ```
 
-2.  **Run Backend**
+3.  **Apply database migrations**
+    Push the SQL schema (tables, RLS policies, views, and RPCs) to your Supabase Cloud instance:
     ```bash
-    make air
-    # Runs the Go backend with live reload (Air)
+    bunx supabase db push
     ```
 
-3.  **Run Frontend**
+### Frontend Configuration
+
+1.  **Configure environment variables**
+    Create a `.env` file inside the `frontend` folder:
     ```bash
-    make front
-    # Starts the SvelteKit development server
+    cd frontend
+    touch .env
+    ```
+    Populate it with your Supabase credentials:
+    ```env
+    PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+    PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
     ```
 
-4.  **Run Migrations**
+2.  **Install dependencies**
     ```bash
-    make migrate-up
-    # Applies database migrations
+    bun install
     ```
+
+3.  **Run SvelteKit dev server**
+    ```bash
+    bun run dev
+    ```
+    Your client is running on `http://localhost:5173`.
+
+---
 
 ## 📂 Project Structure
 
 ```bash
 questhub/
-├── backend/            # Go API server
-│   ├── config/         # App configuration
-│   ├── controller/     # HTTP handlers
-│   ├── models/         # Database models & structs
-│   └── routes/         # API route definitions
 ├── frontend/           # SvelteKit application
 │   ├── src/
-│   │   ├── lib/        # Reusable components & utilities
+│   │   ├── lib/        # Reusable components, Supabase client & store wrappers
 │   │   └── routes/     # App pages & layouts
-├── migrations/         # SQL migration files
-└── docker-compose.yml  # Container orchestration
+│   └── package.json
+└── supabase/           # Supabase migrations & configurations
+    └── migrations/     # PostgreSQL schema migrations
 ```
+
+---
 
 ## 🤝 Contributing
 
@@ -135,7 +114,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-*Built with ❤️ by [ZiplEix](https://github.com/ziplEix)*
