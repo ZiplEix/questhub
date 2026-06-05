@@ -10,7 +10,8 @@
     import CharactersTab from "$lib/components/game/gm/settings/CharactersTab.svelte";
     import InvitationsTab from "$lib/components/game/gm/settings/InvitationsTab.svelte";
     import BestiaryTab from "$lib/components/game/gm/settings/BestiaryTab.svelte";
-    import { Settings, Users, Mail, User, Skull } from "lucide-svelte";
+    import BoardsTab from "$lib/components/game/gm/settings/BoardsTab.svelte";
+    import { Settings, Users, Mail, User, Skull, Layers } from "lucide-svelte";
 
     let activeTab = $state("general");
     let game = $state<any>(null);
@@ -20,6 +21,7 @@
 
     const tabs = [
         { id: "general", label: "Général", icon: Settings },
+        { id: "boards", label: "Plateaux", icon: Layers },
         { id: "players", label: "Joueurs", icon: Users },
         { id: "characters", label: "Personnages", icon: User },
         { id: "bestiary", label: "Bestiaire", icon: Skull },
@@ -143,6 +145,11 @@
                 <!-- GENERAL TAB -->
                 {#if activeTab === "general"}
                     <GeneralTab bind:game />
+                {/if}
+
+                <!-- BOARDS TAB -->
+                {#if activeTab === "boards"}
+                    <BoardsTab mode="settings" />
                 {/if}
 
                 <!-- PLAYERS TAB -->

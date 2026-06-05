@@ -65,7 +65,7 @@
     </div>
 
     <!-- Scene Wrapper -->
-    <Scene />
+    <Scene isGM={true} />
 
     <!-- Context Menu -->
     {#if contextMenu.visible}

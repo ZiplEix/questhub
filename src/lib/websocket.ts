@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { supabase } from './supabaseClient';
+import { fetchBoards } from './api/board';
 
 export const websocketStore = writable<{
     connected: boolean;
@@ -9,7 +10,25 @@ export const websocketStore = writable<{
     messages: []
 });
 
+export const boardsStore = writable<any[]>([]);
+export const activeBoardStore = writable<any | null>(null);
+
 let channel: any = null;
+
+function syncActiveBoard(boards: any[]) {
+    const activeBoard = boards.find(b => b.is_active);
+    activeBoardStore.set(activeBoard || null);
+}
+
+export async function fetchInitialBoards(gameId: string) {
+    try {
+        const boards = await fetchBoards(gameId);
+        boardsStore.set(boards);
+        syncActiveBoard(boards);
+    } catch (e) {
+        console.error("Failed to fetch initial boards:", e);
+    }
+}
 
 export async function fetchHistory(gameId: string) {
     try {
@@ -40,6 +59,9 @@ export async function connectWebSocket(gameId: string) {
 
     // Wait for the session to be loaded so the channel is authenticated
     await supabase.auth.getSession();
+
+    // Load initial campaign data
+    await fetchInitialBoards(gameId);
 
     // Subscribe to messages channel for the specific game
     channel = supabase.channel(`game:${gameId}`)
@@ -77,6 +99,29 @@ export async function connectWebSocket(gameId: string) {
                 }));
             }
         )
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'game_boards',
+                filter: `game_id=eq.${gameId}`
+            },
+            (payload) => {
+                boardsStore.update(boards => {
+                    let updatedBoards = [...boards];
+                    if (payload.eventType === 'INSERT') {
+                        updatedBoards.push(payload.new);
+                    } else if (payload.eventType === 'UPDATE') {
+                        updatedBoards = updatedBoards.map(b => b.id === payload.new.id ? payload.new : b);
+                    } else if (payload.eventType === 'DELETE') {
+                        updatedBoards = updatedBoards.filter(b => b.id !== payload.old.id);
+                    }
+                    syncActiveBoard(updatedBoards);
+                    return updatedBoards;
+                });
+            }
+        )
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 console.log('Supabase Realtime connected');
@@ -94,4 +139,7 @@ export function closeWebSocket() {
         channel = null;
     }
     websocketStore.update(s => ({ ...s, connected: false, messages: [] }));
+    boardsStore.set([]);
+    activeBoardStore.set(null);
 }
+
