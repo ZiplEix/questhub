@@ -3,46 +3,18 @@
     import GMTracker from "$lib/components/game/mj/GMTracker.svelte";
     import GMScene from "$lib/components/game/mj/GMScene.svelte";
     import GMOmniTool from "$lib/components/game/mj/GMOmniTool.svelte";
-    import MonsterDrawer from "$lib/components/game/mj/MonsterDrawer.svelte";
 
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { authClient } from "$lib/auth-client";
     import { fetchHistory } from "$lib/websocket";
-    import { fetchGame, fetchCharacters } from "$lib/api";
+    import { fetchGame } from "$lib/api";
 
-    let selectedMonster = $state<any>(null);
     let isLeftPanelOpen = $state(true);
     let isRightPanelOpen = $state(true);
     let currentUserId = $state("");
     let gmCharacterId = $state("");
-
-    // Lifted state for entities
-    let entities = $state<any[]>([]);
-
-    function handleSelectMonster(monster: any) {
-        selectedMonster = monster;
-    }
-
-    function spawnMonster(monsterTemplate: any) {
-        const newMonster = {
-            id: Date.now(),
-            name: monsterTemplate.name,
-            type: "monster",
-            hp: monsterTemplate.hp,
-            maxHp: monsterTemplate.hp,
-            init: Math.floor(Math.random() * 20) + 1,
-            status: [],
-            // Extra stats for drawer
-            ac: monsterTemplate.ac,
-            cr: monsterTemplate.cr,
-            monsterType: monsterTemplate.type,
-        };
-        entities.push(newMonster);
-        // Sort by initiative (simple desc sort)
-        entities.sort((a: any, b: any) => b.init - a.init);
-    }
 
     onMount(async () => {
         const gameId = page.params.id || "";
@@ -70,27 +42,6 @@
                 if (sessionData?.user) {
                     currentUserId = sessionData.user.id;
                 }
-
-                // Fetch characters (players)
-                const activeCharacters = await fetchCharacters(gameId);
-                const realPlayers = activeCharacters
-                    .filter((c: any) => c.user_id) // Only characters assigned to a user
-                    .map((c: any) => ({
-                        id: c.id,
-                        name: c.name,
-                        type: "player",
-                        hp: c.current_hp,
-                        maxHp: c.max_hp,
-                        init: c.initiative,
-                        status: [],
-                        userId: c.user_id, // Important for chat targeting
-                    }));
-
-                // Add real players to entities, removing any existing players to avoid duplicates
-                entities = [
-                    ...entities.filter((e) => e.type !== "player"),
-                    ...realPlayers,
-                ];
             }
         } catch (e) {
             console.error(e);
@@ -107,7 +58,7 @@
             : '0px'}; opacity: {isLeftPanelOpen ? '1' : '0'};"
     >
         <div class="w-[300px] h-full">
-            <GMTracker {entities} onSelect={handleSelectMonster} />
+            <GMTracker />
         </div>
     </aside>
 
@@ -129,14 +80,6 @@
         </button>
 
         <GMScene />
-
-        <!-- Monster Detail Drawer (Overlay) -->
-        {#if selectedMonster}
-            <MonsterDrawer
-                monster={selectedMonster}
-                onClose={() => (selectedMonster = null)}
-            />
-        {/if}
 
         <!-- Right Toggle Button -->
         <button
@@ -163,8 +106,6 @@
     >
         <div class="w-[400px] h-full">
             <GMOmniTool
-                onSpawn={spawnMonster}
-                {entities}
                 {currentUserId}
                 {gmCharacterId}
             />

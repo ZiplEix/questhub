@@ -9,6 +9,8 @@
         Save,
         ArrowLeft,
     } from "lucide-svelte";
+    import IconRenderer from "$lib/components/IconRenderer.svelte";
+    import IconPicker from "$lib/components/IconPicker.svelte";
     import { createCharacter, updateCharacter, uploadImage } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { page } from "$app/state";
@@ -958,11 +960,9 @@
                                             class="w-full px-3 py-1 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-burnt-orange"
                                         />
                                     {:else if item.imageType === "icon"}
-                                        <input
-                                            type="text"
-                                            bind:value={item.iconName}
-                                            placeholder="Nom de l'icône (ex: Sword)"
-                                            class="w-full px-3 py-1 rounded-lg border border-stone-200 text-xs focus:outline-none focus:border-burnt-orange"
+                                        <IconPicker
+                                            value={item.iconName}
+                                            onSelect={(iconName) => (item.iconName = iconName)}
                                         />
                                     {/if}
                                 </div>

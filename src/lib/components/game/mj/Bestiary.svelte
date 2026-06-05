@@ -4,7 +4,7 @@
     import { page } from "$app/state";
     import { onMount } from "svelte";
 
-    let { onSpawn } = $props();
+
 
     let searchQuery = $state("");
     let monsters = $state<any[]>([]);
@@ -92,17 +92,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div
-                            class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <button
-                                class="p-1.5 bg-burnt-orange text-white rounded-lg hover:bg-orange-600"
-                                title="Ajouter au combat"
-                                onclick={() => onSpawn?.(monster)}
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
+
                     </div>
 
                     <div

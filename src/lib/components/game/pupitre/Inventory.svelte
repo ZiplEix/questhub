@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Backpack, Coins, Search, Package } from "lucide-svelte";
+    import IconRenderer from "$lib/components/IconRenderer.svelte";
     import type { Character } from "$lib/types/character";
 
     let { character } = $props<{ character: Character }>();
@@ -67,8 +68,11 @@
                                 class="w-full h-full object-cover"
                             />
                         {:else if item.icon_name}
-                            <!-- Assuming icon_name might be an emoji or text for now -->
-                            <span class="text-lg">{item.icon_name}</span>
+                            <IconRenderer
+                                iconName={item.icon_name}
+                                size={20}
+                                class="text-stone-600"
+                            />
                         {:else}
                             <Package size={20} class="text-stone-400" />
                         {/if}

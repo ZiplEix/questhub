@@ -9,8 +9,6 @@
     import { page } from "$app/state";
 
     let {
-        onSpawn,
-        entities = [],
         currentUserId = "",
         gmCharacterId = "",
     } = $props();
@@ -44,9 +42,9 @@
     <!-- Content -->
     <div class="flex-1 overflow-hidden relative">
         {#if activeTab === "chat"}
-            <GMChat {entities} {currentUserId} />
+            <GMChat {currentUserId} />
         {:else if activeTab === "bestiary"}
-            <Bestiary {onSpawn} />
+            <Bestiary />
         {:else if activeTab === "notes"}
             <NotesTab
                 characterId={gmCharacterId}
