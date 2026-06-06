@@ -7,6 +7,9 @@ export interface GameBoard {
     image_url: string | null;
     is_active: boolean;
     created_at: string;
+    pixels_per_cell: number;
+    grid_offset_x: number;
+    grid_offset_y: number;
 }
 
 export async function fetchBoards(gameId: string): Promise<GameBoard[]> {
@@ -186,13 +189,25 @@ export async function fetchBoard(boardId: string): Promise<GameBoard> {
     return data;
 }
 
-export async function updateBoard(boardId: string, name: string, imageUrl: string): Promise<GameBoard> {
+export async function updateBoard(
+    boardId: string,
+    name: string,
+    imageUrl: string,
+    pixelsPerCell?: number,
+    gridOffsetX?: number,
+    gridOffsetY?: number
+): Promise<GameBoard> {
+    const updateData: Record<string, any> = {
+        name,
+        image_url: imageUrl
+    };
+    if (pixelsPerCell !== undefined) updateData.pixels_per_cell = pixelsPerCell;
+    if (gridOffsetX !== undefined) updateData.grid_offset_x = gridOffsetX;
+    if (gridOffsetY !== undefined) updateData.grid_offset_y = gridOffsetY;
+
     const { data, error } = await supabase
         .from('game_boards')
-        .update({
-            name,
-            image_url: imageUrl
-        })
+        .update(updateData)
         .eq('id', boardId)
         .select()
         .single();

@@ -30,8 +30,12 @@
     let dragOffset = { x: 0, y: 0 };
     let tokenImages = $state<Record<string, HTMLImageElement>>({});
     let activeBoardTokensLoading = $state(true);
-    const tokenRadius = 16;
     const activeBoardId = $derived($activeBoardStore?.id || "");
+    const pixelsPerCell = $derived($activeBoardStore?.pixels_per_cell || 70);
+    const gridOffsetX = $derived($activeBoardStore?.grid_offset_x || 0);
+    const gridOffsetY = $derived($activeBoardStore?.grid_offset_y || 0);
+    // Token radius is 45% of a cell (leaves a 10% margin on each side)
+    const tokenRadius = $derived(pixelsPerCell * 0.45);
 
     // Context Menu State
     let contextMenu = $state<{
@@ -513,8 +517,6 @@
         // Draw image centered at (0, 0)
         ctx.drawImage(img, -naturalWidth / 2, -naturalHeight / 2, naturalWidth, naturalHeight);
 
-        // Grid layout spacing
-        const spacing = 40;
         const halfW = naturalWidth / 2;
         const halfH = naturalHeight / 2;
 
@@ -522,21 +524,6 @@
         ctx.strokeStyle = "rgba(0, 0, 0, 0.25)";
         ctx.lineWidth = 1 / zoom;
         ctx.strokeRect(-halfW, -halfH, naturalWidth, naturalHeight);
-
-        // Subtle grid dots (double layered for visibility on any background)
-        for (let x = -Math.floor(halfW / spacing) * spacing; x <= halfW; x += spacing) {
-            for (let y = -Math.floor(halfH / spacing) * spacing; y <= halfH; y += spacing) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
-                ctx.beginPath();
-                ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
-                ctx.beginPath();
-                ctx.arc(x + 0.5, y + 0.5, 0.8, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
 
         // Draw active pings
         const now = Date.now();
