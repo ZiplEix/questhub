@@ -2,14 +2,11 @@
     const currentYear = new Date().getFullYear();
 </script>
 
-<footer class="w-full py-8 text-center text-dark-gray/60 text-sm">
-    <div class="flex justify-center gap-6 mb-4">
-        <a href="/about" class="hover:text-burnt-orange transition-colors"
-            >À propos</a
-        >
-        <a href="/support" class="hover:text-burnt-orange transition-colors"
-            >Support</a
-        >
+<footer class="w-full py-8 text-center text-stone-400 text-xs mt-auto border-t border-stone-200/50 bg-stone-50/20 backdrop-blur-xs shrink-0">
+    <div class="flex justify-center flex-wrap gap-x-6 gap-y-2 mb-4 font-semibold">
+        <a href="/about" class="hover:text-burnt-orange transition-colors">À propos</a>
+        <a href="/mentions-legales" class="hover:text-burnt-orange transition-colors">Mentions légales</a>
+        <a href="/contact" class="hover:text-burnt-orange transition-colors">Contact & Signalement</a>
     </div>
-    <p>© {currentYear} QuestHub. Tous droits réservés.</p>
+    <p class="font-medium">© {currentYear} QuestHub. Tous droits réservés.</p>
 </footer>

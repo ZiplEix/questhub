@@ -9,3 +9,4 @@ export * from './storage';
 export * from './dice';
 export * from './board';
 export * from './marketplace';
+export * from './feedback';
