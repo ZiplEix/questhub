@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeBoardStore, sendPing, onPingReceived, onTokenDragged, sendTokenDrag } from "$lib/websocket";
-    import { Compass, Minus, Plus, Trash2, Swords, Eye, EyeOff } from "lucide-svelte";
+    import { Compass, Minus, Plus, Trash2, Swords, Eye, EyeOff, Activity } from "lucide-svelte";
     import { fade } from "svelte/transition";
     import { onMount, untrack } from "svelte";
     import { page } from "$app/state";
@@ -68,6 +68,7 @@
         characterName: string;
         inCombat: boolean;
         isHidden: boolean;
+        auraRadius?: number | null;
     } | null>(null);
 
     async function removeTokenFromBoard(tokenId: string) {
@@ -123,6 +124,34 @@
             console.error("Failed to toggle visibility state from scene menu:", e);
         } finally {
             contextMenu = null;
+        }
+    }
+
+    async function promptCircleDiameter(tokenId: string, currentRadius: number | null) {
+        contextMenu = null;
+        const currentDiameter = currentRadius ? currentRadius * 2 : 0;
+        const msg = currentDiameter > 0 
+            ? `Entrez le diamètre du cercle en mètres (actuel : ${currentDiameter}m, ou 0 pour le supprimer) :`
+            : "Entrez le diamètre du cercle à dessiner autour du jeton (en mètres, ex : 6) :";
+        
+        const input = prompt(msg, currentDiameter > 0 ? String(currentDiameter) : "6");
+        if (input === null) return;
+
+        const val = parseFloat(input);
+        if (isNaN(val) || val < 0) {
+            alert("Veuillez entrer un nombre positif valide.");
+            return;
+        }
+
+        const newRadius = val > 0 ? val / 2 : null;
+        try {
+            // Optimistic update
+            tokens = tokens.map(t => t.id === tokenId ? { ...t, aura_radius: newRadius } : t);
+            draw();
+            await updateTokenCombatState(tokenId, { aura_radius: newRadius });
+        } catch (e) {
+            console.error("Failed to update token aura radius:", e);
+            loadTokens();
         }
     }
 
@@ -681,6 +710,37 @@
                 continue;
             }
 
+            // Draw Aura/Circle Underneath
+            if (token.aura_radius && token.aura_radius > 0) {
+                const auraRadiusPx = token.aura_radius * pixelsPerCell;
+                ctx.save();
+                
+                let auraColor = "#3B82F6"; // default blue for ally
+                if (token.faction === "enemy") {
+                    auraColor = "#EF4444"; // red for enemy
+                } else if (token.faction === "neutral") {
+                    auraColor = "#EAB308"; // yellow for neutral
+                }
+                
+                // Soft filled background
+                ctx.globalAlpha = 0.08;
+                ctx.fillStyle = auraColor;
+                ctx.beginPath();
+                ctx.arc(tx, ty, auraRadiusPx, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Dashed outline
+                ctx.globalAlpha = 0.5;
+                ctx.strokeStyle = auraColor;
+                ctx.lineWidth = 2 / zoom;
+                ctx.setLineDash([6 / zoom, 4 / zoom]);
+                ctx.beginPath();
+                ctx.arc(tx, ty, auraRadiusPx, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
             ctx.save();
             
             // Set transparency for invisible tokens
@@ -885,7 +945,8 @@
                     tokenId: clickedToken.id,
                     characterName: clickedToken.character?.name || "Personnage",
                     inCombat: clickedToken.in_combat,
-                    isHidden: clickedToken.is_hidden
+                    isHidden: clickedToken.is_hidden,
+                    auraRadius: clickedToken.aura_radius
                 };
             } else {
                 // Right-click on empty map: do not prevent default, just close custom menu
@@ -981,6 +1042,14 @@
                         <EyeOff size={13} class="text-stone-400" />
                         Masquer aux joueurs
                     {/if}
+                </button>
+                <button
+                    role="menuitem"
+                    onclick={() => promptCircleDiameter(contextMenu?.tokenId || '', contextMenu?.auraRadius || null)}
+                    class="w-full px-3 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                    <Activity size={13} class="text-stone-400" />
+                    <span>Dessiner un cercle</span>
                 </button>
                 <div class="h-px bg-stone-100 my-1"></div>
                 <div class="px-3 py-1 text-[9px] font-bold text-stone-400 uppercase tracking-wider">Faction</div>

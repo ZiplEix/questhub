@@ -83,6 +83,7 @@ export interface BoardToken {
     initiative: number;
     is_hidden: boolean;
     faction: 'ally' | 'enemy' | 'neutral';
+    aura_radius?: number | null;
     character?: {
         id: string;
         name: string;
@@ -266,6 +267,7 @@ export async function updateTokenCombatState(
         initiative?: number;
         is_hidden?: boolean;
         faction?: 'ally' | 'enemy' | 'neutral';
+        aura_radius?: number | null;
     }
 ): Promise<void> {
     const { error } = await supabase

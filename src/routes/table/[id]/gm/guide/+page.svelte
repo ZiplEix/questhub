@@ -18,7 +18,8 @@
         CheckCircle2,
         HelpCircle,
         Code,
-        Settings
+        Settings,
+        Swords
     } from "lucide-svelte";
     import { page } from "$app/state";
 
@@ -29,7 +30,8 @@
         { id: "hp", label: "Gestion des PV (Dés)", icon: Heart },
         { id: "conditions", label: "États & Effets", icon: Activity },
         { id: "factions", label: "Factions & Camps", icon: Users },
-        { id: "visibility", label: "Visibilité & Joueurs", icon: Eye }
+        { id: "visibility", label: "Visibilité & Joueurs", icon: Eye },
+        { id: "contextmenu", label: "Menu Contextuel (Plateau)", icon: HelpCircle }
     ];
 </script>
 
@@ -374,6 +376,67 @@
                             <p class="text-sm text-stone-600 leading-relaxed">
                                 Lorsque cette case est **cochée**, les joueurs ne verront aucune valeur numérique (ex: <code>45/45</code>) ni barre de vie sur les jetons identifiés comme **PNJ / Ennemis**. Leurs informations de santé restent confidentielles pour le MJ.
                             </p>
+                        </div>
+                    </section>
+                {:else if activeSection === "contextmenu"}
+                    <section class="space-y-6 animate-in fade-in duration-200">
+                        <div class="border-b border-stone-200 pb-4">
+                            <h1 class="text-3xl font-display font-extrabold text-dark-gray flex items-center gap-3">
+                                <HelpCircle class="text-stone-700 fill-stone-100" size={32} />
+                                Menu Contextuel des Jetons
+                            </h1>
+                            <p class="text-stone-500 mt-2">
+                                Faites un clic droit sur n'importe quel jeton sur le plateau de jeu pour accéder à ses options rapides de MJ.
+                            </p>
+                        </div>
+
+                        <!-- Menu actions -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Plus class="text-stone-500" size={20} />
+                                Actions du Menu Contextuel
+                            </h2>
+                            <p class="text-sm text-stone-600">
+                                Le menu contextuel fournit les raccourcis suivants pour le jeton sélectionné :
+                            </p>
+                            
+                            <ul class="space-y-4 text-sm text-stone-600">
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 p-1 rounded bg-stone-100"><Swords size={14} class="text-stone-600" /></span>
+                                    <div>
+                                        <strong class="text-stone-900 block">Ajouter / Retirer du combat</strong>
+                                        Incorpore ou retire instantanément le jeton dans le cycle d'initiative actif.
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 p-1 rounded bg-stone-100"><Eye size={14} class="text-stone-600" /></span>
+                                    <div>
+                                        <strong class="text-stone-900 block">Masquer / Rendre visible aux joueurs</strong>
+                                        Bascule la visibilité du jeton sur le plateau pour les joueurs (brouillard de guerre local).
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 p-1 rounded bg-stone-100"><Activity size={14} class="text-stone-600" /></span>
+                                    <div>
+                                        <strong class="text-stone-900 block">Dessiner un cercle (Aura / Portée)</strong>
+                                        Affiche un cercle de portée en pointillés de la couleur de la faction autour du jeton. Idéal pour matérialiser une zone d'effet (ex: 6 mètres pour une boule de feu, ou une aura de Paladin). Saisissez <code>0</code> pour supprimer le cercle.
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 p-1 rounded bg-stone-100"><Users size={14} class="text-stone-600" /></span>
+                                    <div>
+                                        <strong class="text-stone-900 block">Faction (Allié / Ennemi / Neutre)</strong>
+                                        Bascule rapidement l'affiliation du jeton pour colorer son anneau sur la carte (Bleu pour Allié, Rouge pour Ennemi, Jaune pour Neutre).
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 p-1 rounded bg-stone-100"><Trash2 size={14} class="text-stone-600" /></span>
+                                    <div>
+                                        <strong class="text-stone-900 block">Retirer du plateau</strong>
+                                        Supprime définitivement le jeton du plateau de jeu (sans affecter le personnage dans la base de données).
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                     </section>
                 {/if}
