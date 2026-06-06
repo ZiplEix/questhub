@@ -19,6 +19,20 @@
     let players = $state<any[]>([]);
     let invitations = $state<any[]>([]);
 
+    let allPlayers = $derived.by(() => {
+        if (!game) return players;
+        const gmPlayer = {
+            game_id: game.id,
+            user_id: game.gm_id,
+            name: "Maître du Jeu (MJ)",
+            email: "Créateur de la table",
+            joined_at: game.created_at,
+            ping_color: game.gm_ping_color || "#E07A5F",
+            is_gm: true
+        };
+        return [gmPlayer, ...players];
+    });
+
     const tabs = [
         { id: "general", label: "Général", icon: Settings },
         { id: "boards", label: "Plateaux", icon: Layers },
@@ -155,7 +169,7 @@
                 <!-- PLAYERS TAB -->
                 {#if activeTab === "players"}
                     <PlayersTab
-                        {players}
+                        players={allPlayers}
                         {invitations}
                         onRefresh={refreshData}
                     />
@@ -163,7 +177,7 @@
 
                 <!-- CHARACTERS TAB -->
                 {#if activeTab === "characters"}
-                    <CharactersTab {players} gameId={page.params.id || ""} />
+                    <CharactersTab players={allPlayers} gameId={page.params.id || ""} />
                 {/if}
 
                 <!-- BESTIARY TAB -->

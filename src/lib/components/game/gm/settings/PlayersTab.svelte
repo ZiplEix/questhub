@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from "$app/state";
+    import { goto } from "$app/navigation";
     import { acceptInvitation as acceptInvitationApi, declineInvitation as declineInvitationApi, kickPlayer } from "$lib/api";
     import { UserPlus, Trash2, Check, X } from "lucide-svelte";
 
@@ -119,61 +120,117 @@
 
     <div class="space-y-3">
         {#each players as player}
-            <div
-                class="flex items-center justify-between p-4 rounded-xl border border-stone-100 hover:border-stone-200 transition-all"
-            >
-                <div class="flex items-center gap-4">
-                    {#if player.avatar_url}
-                        <img
-                            src={player.avatar_url}
-                            alt={player.name}
-                            class="w-10 h-10 rounded-full object-cover"
-                        />
-                    {:else}
-                        <div
-                            class="w-10 h-10 rounded-full bg-burnt-orange/20 flex items-center justify-center text-burnt-orange font-bold"
-                        >
-                            {player.name.charAt(0)}
+            {#if player.is_gm}
+                <!-- GM Card (Clickable) -->
+                <div
+                    onclick={() => goto(`/table/${page.params.id}/gm/settings/player/${player.user_id}`)}
+                    onkeydown={(e) => e.key === 'Enter' && goto(`/table/${page.params.id}/gm/settings/player/${player.user_id}`)}
+                    role="button"
+                    tabindex="0"
+                    class="flex items-center justify-between p-4 rounded-xl border border-stone-100 hover:border-stone-300 hover:bg-stone-50/50 transition-all cursor-pointer group"
+                >
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            {#if player.avatar_url}
+                                <img
+                                    src={player.avatar_url}
+                                    alt={player.name}
+                                    class="w-10 h-10 rounded-full object-cover"
+                                />
+                            {:else}
+                                <div
+                                    class="w-10 h-10 rounded-full bg-burnt-orange/20 flex items-center justify-center text-burnt-orange font-bold"
+                                >
+                                    {player.name.charAt(0)}
+                                </div>
+                            {/if}
+                            <span 
+                                class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
+                                style="background-color: {player.ping_color || '#E07A5F'};"
+                                title="Couleur du ping"
+                            ></span>
                         </div>
-                    {/if}
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <p class="font-bold text-dark-gray">
-                                {player.name}
-                            </p>
-                            {#if player.is_gm}
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-dark-gray group-hover:text-burnt-orange transition-colors">
+                                    {player.name}
+                                </p>
                                 <span
                                     class="px-2 py-0.5 rounded-full bg-burnt-orange/10 text-burnt-orange text-xs font-bold border border-burnt-orange/20"
                                 >
                                     MJ
                                 </span>
-                            {/if}
-                        </div>
-                        {#if player.character_name && !player.is_gm}
-                            <p class="text-sm text-burnt-orange font-medium">
-                                Incarne {player.character_name}
+                            </div>
+                            <p class="text-xs text-stone-500">
+                                Rejoint le {new Date(
+                                    player.joined_at,
+                                ).toLocaleDateString()}
                             </p>
-                        {/if}
-                        <p class="text-xs text-stone-500">
-                            Rejoint le {new Date(
-                                player.joined_at,
-                            ).toLocaleDateString()}
-                        </p>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    {#if !player.is_gm}
+            {:else}
+                <!-- Clickable Player Card -->
+                <div
+                    onclick={() => goto(`/table/${page.params.id}/gm/settings/player/${player.user_id}`)}
+                    onkeydown={(e) => e.key === 'Enter' && goto(`/table/${page.params.id}/gm/settings/player/${player.user_id}`)}
+                    role="button"
+                    tabindex="0"
+                    class="flex items-center justify-between p-4 rounded-xl border border-stone-100 hover:border-stone-300 hover:bg-stone-50/50 transition-all cursor-pointer group"
+                >
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            {#if player.avatar_url}
+                                <img
+                                    src={player.avatar_url}
+                                    alt={player.name}
+                                    class="w-10 h-10 rounded-full object-cover"
+                                />
+                            {:else}
+                                <div
+                                    class="w-10 h-10 rounded-full bg-burnt-orange/20 flex items-center justify-center text-burnt-orange font-bold"
+                                >
+                                    {player.name.charAt(0)}
+                                </div>
+                            {/if}
+                            <span 
+                                class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
+                                style="background-color: {player.ping_color || '#E07A5F'};"
+                                title="Couleur du ping"
+                            ></span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-dark-gray group-hover:text-burnt-orange transition-colors">
+                                    {player.name}
+                                </p>
+                            </div>
+                            {#if player.character_name}
+                                <p class="text-sm text-burnt-orange font-medium">
+                                    Incarne {player.character_name}
+                                </p>
+                            {/if}
+                            <p class="text-xs text-stone-500">
+                                Rejoint le {new Date(
+                                    player.joined_at,
+                                ).toLocaleDateString()}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <button
-                            onclick={() =>
-                                removePlayer(player.user_id, player.name)}
+                            onclick={(e) => {
+                                e.stopPropagation();
+                                removePlayer(player.user_id, player.name);
+                            }}
                             class="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                             title="Exclure"
                         >
                             <Trash2 size={18} />
                         </button>
-                    {/if}
+                    </div>
                 </div>
-            </div>
+            {/if}
         {/each}
     </div>
 </div>

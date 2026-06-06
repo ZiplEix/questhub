@@ -6,6 +6,7 @@ export interface Player {
     name: string;
     email: string;
     joined_at: string;
+    ping_color: string;
 }
 
 export async function fetchPlayers(gameId: string): Promise<Player[]> {
@@ -22,6 +23,16 @@ export async function kickPlayer(gameId: string, userId: string): Promise<void> 
     const { error } = await supabase
         .from('game_players')
         .delete()
+        .eq('game_id', gameId)
+        .eq('user_id', userId);
+
+    if (error) throw error;
+}
+
+export async function updatePlayerSettings(gameId: string, userId: string, settings: { ping_color: string }): Promise<void> {
+    const { error } = await supabase
+        .from('game_players')
+        .update(settings)
         .eq('game_id', gameId)
         .eq('user_id', userId);
 

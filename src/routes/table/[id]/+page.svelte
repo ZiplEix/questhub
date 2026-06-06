@@ -23,6 +23,25 @@
     let players = $state<any[]>([]);
     let error = $state<string | null>(null);
     let currentUserId = $state("");
+    
+    let dashboardWidth = $state(400);
+    let isDraggingDashboard = $state(false);
+
+    function handleMouseDownDashboard(e: MouseEvent) {
+        e.preventDefault();
+        isDraggingDashboard = true;
+    }
+
+    function handleMouseMove(e: MouseEvent) {
+        if (isDraggingDashboard) {
+            const newWidth = window.innerWidth - e.clientX;
+            dashboardWidth = Math.min(Math.max(newWidth, 320), 800);
+        }
+    }
+
+    function handleMouseUp() {
+        isDraggingDashboard = false;
+    }
 
     function toggleDashboard() {
         isDashboardOpen = !isDashboardOpen;
@@ -97,6 +116,11 @@
     });
 </script>
 
+<svelte:window 
+    onmousemove={handleMouseMove} 
+    onmouseup={handleMouseUp} 
+/>
+
 {#if loading}
     <div class="h-screen w-full flex items-center justify-center bg-stone-50">
         <div
@@ -127,11 +151,10 @@
             <div class="relative w-full h-full flex overflow-hidden">
                 <!-- Left Zone: Immersion (Flexible) -->
                 <div
-                    class="h-full relative transition-all duration-500 ease-in-out"
-                    style="width: {isDashboardOpen ? '65%' : '100%'}"
+                    class="h-full relative flex-1 transition-all duration-500 ease-in-out"
                 >
                     <ImmersionZone />
-
+ 
                     <!-- Toggle Button (Attached to the right edge of Immersion Zone) -->
                     <button
                         onclick={toggleDashboard}
@@ -147,19 +170,29 @@
                         {/if}
                     </button>
                 </div>
-
+ 
                 <!-- Right Zone: Dashboard (Collapsible) -->
                 <div
-                    class="h-full relative transition-all duration-500 ease-in-out border-l border-stone-200 shadow-2xl z-40 bg-stone-50"
+                    class="h-full relative {isDraggingDashboard ? '' : 'transition-all duration-500 ease-in-out'} border-l border-stone-200 shadow-2xl z-40 bg-stone-50 overflow-hidden"
                     style="width: {isDashboardOpen
-                        ? '35%'
-                        : '0%'}; opacity: {isDashboardOpen
+                        ? dashboardWidth + 'px'
+                        : '0px'}; opacity: {isDashboardOpen
                         ? '1'
                         : '0'}; pointer-events: {isDashboardOpen
                         ? 'auto'
                         : 'none'}"
                 >
-                    <div class="w-full h-full min-w-[350px]">
+                    <!-- Resize Handle -->
+                    <div
+                        onmousedown={handleMouseDownDashboard}
+                        class="absolute top-0 left-0 w-1.5 h-full cursor-col-resize hover:bg-burnt-orange/50 active:bg-burnt-orange transition-all z-50 flex items-center justify-center group"
+                        role="separator"
+                        aria-label="Ajuster la largeur"
+                    >
+                        <div class="w-[2px] h-12 bg-stone-300/20 group-hover:bg-white/40 rounded transition-colors"></div>
+                    </div>
+
+                    <div class="h-full" style="width: {dashboardWidth}px;">
                         <!-- Prevent content squashing -->
                         <PlayerDashboard
                             {character}

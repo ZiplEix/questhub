@@ -12,6 +12,7 @@ export interface Game {
     created_at: string;
     is_gm?: boolean;
     current_character_id?: string | null;
+    gm_ping_color?: string;
 }
 
 export async function fetchGames(): Promise<Game[]> {
@@ -114,7 +115,7 @@ export async function createGame(name: string, imageUrl?: string): Promise<Game>
     return data;
 }
 
-export async function updateGame(gameId: string, payload: { name?: string; image_url?: string; is_active?: boolean; state?: string }): Promise<Game> {
+export async function updateGame(gameId: string, payload: { name?: string; image_url?: string; is_active?: boolean; state?: string; gm_ping_color?: string }): Promise<Game> {
     const { data, error } = await supabase
         .from('games')
         .update(payload)

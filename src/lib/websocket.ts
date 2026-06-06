@@ -122,6 +122,16 @@ export async function connectWebSocket(gameId: string) {
                 });
             }
         )
+        .on(
+            'broadcast',
+            { event: 'ping' },
+            (payload) => {
+                console.log('Received broadcast ping:', payload);
+                if (payload && payload.payload) {
+                    pingCallbacks.forEach(cb => cb(payload.payload));
+                }
+            }
+        )
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 console.log('Supabase Realtime connected');
@@ -142,4 +152,24 @@ export function closeWebSocket() {
     boardsStore.set([]);
     activeBoardStore.set(null);
 }
+
+let pingCallbacks: ((ping: { x: number; y: number; id: number; color?: string }) => void)[] = [];
+
+export function onPingReceived(callback: (ping: { x: number; y: number; id: number; color?: string }) => void) {
+    pingCallbacks.push(callback);
+    return () => {
+        pingCallbacks = pingCallbacks.filter(cb => cb !== callback);
+    };
+}
+
+export function sendPing(x: number, y: number, color: string) {
+    if (channel) {
+        channel.send({
+            type: 'broadcast',
+            event: 'ping',
+            payload: { x, y, id: Date.now(), color }
+        });
+    }
+}
+
 
