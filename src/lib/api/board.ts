@@ -175,3 +175,29 @@ export async function deleteBoardToken(tokenId: string): Promise<void> {
     if (error) throw error;
 }
 
+export async function fetchBoard(boardId: string): Promise<GameBoard> {
+    const { data, error } = await supabase
+        .from('game_boards')
+        .select('*')
+        .eq('id', boardId)
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updateBoard(boardId: string, name: string, imageUrl: string): Promise<GameBoard> {
+    const { data, error } = await supabase
+        .from('game_boards')
+        .update({
+            name,
+            image_url: imageUrl
+        })
+        .eq('id', boardId)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+

@@ -6,7 +6,7 @@
     import { 
         Plus, Trash2, Check, Image as ImageIcon, 
         Link as LinkIcon, Upload, Loader2, Layers,
-        ChevronRight
+        ChevronRight, Edit
     } from "lucide-svelte";
 
     // Props
@@ -333,6 +333,13 @@
                                     {:else}
                                         <span class="flex-1 text-center text-xs font-bold text-emerald-600 bg-emerald-50/50 py-1.5 rounded-xl">Affiché en jeu</span>
                                     {/if}
+                                    <a
+                                        href="/table/{gameId}/gm/settings/board/{board.id}"
+                                        class="p-1.5 text-stone-400 hover:text-burnt-orange hover:bg-stone-50 rounded-xl transition-colors border border-stone-100 hover:border-stone-200 shrink-0 flex items-center justify-center cursor-pointer"
+                                        title="Modifier le plateau"
+                                    >
+                                        <Edit size={16} />
+                                    </a>
                                     <button
                                         onclick={() => handleDeleteBoard(board.id)}
                                         class="p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-stone-100 hover:border-red-100 shrink-0"
