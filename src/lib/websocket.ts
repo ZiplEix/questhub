@@ -132,6 +132,15 @@ export async function connectWebSocket(gameId: string) {
                 }
             }
         )
+        .on(
+            'broadcast',
+            { event: 'token_drag' },
+            (payload) => {
+                if (payload && payload.payload) {
+                    tokenDragCallbacks.forEach(cb => cb(payload.payload));
+                }
+            }
+        )
         .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 console.log('Supabase Realtime connected');
@@ -171,5 +180,25 @@ export function sendPing(x: number, y: number, color: string) {
         });
     }
 }
+
+let tokenDragCallbacks: ((drag: { tokenId: string; x: number; y: number }) => void)[] = [];
+
+export function onTokenDragged(callback: (drag: { tokenId: string; x: number; y: number }) => void) {
+    tokenDragCallbacks.push(callback);
+    return () => {
+        tokenDragCallbacks = tokenDragCallbacks.filter(cb => cb !== callback);
+    };
+}
+
+export function sendTokenDrag(tokenId: string, x: number, y: number) {
+    if (channel) {
+        channel.send({
+            type: 'broadcast',
+            event: 'token_drag',
+            payload: { tokenId, x, y }
+        });
+    }
+}
+
 
 

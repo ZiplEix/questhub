@@ -62,3 +62,116 @@ export async function activateBoard(gameId: string, boardId: string): Promise<vo
 
     if (activateError) throw activateError;
 }
+
+export interface BoardToken {
+    id: string;
+    board_id: string;
+    game_id: string;
+    character_id: string;
+    x: number;
+    y: number;
+    created_at: string;
+    character?: {
+        name: string;
+        avatar_url: string | null;
+        is_npc: boolean;
+        type: string;
+        user_id?: string | null;
+    };
+}
+
+export async function fetchBoardTokens(boardId: string): Promise<BoardToken[]> {
+    const { data, error } = await supabase
+        .from('board_tokens')
+        .select('*, character:characters(*)')
+        .eq('board_id', boardId);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+        const gameId = data[0].game_id;
+        const { data: gcData } = await supabase
+            .from('game_characters')
+            .select('character_id, user_id')
+            .eq('game_id', gameId);
+
+        const assignmentMap = new Map((gcData || []).map(gc => [gc.character_id, gc.user_id]));
+
+        return data.map((t: any) => {
+            const charObj = Array.isArray(t.character) ? t.character[0] : t.character;
+            return {
+                ...t,
+                character: charObj ? {
+                    ...charObj,
+                    user_id: assignmentMap.get(t.character_id) || null
+                } : undefined
+            };
+        });
+    }
+
+    return [];
+}
+
+export async function addBoardToken(boardId: string, gameId: string, characterId: string, x: number, y: number): Promise<BoardToken> {
+    // Check if token already exists for this board and character
+    const { data: existing, error: checkError } = await supabase
+        .from('board_tokens')
+        .select('id')
+        .eq('board_id', boardId)
+        .eq('character_id', characterId)
+        .maybeSingle();
+
+    if (checkError) throw checkError;
+    if (existing) {
+        throw new Error("Ce personnage est déjà sur le plateau.");
+    }
+
+    const { data, error } = await supabase
+        .from('board_tokens')
+        .insert({
+            board_id: boardId,
+            game_id: gameId,
+            character_id: characterId,
+            x,
+            y
+        })
+        .select('*, character:characters(*)')
+        .single();
+
+    if (error) throw error;
+
+    const { data: gc } = await supabase
+        .from('game_characters')
+        .select('user_id')
+        .eq('game_id', gameId)
+        .eq('character_id', characterId)
+        .single();
+
+    const charObj = Array.isArray(data.character) ? data.character[0] : data.character;
+    return {
+        ...data,
+        character: charObj ? {
+            ...charObj,
+            user_id: gc?.user_id || null
+        } : undefined
+    };
+}
+
+export async function updateBoardTokenPosition(tokenId: string, x: number, y: number): Promise<void> {
+    const { error } = await supabase
+        .from('board_tokens')
+        .update({ x, y })
+        .eq('id', tokenId);
+
+    if (error) throw error;
+}
+
+export async function deleteBoardToken(tokenId: string): Promise<void> {
+    const { error } = await supabase
+        .from('board_tokens')
+        .delete()
+        .eq('id', tokenId);
+
+    if (error) throw error;
+}
+

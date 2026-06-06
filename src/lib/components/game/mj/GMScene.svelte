@@ -1,34 +1,12 @@
 <script lang="ts">
     import Scene from "../Scene.svelte";
-    import ContextMenu from "./ContextMenu.svelte";
     import { MousePointer2, CloudFog, Ruler } from "lucide-svelte";
 
     let activeTool = $state<"pointer" | "fog" | "measure">("pointer");
-
-    // Context Menu State
-    let contextMenu = $state<{ x: number; y: number; visible: boolean }>({
-        x: 0,
-        y: 0,
-        visible: false,
-    });
-
-    function handleContextMenu(e: MouseEvent) {
-        e.preventDefault();
-        contextMenu = {
-            x: e.clientX,
-            y: e.clientY,
-            visible: true,
-        };
-    }
-
-    function closeContextMenu() {
-        contextMenu.visible = false;
-    }
 </script>
 
 <div
     class="relative w-full h-full bg-stone-900"
-    oncontextmenu={handleContextMenu}
     role="application"
 >
     <!-- Toolbar -->
@@ -66,13 +44,4 @@
 
     <!-- Scene Wrapper -->
     <Scene isGM={true} />
-
-    <!-- Context Menu -->
-    {#if contextMenu.visible}
-        <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            onClose={closeContextMenu}
-        />
-    {/if}
 </div>

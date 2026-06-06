@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { activeBoardStore, sendPing, onPingReceived } from "$lib/websocket";
-    import { Compass, Minus, Plus } from "lucide-svelte";
+    import { activeBoardStore, sendPing, onPingReceived, onTokenDragged, sendTokenDrag } from "$lib/websocket";
+    import { Compass, Minus, Plus, Trash2 } from "lucide-svelte";
     import { fade } from "svelte/transition";
     import { onMount, untrack } from "svelte";
     import { page } from "$app/state";
     import { fetchPlayers, fetchGame } from "$lib/api";
+    import { fetchBoardTokens, updateBoardTokenPosition, deleteBoardToken, type BoardToken } from "$lib/api/board";
     import { authClient } from "$lib/auth-client";
+    import { supabase } from "$lib/supabaseClient";
 
 
     let {
@@ -20,7 +22,40 @@
     // Pings State
     let pings = $state<{ x: number; y: number; id: number; color?: string }[]>([]);
     let myColor = "#E07A5F"; // default ping color
+    let currentUserId = $state("");
 
+    // Tokens State
+    let tokens = $state<BoardToken[]>([]);
+    let draggedTokenId = $state<string | null>(null);
+    let dragOffset = { x: 0, y: 0 };
+    let tokenImages = $state<Record<string, HTMLImageElement>>({});
+    let activeBoardTokensLoading = $state(true);
+    const tokenRadius = 16;
+    const activeBoardId = $derived($activeBoardStore?.id || "");
+
+    // Context Menu State
+    let contextMenu = $state<{
+        x: number;
+        y: number;
+        tokenId: string;
+        characterName: string;
+    } | null>(null);
+
+    async function removeTokenFromBoard(tokenId: string) {
+        // Optimistic update: remove locally immediately
+        tokens = tokens.filter(t => t.id !== tokenId);
+        draw();
+
+        try {
+            await deleteBoardToken(tokenId);
+        } catch (error) {
+            console.error("Failed to delete token:", error);
+            // Restore token list if DB delete fails
+            loadTokens();
+        } finally {
+            contextMenu = null;
+        }
+    }
 
     // Zoom and Pan States
     let zoom = $state(1);
@@ -82,6 +117,90 @@
         }
     });
 
+    // Preload token images when tokens change
+    $effect(() => {
+        tokens.forEach(token => {
+            const url = token.character?.avatar_url;
+            if (url && !tokenImages[url]) {
+                const imgObj = new Image();
+                imgObj.src = url;
+                imgObj.onload = () => {
+                    tokenImages = { ...tokenImages, [url]: imgObj };
+                    draw();
+                };
+            }
+        });
+    });
+
+    async function loadTokens() {
+        if (!activeBoardId) {
+            tokens = [];
+            return;
+        }
+        try {
+            activeBoardTokensLoading = true;
+            tokens = await fetchBoardTokens(activeBoardId);
+            draw();
+        } catch (error) {
+            console.error("Failed to fetch board tokens:", error);
+        } finally {
+            activeBoardTokensLoading = false;
+        }
+    }
+
+    let tokensChannel: any = null;
+    $effect(() => {
+        if (activeBoardId) {
+            loadTokens();
+
+            if (tokensChannel) {
+                supabase.removeChannel(tokensChannel);
+            }
+
+            tokensChannel = supabase.channel(`board_tokens:${activeBoardId}`)
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'board_tokens' },
+                    async (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            if (payload.new.board_id === activeBoardId) {
+                                loadTokens();
+                            }
+                        } else if (payload.eventType === 'DELETE') {
+                            // Check if deleted token was in our current tokens
+                            if (tokens.some(t => t.id === payload.old.id)) {
+                                tokens = tokens.filter(t => t.id !== payload.old.id);
+                                draw();
+                            }
+                        } else if (payload.eventType === 'UPDATE') {
+                            if (payload.new.board_id === activeBoardId) {
+                                const updatedToken = payload.new;
+                                if (draggedTokenId !== updatedToken.id) {
+                                    tokens = tokens.map(t => {
+                                        if (t.id === updatedToken.id) {
+                                            return { ...t, x: updatedToken.x, y: updatedToken.y };
+                                        }
+                                        return t;
+                                    });
+                                    draw();
+                                }
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+        } else {
+            tokens = [];
+        }
+
+        return () => {
+            if (tokensChannel) {
+                supabase.removeChannel(tokensChannel);
+                tokensChannel = null;
+            }
+        };
+    });
+
     onMount(() => {
         pixelRatio = window.devicePixelRatio || 1;
         if (containerEl) {
@@ -95,6 +214,7 @@
             authClient.getSession().then(({ data: sessionData }) => {
                 console.log("Scene: sessionData is", sessionData);
                 if (sessionData?.user) {
+                    currentUserId = sessionData.user.id;
                     const userId = sessionData.user.id;
                     console.log("Scene: userId is", userId);
                     fetchGame(gameId).then((gameData) => {
@@ -128,8 +248,30 @@
             startAnimationLoop();
         });
 
+        const unsubscribeTokenDrag = onTokenDragged((dragData) => {
+            if (draggedTokenId !== dragData.tokenId) {
+                tokens = tokens.map(t => {
+                    if (t.id === dragData.tokenId) {
+                        return { ...t, x: dragData.x, y: dragData.y };
+                    }
+                    return t;
+                });
+                draw();
+            }
+        });
+
+        const handleWindowMouseDown = (e: MouseEvent) => {
+            if (contextMenu && containerEl && !containerEl.contains(e.target as Node)) {
+                contextMenu = null;
+            }
+        };
+
+        window.addEventListener("mousedown", handleWindowMouseDown);
+
         return () => {
             unsubscribePing();
+            unsubscribeTokenDrag();
+            window.removeEventListener("mousedown", handleWindowMouseDown);
             if (containerEl) {
                 containerEl.removeEventListener("wheel", handleWheel);
             }
@@ -140,7 +282,11 @@
     });
 
     function handleMouseDown(e: MouseEvent) {
-        if (!activeMapUrl) return;
+        if (!activeMapUrl || !imgLoaded || !width || !height) return;
+
+        if (e.button === 0 || e.button === 1) {
+            contextMenu = null;
+        }
 
         if (e.button === 1) {
             // Middle-click to pan
@@ -151,26 +297,111 @@
             startPanX = pan.x;
             startPanY = pan.y;
         } else if (e.button === 0) {
-            // Left-click to ping
+            // Left-click: check if clicked on a token first
+            if (containerEl) {
+                const rect = containerEl.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Convert screen mouse coordinate to image space coordinate
+                const x_image_centered = (mouseX - pan.x) / zoom;
+                const y_image_centered = (mouseY - pan.y) / zoom;
+
+                const halfW = naturalWidth / 2;
+                const halfH = naturalHeight / 2;
+                const tx = x_image_centered + halfW;
+                const ty = y_image_centered + halfH;
+
+                // Find clicked token (reverse loop to get topmost first)
+                let clickedToken: BoardToken | null = null;
+                for (let i = tokens.length - 1; i >= 0; i--) {
+                    const t = tokens[i];
+                    const tokenX = t.x * naturalWidth;
+                    const tokenY = t.y * naturalHeight;
+                    const dist = Math.sqrt((tx - tokenX) ** 2 + (ty - tokenY) ** 2);
+                    if (dist <= tokenRadius) {
+                        clickedToken = t;
+                        break;
+                    }
+                }
+
+                if (clickedToken) {
+                    // Check permissions: GM can move all, Player can move own character
+                    const canMove = isGM || (clickedToken.character?.user_id === currentUserId && !clickedToken.character?.is_npc);
+                    if (canMove) {
+                        draggedTokenId = clickedToken.id;
+                        dragOffset.x = tx - (clickedToken.x * naturalWidth);
+                        dragOffset.y = ty - (clickedToken.y * naturalHeight);
+                    } else {
+                        console.warn("No permission to move this token");
+                    }
+                    return; // Stop here, do not ping
+                }
+            }
+
+            // Normal left-click to ping
             handleSceneClick(e);
         }
     }
 
     function handleMouseMove(e: MouseEvent) {
-        if (!isPanning) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        pan.x = startPanX + dx;
-        pan.y = startPanY + dy;
-        
-        if (animId === null) {
+        if (isPanning) {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            pan.x = startPanX + dx;
+            pan.y = startPanY + dy;
+            
+            if (animId === null) {
+                draw();
+            }
+        } else if (draggedTokenId && containerEl) {
+            const rect = containerEl.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const x_image_centered = (mouseX - pan.x) / zoom;
+            const y_image_centered = (mouseY - pan.y) / zoom;
+
+            const halfW = naturalWidth / 2;
+            const halfH = naturalHeight / 2;
+            const tx = x_image_centered + halfW;
+            const ty = y_image_centered + halfH;
+
+            // Clamped coordinates relative to image bounds
+            const finalTx = Math.min(Math.max(tx - dragOffset.x, 0), naturalWidth);
+            const finalTy = Math.min(Math.max(ty - dragOffset.y, 0), naturalHeight);
+
+            const normX = finalTx / naturalWidth;
+            const normY = finalTy / naturalHeight;
+
+            // Update locally for smooth rendering
+            tokens = tokens.map(t => {
+                if (t.id === draggedTokenId) {
+                    return { ...t, x: normX, y: normY };
+                }
+                return t;
+            });
             draw();
+
+            // Broadcast real-time drag position
+            sendTokenDrag(draggedTokenId, normX, normY);
         }
     }
 
-    function handleMouseUp(e: MouseEvent) {
+    async function handleMouseUp(e: MouseEvent) {
         if (e.button === 1) {
             isPanning = false;
+        } else if (e.button === 0 && draggedTokenId) {
+            // Drag end: save coordinates to DB
+            const draggedToken = tokens.find(t => t.id === draggedTokenId);
+            if (draggedToken) {
+                try {
+                    await updateBoardTokenPosition(draggedTokenId, draggedToken.x, draggedToken.y);
+                } catch (error) {
+                    console.error("Failed to save token position to DB:", error);
+                }
+            }
+            draggedTokenId = null;
         }
     }
 
@@ -337,6 +568,84 @@
             ctx.restore();
         }
 
+        // Draw active tokens
+        for (const token of tokens) {
+            const tx = token.x * naturalWidth - halfW;
+            const ty = token.y * naturalHeight - halfH;
+            const radius = tokenRadius;
+
+            // 1. Draw Ring / Border
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(tx, ty, radius + 2 / zoom, 0, Math.PI * 2);
+
+            let color = "#3B82F6"; // default player blue
+            if (token.character?.is_npc) {
+                color = "#8B5CF6"; // purple for NPC
+            } else if (token.character?.type === "MONSTER") {
+                color = "#EF4444"; // red for monster
+            } else if (token.character?.user_id === currentUserId) {
+                color = "#E07A5F"; // orange for self
+            }
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3 / zoom;
+            ctx.stroke();
+            ctx.restore();
+
+            // 2. Draw Avatar
+            const avatarUrl = token.character?.avatar_url;
+            const loadedImg = avatarUrl ? tokenImages[avatarUrl] : null;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(tx, ty, radius, 0, Math.PI * 2);
+            ctx.clip();
+
+            if (loadedImg) {
+                ctx.drawImage(loadedImg, tx - radius, ty - radius, radius * 2, radius * 2);
+            } else {
+                const grad = ctx.createRadialGradient(tx, ty, 2, tx, ty, radius);
+                grad.addColorStop(0, "#f5f5f4");
+                grad.addColorStop(1, "#d6d3d1");
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                ctx.fillStyle = "#57534e";
+                ctx.font = `bold ${Math.max(10, 12 / zoom)}px sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText((token.character?.name || "?").charAt(0).toUpperCase(), tx, ty);
+            }
+            ctx.restore();
+
+            // 3. Draw Name Label Under Token
+            ctx.save();
+            const labelText = token.character?.name || "Sans nom";
+            ctx.font = `bold ${10 / zoom}px sans-serif`;
+            const textWidth = ctx.measureText(labelText).width;
+            const labelW = textWidth + 8 / zoom;
+            const labelH = 14 / zoom;
+            const labelX = tx - labelW / 2;
+            const labelY = ty + radius + 4 / zoom;
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.beginPath();
+            const r = 3 / zoom;
+            if (ctx.roundRect) {
+                ctx.roundRect(labelX, labelY, labelW, labelH, r);
+            } else {
+                ctx.rect(labelX, labelY, labelW, labelH);
+            }
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(labelText, tx, labelY + labelH / 2);
+            ctx.restore();
+        }
+
         ctx.restore();
     }
 
@@ -372,6 +681,51 @@
             }
         }
     }
+
+    function handleContextMenu(e: MouseEvent) {
+        if (!activeMapUrl || !imgLoaded || !width || !height) return;
+
+        if (containerEl) {
+            const rect = containerEl.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const x_image_centered = (mouseX - pan.x) / zoom;
+            const y_image_centered = (mouseY - pan.y) / zoom;
+
+            const halfW = naturalWidth / 2;
+            const halfH = naturalHeight / 2;
+            const tx = x_image_centered + halfW;
+            const ty = y_image_centered + halfH;
+
+            // Find clicked token (reverse loop to get topmost first)
+            let clickedToken: BoardToken | null = null;
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                const t = tokens[i];
+                const tokenX = t.x * naturalWidth;
+                const tokenY = t.y * naturalHeight;
+                const dist = Math.sqrt((tx - tokenX) ** 2 + (ty - tokenY) ** 2);
+                if (dist <= tokenRadius) {
+                    clickedToken = t;
+                    break;
+                }
+            }
+
+            if (clickedToken && isGM) {
+                // Right-click on a token: show custom menu, prevent browser menu
+                e.preventDefault();
+                contextMenu = {
+                    x: mouseX,
+                    y: mouseY,
+                    tokenId: clickedToken.id,
+                    characterName: clickedToken.character?.name || "Personnage"
+                };
+            } else {
+                // Right-click on empty map: do not prevent default, just close custom menu
+                contextMenu = null;
+            }
+        }
+    }
 </script>
 
 <svelte:window 
@@ -385,6 +739,7 @@
     bind:offsetHeight={height}
     class="relative w-full h-full bg-stone-950 overflow-hidden select-none"
     onmousedown={handleMouseDown}
+    oncontextmenu={handleContextMenu}
     role="button"
     tabindex="0"
     style="cursor: {isPanning ? 'grabbing' : activeMapUrl ? 'grab' : 'default'};"
@@ -426,6 +781,29 @@
                 <Plus size={14} />
             </button>
         </div>
+
+        <!-- Custom Context Menu for tokens -->
+        {#if contextMenu && isGM}
+            <div
+                role="menu"
+                tabindex="-1"
+                class="absolute bg-white rounded-xl shadow-xl border border-stone-200 py-1 z-40 w-44 animate-in fade-in zoom-in-95 duration-100 origin-top-left flex flex-col"
+                style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
+                onmousedown={(e) => e.stopPropagation()}
+            >
+                <div class="px-3 py-1 text-[10px] font-bold text-stone-400 uppercase tracking-wider border-b border-stone-100 mb-1 truncate" title={contextMenu.characterName}>
+                    {contextMenu.characterName}
+                </div>
+                <button
+                    role="menuitem"
+                    onclick={() => removeTokenFromBoard(contextMenu?.tokenId || '')}
+                    class="w-full px-3 py-2 text-left text-xs text-red-500 hover:bg-red-50 font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                    <Trash2 size={13} />
+                    Retirer du plateau
+                </button>
+            </div>
+        {/if}
     {:else}
         <!-- Premium Empty State -->
         <div class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-stone-900 z-10">

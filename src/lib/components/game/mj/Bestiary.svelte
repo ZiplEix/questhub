@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { Search, Plus, Skull } from "lucide-svelte";
+    import { Search, Plus, Skull, MapPin } from "lucide-svelte";
     import { fetchMonsters } from "$lib/api";
+    import { activeBoardStore } from "$lib/websocket";
+    import { addBoardToken } from "$lib/api/board";
     import { page } from "$app/state";
     import { onMount } from "svelte";
 
@@ -28,6 +30,21 @@
             m.name.toLowerCase().includes(searchQuery.toLowerCase()),
         ),
     );
+
+    async function placeToken(charId: string, event: Event) {
+        event.stopPropagation();
+        if (!$activeBoardStore) {
+            alert("Aucun plateau n'est actif.");
+            return;
+        }
+        try {
+            const gameId = page.params.id || "";
+            await addBoardToken($activeBoardStore.id, gameId, charId, 0.5, 0.5);
+        } catch (error: any) {
+            console.error("Failed to place token:", error);
+            alert(error.message || "Erreur lors du placement du monstre.");
+        }
+    }
 </script>
 
 <div class="h-full flex flex-col bg-stone-50">
@@ -93,6 +110,13 @@
                             </div>
                         </div>
 
+                        <button
+                            onclick={(e) => placeToken(monster.id, e)}
+                            class="p-1 hover:bg-stone-100 text-stone-400 hover:text-burnt-orange rounded transition-colors"
+                            title="Placer sur le plateau"
+                        >
+                            <MapPin size={14} />
+                        </button>
                     </div>
 
                     <div
