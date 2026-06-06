@@ -7,7 +7,7 @@
         onSelect?: (iconName: string) => void;
     }
 
-    const { value = "", onSelect } = $props<Props>();
+    let { value = "", onSelect }: Props = $props();
 
     let searchQuery = $state("");
     let isOpen = $state(false);

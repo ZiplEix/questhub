@@ -8,7 +8,7 @@
         class?: ClassValue;
     }
 
-    const { iconName, size = 20, class: className } = $props<Props>();
+    let { iconName, size = 20, class: className }: Props = $props();
 
     const Icon = getIconComponent(iconName);
 </script>
