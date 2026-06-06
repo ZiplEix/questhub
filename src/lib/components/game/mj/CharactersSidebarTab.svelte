@@ -18,6 +18,8 @@
     import { activeBoardStore } from "$lib/websocket";
     import { addBoardToken } from "$lib/api/board";
     import CharacterSheet from "../pupitre/CharacterSheet.svelte";
+    import { supabase } from "$lib/supabaseClient";
+    import { parseConditions } from "$lib/api/character";
 
     let characters = $state<Character[]>([]);
     let players = $state<Player[]>([]);
@@ -47,6 +49,45 @@
 
     onMount(() => {
         loadData();
+    });
+
+    // Subscribe to character updates to reflect HP/conditions in real-time
+    let charactersChannel: any = null;
+    $effect(() => {
+        if (gameId) {
+            if (charactersChannel) supabase.removeChannel(charactersChannel);
+            charactersChannel = supabase.channel(`sidebar_characters:${gameId}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'characters' },
+                    (payload) => {
+                        const updatedChar = payload.new;
+                        // Map updated character properties into the characters list
+                        characters = characters.map(c => {
+                            if (c.id === updatedChar.id) {
+                                return {
+                                    ...c,
+                                    ...updatedChar,
+                                    conditions: parseConditions(updatedChar.conditions)
+                                };
+                            }
+                            return c;
+                        });
+                        // Sync selectedCharacter if it's the one that was updated
+                        if (selectedCharacter && selectedCharacter.id === updatedChar.id) {
+                            selectedCharacter = {
+                                ...selectedCharacter,
+                                ...updatedChar,
+                                conditions: parseConditions(updatedChar.conditions)
+                            };
+                        }
+                    }
+                )
+                .subscribe();
+        }
+        return () => {
+            if (charactersChannel) supabase.removeChannel(charactersChannel);
+        };
     });
 
     // Filtering logic

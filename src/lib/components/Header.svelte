@@ -6,6 +6,7 @@
         LayoutDashboard,
         ChevronDown,
         Settings,
+        BookOpen,
     } from "lucide-svelte";
     import { authClient } from "$lib/auth-client";
     import { clickOutside } from "$lib/actions/clickOutside";
@@ -51,14 +52,23 @@
     </a>
 
     <!-- Centered on the header -->
-    <!-- Centered on the header -->
     {#if path.endsWith("/gm")}
         <div
-            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2"
         >
             <a
+                href="{path}/guide"
+                class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
+                title="Guide du MJ"
+            >
+                <BookOpen size={18} />
+                <span class="font-medium text-sm hidden md:inline"
+                    >Guide du MJ</span
+                >
+            </a>
+            <a
                 href="{path}/settings"
-                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
+                class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
                 title="Paramètres de la partie"
             >
                 <Settings size={18} />
@@ -67,12 +77,12 @@
                 >
             </a>
         </div>
-    {:else if path.endsWith("/gm/settings")}
+    {:else if path.endsWith("/gm/settings") || path.endsWith("/gm/guide")}
         <div
             class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         >
             <a
-                href={path.replace("/settings", "")}
+                href={path.replace(/\/settings|\/guide/, "")}
                 class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
                 title="Retour au jeu"
             >

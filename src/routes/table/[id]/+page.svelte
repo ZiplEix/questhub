@@ -15,6 +15,8 @@
     import { fetchGame, fetchCharacter, fetchCharacters } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { websocketStore, fetchHistory } from "$lib/websocket";
+    import { supabase } from "$lib/supabaseClient";
+    import { parseConditions } from "$lib/api/character";
 
     let isDashboardOpen = $state(true);
     let loading = $state(true);
@@ -113,6 +115,33 @@
                 });
             }
         }
+    });
+
+    // React to character database changes
+    let characterChannel: any = null;
+    $effect(() => {
+        if (game?.current_character_id) {
+            const charId = game.current_character_id;
+            if (characterChannel) supabase.removeChannel(characterChannel);
+            characterChannel = supabase.channel(`player_char:${charId}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'characters', filter: `id=eq.${charId}` },
+                    (payload) => {
+                        character = {
+                            ...character,
+                            ...payload.new,
+                            conditions: parseConditions(payload.new.conditions)
+                        };
+                    }
+                )
+                .subscribe();
+        }
+        return () => {
+            if (characterChannel) {
+                supabase.removeChannel(characterChannel);
+            }
+        };
     });
 </script>
 

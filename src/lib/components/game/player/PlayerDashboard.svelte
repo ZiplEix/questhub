@@ -11,6 +11,8 @@
 
     import { onMount } from "svelte";
     import Chat from "../shared/Chat.svelte";
+    import PlayerTracker from "./PlayerTracker.svelte";
+    import { activeBoardStore } from "$lib/websocket";
 
     let {
         character,
@@ -29,7 +31,14 @@
         { id: "sac", label: "Sac" },
         { id: "notes", label: "Notes" },
         { id: "chat", label: "Chat" },
+        { id: "combat", label: "Combat" },
     ];
+
+    $effect(() => {
+        if ($activeBoardStore?.combat_active) {
+            activeTab = "combat";
+        }
+    });
 </script>
 
 <div
@@ -60,6 +69,8 @@
             <NotesTab characterId={character.id} gameId={character.game_id} />
         {:else if activeTab === "chat"}
             <Chat {players} {currentUserId} senderName={character.name} />
+        {:else if activeTab === "combat"}
+            <PlayerTracker />
         {/if}
     </div>
 

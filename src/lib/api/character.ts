@@ -26,6 +26,7 @@ export interface Character {
     speed: number;
     game_id: string;
     user_id?: string | null;
+    conditions: string[];
 }
 
 export async function fetchCharacters(gameId: string): Promise<Character[]> {
@@ -41,6 +42,7 @@ export async function fetchCharacters(gameId: string): Promise<Character[]> {
         if (!charObj || charObj.type === 'MONSTER' || charObj.type === 'GM_HIDDEN') return null;
         return {
             ...charObj,
+            conditions: parseConditions(charObj.conditions),
             game_id: gc.game_id,
             user_id: gc.user_id
         };
@@ -65,6 +67,7 @@ export async function fetchCharacter(gameId: string, characterId: string): Promi
 
     return {
         ...charData,
+        conditions: parseConditions(charData.conditions),
         game_id: gc?.game_id || gameId,
         user_id: gc?.user_id || null
     };
@@ -132,3 +135,48 @@ export async function assignCharacter(gameId: string, characterId: string, userI
 
     if (error) throw error;
 }
+
+export async function updateCharacterConditions(characterId: string, conditions: string[]): Promise<void> {
+    const { error } = await supabase
+        .from('characters')
+        .update({ conditions })
+        .eq('id', characterId);
+
+    if (error) throw error;
+}
+
+export async function updateCharacterHP(characterId: string, currentHp: number): Promise<void> {
+    const { error } = await supabase
+        .from('characters')
+        .update({ current_hp: currentHp })
+        .eq('id', characterId);
+
+    if (error) throw error;
+}
+
+export function parseConditions(conditions: any): string[] {
+    if (!conditions) return [];
+    if (Array.isArray(conditions)) return conditions;
+    if (typeof conditions === 'string') {
+        try {
+            const parsed = JSON.parse(conditions);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {}
+        
+        try {
+            const parsed = JSON.parse(JSON.parse(conditions));
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {}
+
+        if (conditions.startsWith('[') && conditions.endsWith(']')) {
+            return conditions
+                .slice(1, -1)
+                .split(',')
+                .map(s => s.trim().replace(/^["']|["']$/g, ''))
+                .filter(Boolean);
+        }
+        return [conditions];
+    }
+    return [];
+}
+

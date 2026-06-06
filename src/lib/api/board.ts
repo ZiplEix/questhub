@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { parseConditions } from './character';
 
 export interface GameBoard {
     id: string;
@@ -10,6 +11,10 @@ export interface GameBoard {
     pixels_per_cell: number;
     grid_offset_x: number;
     grid_offset_y: number;
+    combat_active: boolean;
+    combat_round: number;
+    combat_active_token_id: string | null;
+    hide_monster_stats: boolean;
 }
 
 export async function fetchBoards(gameId: string): Promise<GameBoard[]> {
@@ -74,12 +79,23 @@ export interface BoardToken {
     x: number;
     y: number;
     created_at: string;
+    in_combat: boolean;
+    initiative: number;
+    is_hidden: boolean;
+    faction: 'ally' | 'enemy' | 'neutral';
     character?: {
+        id: string;
         name: string;
         avatar_url: string | null;
         is_npc: boolean;
         type: string;
+        max_hp: number;
+        current_hp: number;
+        armor_class: number;
+        speed: number;
+        initiative: number;
         user_id?: string | null;
+        conditions: string[];
     };
 }
 
@@ -106,6 +122,7 @@ export async function fetchBoardTokens(boardId: string): Promise<BoardToken[]> {
                 ...t,
                 character: charObj ? {
                     ...charObj,
+                    conditions: parseConditions(charObj.conditions),
                     user_id: assignmentMap.get(t.character_id) || null
                 } : undefined
             };
@@ -129,6 +146,13 @@ export async function addBoardToken(boardId: string, gameId: string, characterId
         throw new Error("Ce personnage est déjà sur le plateau.");
     }
 
+    const { data: charData } = await supabase
+        .from('characters')
+        .select('type')
+        .eq('id', characterId)
+        .single();
+    const faction = charData?.type === 'PLAYER' ? 'ally' : 'enemy';
+
     const { data, error } = await supabase
         .from('board_tokens')
         .insert({
@@ -136,7 +160,8 @@ export async function addBoardToken(boardId: string, gameId: string, characterId
             game_id: gameId,
             character_id: characterId,
             x,
-            y
+            y,
+            faction
         })
         .select('*, character:characters(*)')
         .single();
@@ -155,6 +180,7 @@ export async function addBoardToken(boardId: string, gameId: string, characterId
         ...data,
         character: charObj ? {
             ...charObj,
+            conditions: parseConditions(charObj.conditions),
             user_id: gc?.user_id || null
         } : undefined
     };
@@ -215,4 +241,51 @@ export async function updateBoard(
     if (error) throw error;
     return data;
 }
+
+export async function updateBoardCombatState(
+    boardId: string,
+    payload: {
+        combat_active?: boolean;
+        combat_round?: number;
+        combat_active_token_id?: string | null;
+        hide_monster_stats?: boolean;
+    }
+): Promise<void> {
+    const { error } = await supabase
+        .from('game_boards')
+        .update(payload)
+        .eq('id', boardId);
+
+    if (error) throw error;
+}
+
+export async function updateTokenCombatState(
+    tokenId: string,
+    payload: {
+        in_combat?: boolean;
+        initiative?: number;
+        is_hidden?: boolean;
+        faction?: 'ally' | 'enemy' | 'neutral';
+    }
+): Promise<void> {
+    const { error } = await supabase
+        .from('board_tokens')
+        .update(payload)
+        .eq('id', tokenId);
+
+    if (error) throw error;
+}
+
+export async function resetAllTokensCombatState(boardId: string): Promise<void> {
+    const { error } = await supabase
+        .from('board_tokens')
+        .update({
+            in_combat: false,
+            initiative: 0
+        })
+        .eq('board_id', boardId);
+
+    if (error) throw error;
+}
+
 

@@ -27,6 +27,7 @@ export interface Character {
     experience?: number;
     armor_class: number;
     speed: number;
+    conditions: string[];
 }
 
 export interface InventoryItem {

@@ -15,8 +15,16 @@
     let isRightPanelOpen = $state(true);
     let currentUserId = $state("");
     let gmCharacterId = $state("");
+    
+    let leftPanelWidth = $state(380);
+    let isDraggingLeft = $state(false);
     let rightPanelWidth = $state(400);
     let isDraggingRight = $state(false);
+
+    function handleMouseDownLeft(e: MouseEvent) {
+        e.preventDefault();
+        isDraggingLeft = true;
+    }
 
     function handleMouseDownRight(e: MouseEvent) {
         e.preventDefault();
@@ -24,6 +32,10 @@
     }
 
     function handleMouseMove(e: MouseEvent) {
+        if (isDraggingLeft) {
+            const newWidth = e.clientX;
+            leftPanelWidth = Math.min(Math.max(newWidth, 320), 600);
+        }
         if (isDraggingRight) {
             const newWidth = window.innerWidth - e.clientX;
             rightPanelWidth = Math.min(Math.max(newWidth, 320), 800);
@@ -31,6 +43,7 @@
     }
 
     function handleMouseUp() {
+        isDraggingLeft = false;
         isDraggingRight = false;
     }
 
@@ -75,13 +88,22 @@
 <GMLayout>
     <!-- LEFT COLUMN: Flow Controller -->
     <aside
-        class="shrink-0 z-20 shadow-xl relative transition-all duration-500 ease-in-out overflow-hidden"
+        class="shrink-0 z-20 shadow-xl relative {isDraggingLeft ? '' : 'transition-all duration-500 ease-in-out'} overflow-hidden"
         style="width: {isLeftPanelOpen
-            ? '300px'
+            ? leftPanelWidth + 'px'
             : '0px'}; opacity: {isLeftPanelOpen ? '1' : '0'};"
     >
-        <div class="w-[300px] h-full">
+        <div class="h-full" style="width: {leftPanelWidth}px;">
             <GMTracker />
+        </div>
+        <!-- Resize Handle -->
+        <div
+            onmousedown={handleMouseDownLeft}
+            class="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-burnt-orange/50 active:bg-burnt-orange transition-all z-30 flex items-center justify-center group"
+            role="separator"
+            aria-label="Ajuster la largeur"
+        >
+            <div class="w-[2px] h-12 bg-stone-300/20 group-hover:bg-white/40 rounded transition-colors"></div>
         </div>
     </aside>
 
