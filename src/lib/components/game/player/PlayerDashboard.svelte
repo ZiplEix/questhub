@@ -1,6 +1,7 @@
 <script lang="ts">
     import QuickDice from "./QuickDice.svelte";
     import NotesTab from "../shared/NotesTab.svelte";
+    import StorySidebarTab from "../shared/StorySidebarTab.svelte";
 
     // Shared components from GM view
     import CharacterSheet from "../pupitre/CharacterSheet.svelte";
@@ -30,6 +31,7 @@
         { id: "fiche", label: "Fiche" },
         { id: "sac", label: "Sac" },
         { id: "notes", label: "Notes" },
+        { id: "story", label: "Histoire" },
         { id: "chat", label: "Chat" },
         { id: "combat", label: "Combat" },
     ];
@@ -49,7 +51,7 @@
         {#each tabs as tab}
             <button
                 onclick={() => (activeTab = tab.id)}
-                class="flex-1 py-2 rounded-lg text-sm font-bold transition-all
+                class="flex-1 py-2 rounded-lg text-[11px] md:text-xs lg:text-sm font-bold transition-all
                 {activeTab === tab.id
                     ? 'bg-dark-gray text-white shadow-md'
                     : 'bg-stone-50 text-stone-400 hover:bg-stone-100'}"
@@ -67,6 +69,8 @@
             <Inventory {character} />
         {:else if activeTab === "notes"}
             <NotesTab characterId={character.id} gameId={character.game_id} />
+        {:else if activeTab === "story"}
+            <StorySidebarTab gameId={character.game_id} isGM={false} />
         {:else if activeTab === "chat"}
             <Chat {players} {currentUserId} senderName={character.name} />
         {:else if activeTab === "combat"}

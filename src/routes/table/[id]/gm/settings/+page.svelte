@@ -11,7 +11,8 @@
     import InvitationsTab from "$lib/components/game/gm/settings/InvitationsTab.svelte";
     import BestiaryTab from "$lib/components/game/gm/settings/BestiaryTab.svelte";
     import BoardsTab from "$lib/components/game/gm/settings/BoardsTab.svelte";
-    import { Settings, Users, Mail, User, Skull, Layers } from "lucide-svelte";
+    import StoryTab from "$lib/components/game/gm/settings/StoryTab.svelte";
+    import { Settings, Users, Mail, User, Skull, Layers, BookOpen } from "lucide-svelte";
 
     let activeTab = $state("general");
     let game = $state<any>(null);
@@ -39,6 +40,7 @@
         { id: "players", label: "Joueurs", icon: Users },
         { id: "characters", label: "Personnages", icon: User },
         { id: "bestiary", label: "Bestiaire", icon: Skull },
+        { id: "story", label: "Histoire", icon: BookOpen },
         { id: "invitations", label: "Invitations", icon: Mail },
     ];
 
@@ -110,7 +112,7 @@
 <div class="min-h-screen bg-cream">
     <Header />
 
-    <main class="max-w-4xl mx-auto p-6 md:p-12">
+    <main class="max-w-6xl mx-auto p-6 md:p-12">
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-display font-bold text-dark-gray mb-2">
@@ -188,6 +190,11 @@
                 <!-- INVITATIONS TAB -->
                 {#if activeTab === "invitations"}
                     <InvitationsTab {invitations} onRefresh={refreshData} />
+                {/if}
+
+                <!-- STORY TAB -->
+                {#if activeTab === "story"}
+                    <StoryTab gameId={game.id} />
                 {/if}
             </div>
         {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { MessageSquare, Ghost, NotebookPen, Layers, Users } from "lucide-svelte";
+    import { MessageSquare, Ghost, NotebookPen, Layers, Users, BookOpen } from "lucide-svelte";
     import QuickDice from "../player/QuickDice.svelte";
 
     // Components
@@ -8,6 +8,7 @@
     import NotesTab from "../shared/NotesTab.svelte";
     import BoardsTab from "../gm/settings/BoardsTab.svelte";
     import CharactersSidebarTab from "./CharactersSidebarTab.svelte";
+    import StorySidebarTab from "../shared/StorySidebarTab.svelte";
     import { page } from "$app/state";
 
     let {
@@ -22,6 +23,7 @@
         { id: "characters", icon: Users, label: "Personnages" },
         { id: "bestiary", icon: Ghost, label: "Bestiaire" },
         { id: "notes", icon: NotebookPen, label: "Notes" },
+        { id: "story", icon: BookOpen, label: "Histoire" },
         { id: "boards", icon: Layers, label: "Plateaux" },
     ];
 </script>
@@ -55,6 +57,11 @@
             <NotesTab
                 characterId={gmCharacterId}
                 gameId={page.params.id || ""}
+            />
+        {:else if activeTab === "story"}
+            <StorySidebarTab
+                gameId={page.params.id || ""}
+                isGM={true}
             />
         {:else if activeTab === "boards"}
             <BoardsTab mode="sidebar" />

@@ -95,7 +95,7 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- 1. VTT -->
             <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-2xs hover:shadow-xs transition-all space-y-4">
                 <div class="w-12 h-12 bg-burnt-orange/15 rounded-xl flex items-center justify-center text-burnt-orange border border-burnt-orange/20 shadow-xs">
@@ -133,7 +133,7 @@
                 <ul class="space-y-2 text-xs text-stone-500 font-medium pl-1">
                     <li class="flex items-center gap-2">
                         <CircleDot size={12} class="text-burnt-orange" />
-                        Calcul rapide des PV via commandes textuelles (ex: <code class="bg-stone-100 px-1 py-0.5 rounded text-stone-600">-5</code> ou <code class="bg-stone-100 px-1 py-0.5 rounded text-stone-600">+2d6</code>).
+                        Calcul rapide des PV via formules de dés (ex: <code class="bg-stone-100 px-1 py-0.5 rounded text-stone-600">-5</code> ou <code class="bg-stone-100 px-1 py-0.5 rounded text-stone-600">+2d6</code>).
                     </li>
                     <li class="flex items-center gap-2">
                         <CircleDot size={12} class="text-burnt-orange" />
@@ -171,7 +171,32 @@
                 </ul>
             </div>
 
-            <!-- 4. Community Market -->
+            <!-- 4. Story & Lore -->
+            <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-2xs hover:shadow-xs transition-all space-y-4">
+                <div class="w-12 h-12 bg-burnt-orange/15 rounded-xl flex items-center justify-center text-burnt-orange border border-burnt-orange/20 shadow-xs">
+                    <BookOpen size={24} />
+                </div>
+                <h3 class="text-lg font-display font-black text-dark-gray">Histoire & Lore (Codex)</h3>
+                <p class="text-stone-600 text-sm leading-relaxed">
+                    Rédigez l'histoire de vos parties en Markdown et organisez-la au sein d'un codex interactif.
+                </p>
+                <ul class="space-y-2 text-xs text-stone-500 font-medium pl-1">
+                    <li class="flex items-center gap-2">
+                        <CircleDot size={12} class="text-burnt-orange" />
+                        Éditeur de texte Markdown double-onglet (Édition / Prévisualisation).
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <CircleDot size={12} class="text-burnt-orange" />
+                        Classement en dossiers avec réorganisation par glisser-déposer.
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <CircleDot size={12} class="text-burnt-orange" />
+                        Révélation de pages ou dossiers entiers en temps réel pour vos joueurs.
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 5. Community Market -->
             <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-2xs hover:shadow-xs transition-all space-y-4">
                 <div class="w-12 h-12 bg-burnt-orange/15 rounded-xl flex items-center justify-center text-burnt-orange border border-burnt-orange/20 shadow-xs">
                     <Users size={24} />

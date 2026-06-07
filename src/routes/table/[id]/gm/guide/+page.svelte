@@ -31,7 +31,8 @@
         { id: "conditions", label: "États & Effets", icon: Activity },
         { id: "factions", label: "Factions & Camps", icon: Users },
         { id: "visibility", label: "Visibilité & Joueurs", icon: Eye },
-        { id: "contextmenu", label: "Menu Contextuel (Plateau)", icon: HelpCircle }
+        { id: "contextmenu", label: "Menu Contextuel (Plateau)", icon: HelpCircle },
+        { id: "story", label: "Histoire & Lore", icon: BookOpen }
     ];
 </script>
 
@@ -436,6 +437,64 @@
                                         Supprime définitivement le jeton du plateau de jeu (sans affecter le personnage dans la base de données).
                                     </div>
                                 </li>
+                            </ul>
+                        </div>
+                    </section>
+                {:else if activeSection === "story"}
+                    <section class="space-y-6 animate-in fade-in duration-200">
+                        <div class="border-b border-stone-200 pb-4">
+                            <h1 class="text-3xl font-display font-extrabold text-dark-gray flex items-center gap-3">
+                                <BookOpen class="text-burnt-orange fill-burnt-orange/10" size={32} />
+                                Gestion de l'Histoire & du Lore
+                            </h1>
+                            <p class="text-stone-500 mt-2">
+                                Rédigez le lore de votre univers, classez vos articles par dossiers et révélez-les à vos joueurs en temps réel.
+                            </p>
+                        </div>
+
+                        <!-- Écriture Markdown -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Code class="text-stone-500" size={20} />
+                                Rédiger en Markdown
+                            </h2>
+                            <p class="text-sm text-stone-600 leading-relaxed">
+                                Dans les paramètres de la partie, sous l'onglet <strong>"Histoire"</strong>, vous disposez d'un éditeur double-onglet :
+                            </p>
+                            <ul class="list-disc pl-5 space-y-2 text-sm text-stone-600">
+                                <li><strong>Éditer</strong> : Rédigez votre contenu au format Markdown (titres, gras, italique, listes, citations, tableaux...). Une sauvegarde automatique enregistre votre travail 1 seconde après la fin de la saisie.</li>
+                                <li><strong>Prévisualiser</strong> : Visualisez instantanément le rendu HTML propre et premium de votre article avant ou pendant sa lecture.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Dossiers et Glisser-Déposer -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Users class="text-stone-500" size={20} />
+                                Organiser par Dossiers
+                            </h2>
+                            <p class="text-sm text-stone-600 leading-relaxed">
+                                Structurez votre campagne en créant des dossiers et des articles à la racine ou à l'intérieur de ces dossiers.
+                            </p>
+                            <ul class="list-disc pl-5 space-y-2 text-sm text-stone-600">
+                                <li><strong>Création & Édition</strong> : Créez des dossiers thématiques, renommez-les instantanément grâce à l'icône de crayon (Editer) visible sur chaque ligne.</li>
+                                <li><strong>Glisser-Déposer (Drag & Drop)</strong> : Saisissez n'importe quel article par son titre (curseur de main) et déposez-le sur le dossier de votre choix pour le ranger, ou dans la zone "Articles à la racine" pour le sortir.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Révélation et Temps Réel -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Eye class="text-stone-500" size={20} />
+                                Contrôle de la Visibilité & Temps Réel
+                            </h2>
+                            <p class="text-sm text-stone-600 leading-relaxed">
+                                C'est vous qui décidez du moment où les secrets de votre monde sont révélés :
+                            </p>
+                            <ul class="list-disc pl-5 space-y-2 text-sm text-stone-600">
+                                <li><strong>Icône d'œil (Visibilité)</strong> : Cliquez sur l'icône d'œil à côté d'un article ou d'un dossier pour le rendre visible (œil vert) ou masqué (œil barré gris) pour les joueurs.</li>
+                                <li><strong>Héritage de visibilité</strong> : Si un dossier est masqué, tous les articles à l'intérieur sont automatiquement masqués pour les joueurs, même si l'article individuel est marqué comme visible.</li>
+                                <li><strong>Synchronisation instantanée</strong> : Toute mise à jour de texte, création de page ou changement de visibilité par le MJ s'affiche instantanément dans le panneau "Histoire" de la barre latérale des joueurs en temps réel sans rechargement de page.</li>
                             </ul>
                         </div>
                     </section>
