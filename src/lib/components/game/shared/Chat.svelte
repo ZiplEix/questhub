@@ -70,6 +70,28 @@
         );
         return p ? p.name : "Inconnu";
     }
+
+    function formatMessageContent(content: string): string {
+        if (!content) return "";
+        // Escape HTML to prevent XSS
+        let escaped = content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+        // Parse bold: **text** -> <strong>text</strong>
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+        // Parse italic: *text* -> <em>text</em>
+        escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+        // Parse code: `text` -> <code class="bg-black/10 px-1 py-0.5 rounded font-mono text-[11px]">text</code>
+        escaped = escaped.replace(/`(.*?)`/g, '<code class="bg-black/10 px-1 py-0.5 rounded font-mono text-[11px]">$1</code>');
+
+        return escaped;
+    }
 </script>
 
 <div class="h-full flex flex-col bg-stone-50">
@@ -82,7 +104,7 @@
                         class="bg-stone-200 text-stone-600 text-xs px-3 py-1 rounded-full italic border border-stone-300"
                     >
                         <span class="font-bold">{msg.sender_name}</span>
-                        {msg.content}
+                        {@html formatMessageContent(msg.content)}
                     </div>
                 </div>
             {:else if msg.type.startsWith("CHAT")}
@@ -136,7 +158,7 @@
                             {/if}
                         {/if}
 
-                        {msg.content}
+                        {@html formatMessageContent(msg.content)}
                     </div>
                 </div>
             {/if}
