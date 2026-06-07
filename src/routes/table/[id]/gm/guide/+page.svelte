@@ -19,7 +19,8 @@
         HelpCircle,
         Code,
         Settings,
-        Swords
+        Swords,
+        MessageSquare
     } from "lucide-svelte";
     import { page } from "$app/state";
 
@@ -32,7 +33,8 @@
         { id: "factions", label: "Factions & Camps", icon: Users },
         { id: "visibility", label: "Visibilité & Joueurs", icon: Eye },
         { id: "contextmenu", label: "Menu Contextuel (Plateau)", icon: HelpCircle },
-        { id: "story", label: "Histoire & Lore", icon: BookOpen }
+        { id: "story", label: "Histoire & Lore", icon: BookOpen },
+        { id: "commands", label: "Commandes & Chat", icon: MessageSquare }
     ];
 </script>
 
@@ -496,6 +498,106 @@
                                 <li><strong>Héritage de visibilité</strong> : Si un dossier est masqué, tous les articles à l'intérieur sont automatiquement masqués pour les joueurs, même si l'article individuel est marqué comme visible.</li>
                                 <li><strong>Synchronisation instantanée</strong> : Toute mise à jour de texte, création de page ou changement de visibilité par le MJ s'affiche instantanément dans le panneau "Histoire" de la barre latérale des joueurs en temps réel sans rechargement de page.</li>
                             </ul>
+                        </div>
+                    </section>
+                {:else if activeSection === "commands"}
+                    <section class="space-y-6 animate-in fade-in duration-200">
+                        <div class="border-b border-stone-200 pb-4">
+                            <h1 class="text-3xl font-display font-extrabold text-dark-gray flex items-center gap-3">
+                                <MessageSquare class="text-burnt-orange fill-burnt-orange/10" size={32} />
+                                Commandes & Chat
+                            </h1>
+                            <p class="text-stone-500 mt-2">
+                                Communiquez en privé, lancez des dés ou décrivez des actions narratives grâce aux raccourcis console intégrés dans la boîte de dialogue.
+                            </p>
+                        </div>
+
+                        <!-- Autocomplete guide -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Plus class="text-stone-500" size={20} />
+                                Système d'Autocomplétion Intelligente
+                            </h2>
+                            <p class="text-sm text-stone-600 leading-relaxed">
+                                Le chat dispose d'un assistant de saisie en temps réel pour accélérer l'utilisation des commandes :
+                            </p>
+                            <ul class="list-disc pl-5 space-y-2 text-sm text-stone-600">
+                                <li><strong>Déclencheur</strong> : Tapez simplement un slash <code>/</code> dans la barre de saisie du chat pour faire apparaître le menu flottant des commandes disponibles.</li>
+                                <li><strong>Navigation clavier</strong> : Parcourez les suggestions avec les touches <kbd class="px-1.5 py-0.5 bg-stone-50 border border-stone-200 rounded text-xs font-mono shadow-xs">↓</kbd> et <kbd class="px-1.5 py-0.5 bg-stone-50 border border-stone-200 rounded text-xs font-mono shadow-xs">↑</kbd>, puis validez votre choix avec <kbd class="px-2 py-0.5 bg-stone-50 border border-stone-200 rounded text-xs font-mono shadow-xs">Entrée</kbd> ou <kbd class="px-2 py-0.5 bg-stone-50 border border-stone-200 rounded text-xs font-mono shadow-xs">Tab</kbd>.</li>
+                                <li><strong>Fermeture</strong> : Appuyez sur <kbd class="px-2 py-0.5 bg-stone-50 border border-stone-200 rounded text-xs font-mono shadow-xs">Échap</kbd> ou cliquez à l'extérieur de la barre de saisie pour masquer les suggestions.</li>
+                                <li><strong>Clic Souris</strong> : Vous pouvez directement cliquer sur l'une des suggestions. L'autocomplétion s'appliquera et le focus restera dans la barre de saisie pour que vous puissiez continuer à écrire sans interruption.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Chat Commands List -->
+                        <div class="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm space-y-4">
+                            <h2 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                                <Code class="text-stone-500" size={20} />
+                                Répertoire des Commandes de Chat
+                            </h2>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead>
+                                        <tr class="border-b border-stone-200 text-stone-400 font-semibold">
+                                            <th class="py-2.5 pr-4">Commande (et raccourcis)</th>
+                                            <th class="py-2.5 pr-4">Action</th>
+                                            <th class="py-2.5">Exemple d'utilisation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-stone-100 text-stone-600 font-medium">
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /roll <span class="text-stone-400 font-sans">[dés]</span><br/>
+                                                /r <span class="text-stone-400 font-sans">[dés]</span>
+                                            </td>
+                                            <td class="py-3 pr-4">Lance les dés de manière publique.</td>
+                                            <td class="py-3 font-mono text-stone-500">/r 2d6 + 4</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /gmroll <span class="text-stone-400 font-sans">[dés]</span><br/>
+                                                /gr <span class="text-stone-400 font-sans">[dés]</span>
+                                            </td>
+                                            <td class="py-3 pr-4">Lance les dés secrètement pour le MJ.</td>
+                                            <td class="py-3 font-mono text-stone-500">/gr 1d20 + 5</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /chuchotement <span class="text-stone-400 font-sans">[joueur] [msg]</span><br/>
+                                                /w <span class="text-stone-400 font-sans">[joueur] [msg]</span><br/>
+                                                /whisper <span class="text-stone-400 font-sans">[joueur] [msg]</span>
+                                            </td>
+                                            <td class="py-3 pr-4">
+                                                Chuchote à un joueur. L'autocomplétion propose les noms des joueurs dès que vous commencez à écrire. Les noms contenant des espaces sont automatiquement encadrés par des guillemets doubles.
+                                            </td>
+                                            <td class="py-3 font-mono text-stone-500">/w "Baptiste Durant" Salut !</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /secret <span class="text-stone-400 font-sans">[msg]</span><br/>
+                                                /s <span class="text-stone-400 font-sans">[msg]</span>
+                                            </td>
+                                            <td class="py-3 pr-4">Envoie un message secret visible uniquement par le MJ. Les joueurs peuvent l'utiliser pour faire des actions discrètes.</td>
+                                            <td class="py-3 font-mono text-stone-500">/s Je tente de subtiliser la bourse du garde.</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /me <span class="text-stone-400 font-sans">[action]</span>
+                                            </td>
+                                            <td class="py-3 pr-4">Décrit une action narrative (affiché à la troisième personne en italique).</td>
+                                            <td class="py-3 font-mono text-stone-500">/me s'adosse au mur, l'air méfiant.</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 pr-4 font-mono text-stone-900 bg-stone-50/50 px-2 rounded">
+                                                /aide, /help, /?
+                                            </td>
+                                            <td class="py-3 pr-4">Affiche la fiche d'aide des commandes directement dans la zone des messages (uniquement visible par l'auteur).</td>
+                                            <td class="py-3 font-mono text-stone-500">/aide</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
                 {/if}
