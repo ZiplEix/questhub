@@ -98,7 +98,7 @@
                                 Préparation du Combat
                             </h2>
                             <p class="text-sm text-stone-600 leading-relaxed">
-                                Avant de lancer le combat, le tracker est en mode **Préparation**. Une liste de tous les jetons (tokens) présents sur la carte s'affiche.
+                                Avant de lancer le combat, le tracker est en mode <strong>Préparation</strong>. Une liste de tous les jetons (tokens) présents sur la carte s'affiche.
                             </p>
                             <ul class="list-disc pl-5 space-y-2 text-sm text-stone-600">
                                 <li>Cochez ou décochez les cases à côté des jetons pour les inclure ou non dans l'initiative.</li>
@@ -375,7 +375,7 @@
                                 <span>Masquer complètement la santé des monstres</span>
                             </div>
                             <p class="text-sm text-stone-600 leading-relaxed">
-                                Lorsque cette case est **cochée**, les joueurs ne verront aucune valeur numérique (ex: <code>45/45</code>) ni barre de vie sur les jetons identifiés comme **PNJ / Ennemis**. Leurs informations de santé restent confidentielles pour le MJ.
+                                Lorsque cette case est <strong>cochée</strong>, les joueurs ne verront aucune valeur numérique (ex: <code>45/45</code>) ni barre de vie sur les jetons identifiés comme <strong>PNJ / Ennemis</strong>. Leurs informations de santé restent confidentielles pour le MJ.
                             </p>
                         </div>
                     </section>

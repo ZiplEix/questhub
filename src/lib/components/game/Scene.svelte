@@ -1101,7 +1101,7 @@
                     </h3>
                     <p class="text-sm text-stone-400 leading-relaxed">
                         {#if isGM}
-                            Créez un plateau et ajoutez-y une carte dans le panneau latéral droit (**onglet Plateaux**), puis activez-les pour lancer l'aventure.
+                            Créez un plateau et ajoutez-y une carte dans le panneau latéral droit (<strong>onglet Plateaux</strong>), puis activez-les pour lancer l'aventure.
                         {:else}
                             Le Maître du Jeu prépare le terrain. La carte s'affichera automatiquement ici dès qu'elle sera activée.
                         {/if}
