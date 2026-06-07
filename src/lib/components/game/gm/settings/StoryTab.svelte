@@ -88,6 +88,15 @@
         }
     }
 
+    function handleAssetDragStart(e: DragEvent, asset: typeof assets[0]) {
+        if (e.dataTransfer) {
+            const altText = asset.name.split('_').slice(1).join('_').split('.').shift() || "image";
+            const markdown = `![${altText}](${asset.url})`;
+            e.dataTransfer.setData("text/plain", markdown);
+            e.dataTransfer.effectAllowed = "copy";
+        }
+    }
+
     function handleDragOver(e: DragEvent, targetId: string | null) {
         e.preventDefault();
         activeDropTargetId = targetId === null ? "root" : targetId;
@@ -716,6 +725,8 @@
                                             <img
                                                 src={asset.url}
                                                 alt={asset.name}
+                                                draggable="true"
+                                                ondragstart={(e) => handleAssetDragStart(e, asset)}
                                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                         </button>
