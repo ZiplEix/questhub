@@ -17,7 +17,11 @@
         Plus, 
         Check, 
         X,
-        BookOpen
+        BookOpen,
+        Image as ImageIcon,
+        UploadCloud,
+        Copy,
+        FileImage
     } from "lucide-svelte";
     import { marked } from "marked";
     import { 
@@ -32,6 +36,11 @@
         type StoryFolder,
         type StoryPage
     } from "$lib/api/story";
+    import {
+        uploadStoryAsset,
+        listStoryAssets,
+        deleteStoryAsset
+    } from "$lib/api/storage";
 
     let { gameId } = $props<{ gameId: string }>();
 
@@ -61,6 +70,15 @@
     // Drag and Drop state
     let draggedPageId = $state<string | null>(null);
     let activeDropTargetId = $state<string | "root" | null>(null);
+
+    // Media Library (Drive) state
+    let assets = $state<Array<{ name: string; url: string; created_at: string; size: number }>>([]);
+    let assetsLoading = $state(true);
+    let assetsCollapsed = $state(true);
+    let isUploadingAsset = $state(false);
+    let assetsError = $state<string | null>(null);
+    let fileInputRef = $state<HTMLInputElement | null>(null);
+    let textareaElement = $state<HTMLTextAreaElement | null>(null);
 
     function handleDragStart(e: DragEvent, page: StoryPage) {
         draggedPageId = page.id;
@@ -102,13 +120,108 @@
         }
     }
 
+    async function loadAssets() {
+        try {
+            assets = await listStoryAssets(gameId);
+        } catch (error) {
+            console.error("Failed to load story assets:", error);
+            assetsError = "Impossible de charger les images.";
+        }
+    }
+
+    async function handleUploadFiles(files: FileList | File[]) {
+        if (files.length === 0) return;
+        
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
+        if (imageFiles.length === 0) return;
+
+        isUploadingAsset = true;
+        saveStatus = "saving";
+        assetsError = null;
+
+        try {
+            for (const file of imageFiles) {
+                const url = await uploadStoryAsset(gameId, file);
+                if (selectedPage) {
+                    const altText = file.name.split('.').shift() || "image";
+                    insertMarkdown(`\n![${altText}](${url})\n`);
+                }
+            }
+            await loadAssets();
+            saveStatus = "saved";
+        } catch (error) {
+            console.error("Failed to upload files:", error);
+            saveStatus = "error";
+            assetsError = "Échec du téléversement.";
+        } finally {
+            isUploadingAsset = false;
+        }
+    }
+
+    async function handleDeleteAsset(fileName: string) {
+        if (!confirm("Voulez-vous vraiment supprimer cette image du Drive de la campagne ? Elle ne s'affichera plus dans le lore.")) return;
+        try {
+            await deleteStoryAsset(gameId, fileName);
+            assets = assets.filter(a => a.name !== fileName);
+        } catch (error) {
+            console.error("Failed to delete asset:", error);
+            alert("Erreur lors de la suppression de l'image.");
+        }
+    }
+
+    function insertMarkdown(text: string) {
+        if (!selectedPage || !textareaElement) return;
+        
+        const start = textareaElement.selectionStart;
+        const end = textareaElement.selectionEnd;
+        const currentContent = selectedPage.content || "";
+        
+        selectedPage.content = currentContent.substring(0, start) + text + currentContent.substring(end);
+        
+        setTimeout(() => {
+            if (textareaElement) {
+                textareaElement.focus();
+                const newCursorPos = start + text.length;
+                textareaElement.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }, 50);
+
+        triggerAutoSave();
+    }
+
+    function handleTextareaDrop(e: DragEvent) {
+        if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+            const files = Array.from(e.dataTransfer.files);
+            const containsImages = files.some(file => file.type.startsWith("image/"));
+            if (containsImages) {
+                e.preventDefault();
+                handleUploadFiles(files);
+            }
+        }
+    }
+
+    function handleTextareaPaste(e: ClipboardEvent) {
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+            const files = Array.from(e.clipboardData.files);
+            const containsImages = files.some(file => file.type.startsWith("image/"));
+            if (containsImages) {
+                e.preventDefault();
+                handleUploadFiles(files);
+            }
+        }
+    }
+
     onMount(async () => {
         try {
-            await refreshData();
+            await Promise.all([
+                refreshData(),
+                loadAssets()
+            ]);
         } catch (error) {
             console.error("Failed to load story elements:", error);
         } finally {
             loading = false;
+            assetsLoading = false;
         }
     });
 
@@ -536,6 +649,94 @@
                         {/each}
                     </div>
                 {/if}
+
+                <!-- MEDIATHEQUE (DRIVE) -->
+                <div class="mt-6 pt-6 border-t border-stone-100 space-y-4">
+                    <div class="flex items-center justify-between px-2">
+                        <button
+                            onclick={() => assetsCollapsed = !assetsCollapsed}
+                            class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-stone-600 transition-colors"
+                        >
+                            {#if assetsCollapsed}
+                                <ChevronRight size={14} />
+                            {:else}
+                                <ChevronDown size={14} />
+                            {/if}
+                            <ImageIcon size={14} class="text-burnt-orange" />
+                            <span>Médiathèque (Drive)</span>
+                            <span class="text-[10px] font-normal text-stone-400 font-mono">({assets.length})</span>
+                        </button>
+
+                        <!-- Upload file button -->
+                        <button
+                            onclick={() => fileInputRef?.click()}
+                            class="text-stone-400 hover:text-burnt-orange p-1 rounded transition-colors"
+                            title="Importer une image"
+                        >
+                            <UploadCloud size={16} />
+                        </button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            class="hidden"
+                            bind:this={fileInputRef}
+                            onchange={(e) => e.currentTarget.files && handleUploadFiles(e.currentTarget.files)}
+                        />
+                    </div>
+
+                    {#if !assetsCollapsed}
+                        {#if assetsLoading}
+                            <div class="flex items-center justify-center py-4">
+                                <Loader2 class="animate-spin text-stone-400" size={16} />
+                            </div>
+                        {:else if assets.length === 0}
+                            <div class="p-4 border border-dashed border-stone-200 rounded-xl text-center space-y-2">
+                                <FileImage size={24} class="text-stone-300 mx-auto" />
+                                <p class="text-[10px] text-stone-400 leading-normal">
+                                    Aucune image importée. Déposez des images dans l'éditeur ou importez-les ici.
+                                </p>
+                            </div>
+                        {:else}
+                            {#if assetsError}
+                                <p class="text-[10px] text-red-500 px-2">{assetsError}</p>
+                            {/if}
+                            <div class="grid grid-cols-3 gap-2 px-1">
+                                {#each assets as asset}
+                                    <div class="group relative aspect-square rounded-lg border border-stone-150 overflow-hidden bg-stone-50 hover:border-burnt-orange transition-all">
+                                        <!-- Thumbnail click inserts markdown image -->
+                                        <button
+                                            onclick={() => {
+                                                const altText = asset.name.split('_').slice(1).join('_').split('.').shift() || "image";
+                                                insertMarkdown(`![${altText}](${asset.url})`);
+                                            }}
+                                            class="w-full h-full p-0 border-0 bg-transparent block cursor-pointer"
+                                            title="Insérer dans l'article"
+                                        >
+                                            <img
+                                                src={asset.url}
+                                                alt={asset.name}
+                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            />
+                                        </button>
+
+                                        <!-- Asset Actions -->
+                                        <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <!-- Delete asset -->
+                                            <button
+                                                onclick={() => handleDeleteAsset(asset.name)}
+                                                class="p-1 bg-white/90 hover:bg-red-50 text-stone-400 hover:text-red-500 rounded shadow-xs backdrop-blur-xs transition-colors cursor-pointer"
+                                                title="Supprimer définitivement"
+                                            >
+                                                <Trash2 size={10} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
             </div>
         {/if}
     </div>
@@ -625,12 +826,23 @@
             <!-- 3. Tab Contents -->
             <div class="flex-1 overflow-y-auto bg-white rounded-xl border border-stone-100 p-4 relative flex flex-col">
                 {#if activeEditorTab === "edit"}
-                    <textarea
-                        bind:value={selectedPage.content}
-                        oninput={triggerAutoSave}
-                        class="w-full flex-1 resize-none focus:outline-none font-mono text-sm leading-relaxed text-stone-700 bg-white"
-                        placeholder="# Titre du lore&#10;&#10;Écrivez votre lore en Markdown ici. Vous pouvez utiliser du **gras**, de l' *italique*, des [liens](https://...), des listes :&#10;- Premier point&#10;- Deuxième point&#10;&#10;Ou des citations :&#10;> « Il y a bien longtemps, dans une galaxie lointaine... »"
-                    ></textarea>
+                    <div class="relative flex-1 flex flex-col">
+                        <textarea
+                            bind:this={textareaElement}
+                            bind:value={selectedPage.content}
+                            oninput={triggerAutoSave}
+                            ondrop={handleTextareaDrop}
+                            onpaste={handleTextareaPaste}
+                            class="w-full flex-1 resize-none focus:outline-none font-mono text-sm leading-relaxed text-stone-700 bg-white"
+                            placeholder="# Titre du lore&#10;&#10;Écrivez votre lore en Markdown ici. Vous pouvez glisser-déposer ou coller une image directement ici pour l'importer dans l'article.&#10;&#10;Exemple de Markdown :&#10;- **gras**, *italique*&#10;- [liens](https://...)&#10;- listes et tableaux..."
+                        ></textarea>
+                        {#if isUploadingAsset}
+                            <div class="absolute inset-0 bg-white/75 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-stone-600 z-10">
+                                <Loader2 class="animate-spin text-burnt-orange" size={24} />
+                                <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Téléversement de l'image...</span>
+                            </div>
+                        {/if}
+                    </div>
                 {:else}
                     <div class="markdown-content flex-1 max-w-none">
                         {#if selectedPage.content}
