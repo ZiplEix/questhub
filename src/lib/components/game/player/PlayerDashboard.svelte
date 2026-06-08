@@ -7,10 +7,7 @@
     import CharacterSheet from "../pupitre/CharacterSheet.svelte";
     import Inventory from "../pupitre/Inventory.svelte";
     import type { Character } from "$lib/types/character";
-    import { authClient } from "$lib/auth-client";
-    // Removed unused imports
 
-    import { onMount } from "svelte";
     import Chat from "../shared/Chat.svelte";
     import PlayerTracker from "./PlayerTracker.svelte";
     import { activeBoardStore } from "$lib/websocket";

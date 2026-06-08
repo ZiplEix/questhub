@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Send, Dices, EyeOff, MessageSquare } from "lucide-svelte";
+    import { Send, EyeOff } from "lucide-svelte";
     import { websocketStore } from "$lib/websocket";
     import { sendMessage } from "$lib/chat";
     import { page } from "$app/state";

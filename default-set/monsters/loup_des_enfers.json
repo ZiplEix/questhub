@@ -1,0 +1,48 @@
+{
+  "name": "Loup des enfers",
+  "race": "Fiélon",
+  "sub_race": "Canidé",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 45,
+  "current_hp": 45,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 15,
+  "speed": 15,
+  "height": "1.3m",
+  "weight": "120kg",
+  "experience": 700,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié se trouve à 1.5m de la cible.\n- Odorat aiguisé : Avantage sur les tests de Sagesse (Perception) liés à l'odorat.\n- Corps infernal : Entièrement immunisé aux dégâts de feu.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 17,
+  "strength_mod": 3,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 14,
+  "constitution_mod": 2,
+  "intelligence": 6,
+  "intelligence_mod": -2,
+  "wisdom": 13,
+  "wisdom_mod": 1,
+  "charisma": 6,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure brûlante",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 1d8 + 3 perforants et 1d6 de feu.",
+        "charges": ""
+      },
+      {
+        "name": "Souffle de feu",
+        "description": "Souffle un cône de feu de 4.5m : 3d6 de feu (JdS de Dextérité DD 12 pour moitié).",
+        "charges": "Recharge (5-6)"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

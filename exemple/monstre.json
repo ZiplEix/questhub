@@ -1,0 +1,55 @@
+{
+  "name": "Wyverne des tempêtes",
+  "race": "Dragon",
+  "sub_race": "Wyverne",
+  "type": "MONSTER",
+  "is_npc": false,
+  "max_hp": 110,
+  "current_hp": 110,
+  "money": 0,
+  "initiative": 10,
+  "armor_class": 16,
+  "speed": 40,
+  "height": "345",
+  "weight": "450",
+  "experience": 0,
+  "abilities": "- Vol (24m).\n- Résistance aux dégâts de foudre.\n- Attaque multiple: la wyverne effectue deux attaques par tour : une morsure et une attaque de griffes ou de dard.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 19,
+  "strength_mod": 4,
+  "dexterity": 10,
+  "dexterity_mod": 0,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 5,
+  "intelligence_mod": -3,
+  "wisdom": 12,
+  "wisdom_mod": 1,
+  "charisma": 6,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure",
+        "description": "Attaque au corps à corps : +7 au toucher, allonge 3m, une cible. Touché : 2d6 + 4 dégâts perforants.",
+        "charges": ""
+      },
+      {
+        "name": "Dard venimeux",
+        "description": "Attaque au corps à corps : +7 au toucher, allonge 4.5m, une cible. Touché : 1d6 + 4 dégâts perforants, et la cible doit effectuer un jet de sauvegarde de Constitution (DD 15), subissant 3d6 dégâts de poison en cas d'échec.",
+        "charges": ""
+      },
+      {
+        "name": "Griffes",
+        "description": "Attaque au corps à corps : +7 au toucher, allonge 1.5m, une cible. Touché : 2d4 + 4 dégâts tranchants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

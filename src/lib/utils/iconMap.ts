@@ -1,7 +1,6 @@
 import {
     Sword,
     Wand2,
-    AlertCircle,
     Package,
     Zap,
     Heart,
@@ -47,17 +46,17 @@ export const AVAILABLE_ICONS: IconOption[] = [
     { name: "bow", label: "Arc", category: "Armes", component: Crosshair },
     { name: "wand", label: "Baguette", category: "Armes", component: Wand2 },
     { name: "staff", label: "Bâton", category: "Armes", component: Scroll },
-    
+
     // Armures et protection
     { name: "shield", label: "Bouclier", category: "Protection", component: Shield },
-    
+
     // Objets magiques
     { name: "gem", label: "Gemme", category: "Magique", component: Gem },
     { name: "spell", label: "Sort", category: "Magique", component: Wand },
     { name: "scroll", label: "Parchemin", category: "Magique", component: Scroll },
     { name: "book", label: "Livre", category: "Magique", component: Book },
     { name: "key", label: "Clé", category: "Magique", component: Key },
-    
+
     // Utilitaire
     { name: "backpack", label: "Sac à dos", category: "Utilitaire", component: Backpack },
     { name: "map", label: "Carte", category: "Utilitaire", component: Map },
@@ -65,13 +64,13 @@ export const AVAILABLE_ICONS: IconOption[] = [
     { name: "torch", label: "Torche", category: "Utilitaire", component: Flame },
     { name: "coin", label: "Pièce", category: "Utilitaire", component: Coins },
     { name: "treasure", label: "Trésor", category: "Utilitaire", component: Trophy },
-    
+
     // Éléments
     { name: "water", label: "Eau", category: "Éléments", component: Droplets },
     { name: "fire", label: "Feu", category: "Éléments", component: Flame },
     { name: "air", label: "Air", category: "Éléments", component: Wind },
     { name: "earth", label: "Terre", category: "Éléments", component: Cloud },
-    
+
     // Divers
     { name: "health", label: "Santé", category: "Divers", component: Heart },
     { name: "mana", label: "Mana", category: "Divers", component: Zap },

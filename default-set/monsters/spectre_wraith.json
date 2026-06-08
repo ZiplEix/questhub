@@ -1,0 +1,50 @@
+{
+  "name": "Spectre (Wraith)",
+  "race": "Mort-vivant",
+  "sub_race": "Wraith",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 67,
+  "current_hp": 67,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 13,
+  "speed": 18,
+  "height": "1.8m",
+  "weight": "0kg",
+  "experience": 1800,
+  "abilities": "- Déplacement incorporel : Peut traverser les murs et objets solides comme s'ils étaient un terrain difficile.\n- Résistance physique : Résistant aux armes physiques non magiques.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 6,
+  "strength_mod": -2,
+  "dexterity": 16,
+  "dexterity_mod": 3,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 12,
+  "intelligence_mod": 1,
+  "wisdom": 14,
+  "wisdom_mod": 2,
+  "charisma": 15,
+  "charisma_mod": 2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Absorption de vie",
+        "description": "Attaque de corps à corps : +6 au toucher. Dégâts : 4d8 + 3 nécrotiques. Le maximum de PV de la cible est réduit de la valeur des dégâts.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Créer un spectre",
+        "description": "Transforme l'esprit d'un humanoïde décédé récemment à moins de 3m sous sa coupe.",
+        "charges": "1 par jour"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

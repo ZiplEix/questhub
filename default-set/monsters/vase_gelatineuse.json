@@ -1,0 +1,48 @@
+{
+  "name": "Vase gélatineuse",
+  "race": "Vase",
+  "sub_race": "",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 84,
+  "current_hp": 84,
+  "money": 0,
+  "initiative": -5,
+  "armor_class": 6,
+  "speed": 4,
+  "height": "3.0m",
+  "weight": "2000kg",
+  "experience": 450,
+  "abilities": "- Transparence : Nécessite un jet de Sagesse (Perception) DD 15 pour être remarquée avant d'entrer en contact direct.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 14,
+  "strength_mod": 2,
+  "dexterity": 3,
+  "dexterity_mod": -4,
+  "constitution": 20,
+  "constitution_mod": 5,
+  "intelligence": 1,
+  "intelligence_mod": -5,
+  "wisdom": 6,
+  "wisdom_mod": -2,
+  "charisma": 1,
+  "charisma_mod": -5,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Pseudopode",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 3d6 acide.",
+        "charges": ""
+      },
+      {
+        "name": "Englober",
+        "description": "La vase se déplace sur une cible de taille M ou moins. Cible englobée subit 3d6 acide au début de ses tours et est privée d'air.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

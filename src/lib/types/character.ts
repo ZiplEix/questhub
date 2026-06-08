@@ -7,6 +7,21 @@ export interface Character {
     max_hp: number;
     current_hp: number;
     avatar_url?: string | null;
+    // Core D&D ability scores
+    strength: number;
+    strength_mod: number;
+    dexterity: number;
+    dexterity_mod: number;
+    constitution: number;
+    constitution_mod: number;
+    intelligence: number;
+    intelligence_mod: number;
+    wisdom: number;
+    wisdom_mod: number;
+    charisma: number;
+    charisma_mod: number;
+
+    // Additional custom stats
     stats: Record<string, { value: number; modifier: number }>;
     inventory: InventoryItem[];
     is_npc: boolean;

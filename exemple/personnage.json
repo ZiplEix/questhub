@@ -1,0 +1,66 @@
+{
+  "name": "Elara Lunargent",
+  "race": "Elfe",
+  "sub_race": "Haut-Elfe",
+  "type": "PLAYER",
+  "is_npc": false,
+  "max_hp": 45,
+  "current_hp": 45,
+  "money": 150,
+  "initiative": 3,
+  "armor_class": 15,
+  "speed": 35,
+  "age": "127",
+  "height": "170",
+  "weight": "55",
+  "experience": 2700,
+  "abilities": "- Vision dans le noir (18m).\n- Résistance aux charmes.\n- Transe elfique (4h de méditation au lieu de 8h de sommeil).\n- Maîtrise des épées longues et des arcs.",
+  "avatar_url": null,
+  "max_spells": 4,
+  "strength": 8,
+  "strength_mod": -1,
+  "dexterity": 16,
+  "dexterity_mod": 3,
+  "constitution": 12,
+  "constitution_mod": 1,
+  "intelligence": 18,
+  "intelligence_mod": 4,
+  "wisdom": 13,
+  "wisdom_mod": 1,
+  "charisma": 10,
+  "charisma_mod": 0,
+  "stats": {},
+  "inventory": [
+    {
+      "name": "Bâton arcanique",
+      "quantity": "1",
+      "description": "Focaliseur arcanique. Peut être utilisé comme arme de corps à corps (1d6 contondant).",
+      "icon_name": "Wand"
+    },
+    {
+      "name": "Grimoire",
+      "quantity": "1",
+      "description": "Contient tous les sorts connus. 100 pages, 47 utilisées.",
+      "icon_name": "BookOpen"
+    },
+    {
+      "name": "Potion de soins",
+      "quantity": "3",
+      "description": "Restaure 2d4+2 points de vie.",
+      "icon_name": "Heart"
+    },
+    {
+      "name": "Rations de voyage",
+      "quantity": "5",
+      "description": "Nourriture séchée pour une journée.",
+      "icon_name": "Apple"
+    },
+    {
+      "name": "Pièces d'or",
+      "quantity": "150",
+      "description": "Monnaie courante.",
+      "icon_name": "Coins"
+    }
+  ],
+  "conditions": []
+}

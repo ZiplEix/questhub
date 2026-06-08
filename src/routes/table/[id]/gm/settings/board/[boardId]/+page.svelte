@@ -6,10 +6,10 @@
     import { fetchBoard, updateBoard } from "$lib/api/board";
     import { uploadImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
-    import { 
-        ArrowLeft, Check, Upload, Link as LinkIcon, 
-        Loader2, Image as ImageIcon, Layers, Grid3x3, 
-        ZoomIn, ZoomOut, RotateCcw
+    import {
+        ArrowLeft, Check, Upload, Link as LinkIcon,
+        Loader2, Image, Layers, Grid3x3,
+        ZoomIn, ZoomOut
     } from "lucide-svelte";
 
     const gameId = page.params.id as string;
@@ -18,7 +18,7 @@
     let boardName = $state("");
     let boardUrl = $state("");
     let uploadMethod = $state<"file" | "url">("file");
-    
+
     // Scale fields
     let pixelsPerCell = $state(70);
     let gridOffsetX = $state(0);

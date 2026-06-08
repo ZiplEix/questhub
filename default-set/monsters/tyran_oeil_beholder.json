@@ -1,0 +1,48 @@
+{
+  "name": "Tyrant de l'œil (Beholder)",
+  "race": "Aberration",
+  "sub_race": "Beholder",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 180,
+  "current_hp": 180,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 18,
+  "speed": 6,
+  "height": "2.4m",
+  "weight": "300kg",
+  "experience": 10000,
+  "abilities": "- Cône d'antimagie : L'œil central annule toute magie dans un cône de 45m devant lui.\n- Vol stationnaire : Flotte magiquement dans les airs.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 10,
+  "strength_mod": 0,
+  "dexterity": 14,
+  "dexterity_mod": 2,
+  "constitution": 18,
+  "constitution_mod": 4,
+  "intelligence": 17,
+  "intelligence_mod": 3,
+  "wisdom": 15,
+  "wisdom_mod": 2,
+  "charisma": 17,
+  "charisma_mod": 3,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 4d6 perforants.",
+        "charges": ""
+      },
+      {
+        "name": "Rayons de Beholder",
+        "description": "Tire trois rayons au hasard parmi : Désintégration (10d10 force), Pétrification (JdS Dex), Mort (10d10 nécrotique, JdS Con), Télékinésie, Charme ou Sommeil.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

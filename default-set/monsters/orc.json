@@ -1,0 +1,48 @@
+{
+  "name": "Orc",
+  "race": "Humanoïde",
+  "sub_race": "Orc",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 15,
+  "current_hp": 15,
+  "money": 0,
+  "initiative": 1,
+  "armor_class": 13,
+  "speed": 9,
+  "height": "1.9m",
+  "weight": "110kg",
+  "experience": 100,
+  "abilities": "- Agressif : Peut se déplacer de sa vitesse vers une créature ennemie visible en action bonus.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 16,
+  "strength_mod": 3,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 7,
+  "intelligence_mod": -2,
+  "wisdom": 11,
+  "wisdom_mod": 0,
+  "charisma": 10,
+  "charisma_mod": 0,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Hache à deux mains",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 1d12 + 3 tranchants.",
+        "charges": ""
+      },
+      {
+        "name": "Javelot",
+        "description": "Attaque à distance : +5 au toucher, portée 9m. Dégâts : 1d6 + 3 perforants.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

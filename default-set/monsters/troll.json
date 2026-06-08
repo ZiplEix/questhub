@@ -1,0 +1,55 @@
+{
+  "name": "Troll",
+  "race": "Géant",
+  "sub_race": "Troll",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 84,
+  "current_hp": 84,
+  "money": 0,
+  "initiative": 1,
+  "armor_class": 15,
+  "speed": 9,
+  "height": "2.8m",
+  "weight": "230kg",
+  "experience": 1800,
+  "abilities": "- Régénération : Regagne 10 PV au début de son tour, sauf s'il a subi des dégâts de feu ou d'acide au tour précédent.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 18,
+  "strength_mod": 4,
+  "dexterity": 13,
+  "dexterity_mod": 1,
+  "constitution": 20,
+  "constitution_mod": 5,
+  "intelligence": 7,
+  "intelligence_mod": -2,
+  "wisdom": 9,
+  "wisdom_mod": -1,
+  "charisma": 7,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure",
+        "description": "Attaque de corps à corps : +7 au toucher. Dégâts : 1d6 + 4 perforants.",
+        "charges": ""
+      },
+      {
+        "name": "Griffes",
+        "description": "Attaque de corps à corps : +7 au toucher. Dégâts : 2d6 + 4 tranchants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "Le troll effectue trois attaques par tour : une de morsure et deux de griffes.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

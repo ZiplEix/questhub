@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Search, Plus, Skull, MapPin } from "lucide-svelte";
+    import { Search, Skull, MapPin } from "lucide-svelte";
     import { fetchMonsters } from "$lib/api";
     import { activeBoardStore } from "$lib/websocket";
     import { addBoardToken } from "$lib/api/board";

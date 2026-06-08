@@ -1,0 +1,43 @@
+{
+  "name": "Loup géant",
+  "race": "Bête",
+  "sub_race": "Canidé",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 37,
+  "current_hp": 37,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 14,
+  "speed": 15,
+  "height": "1.5m",
+  "weight": "180kg",
+  "experience": 200,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié se trouve à 1.5m de la cible.\n- Ouïe et Odorat aiguisés : Avantage sur les tests de Sagesse (Perception) liés à l'ouïe ou à l'odorat.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 17,
+  "strength_mod": 3,
+  "dexterity": 15,
+  "dexterity_mod": 2,
+  "constitution": 15,
+  "constitution_mod": 2,
+  "intelligence": 3,
+  "intelligence_mod": -4,
+  "wisdom": 12,
+  "wisdom_mod": 1,
+  "charisma": 7,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure dévorante",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 2d6 + 3 perforants. La cible doit réussir un JdS de Force (DD 13) ou tomber à terre.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

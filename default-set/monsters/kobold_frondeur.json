@@ -1,0 +1,48 @@
+{
+  "name": "Kobold frondeur",
+  "race": "Humanoïde",
+  "sub_race": "Reptilien",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 5,
+  "current_hp": 5,
+  "money": 0,
+  "initiative": 3,
+  "armor_class": 13,
+  "speed": 9,
+  "height": "0.9m",
+  "weight": "14kg",
+  "experience": 25,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié non-incapacité se trouve à 1.5m de la cible.\n- Sensibilité au soleil : Désavantage sur les attaques en pleine lumière.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 7,
+  "strength_mod": -2,
+  "dexterity": 16,
+  "dexterity_mod": 3,
+  "constitution": 9,
+  "constitution_mod": -1,
+  "intelligence": 8,
+  "intelligence_mod": -1,
+  "wisdom": 7,
+  "wisdom_mod": -2,
+  "charisma": 8,
+  "charisma_mod": -1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Fronde de précision",
+        "description": "Attaque à distance : +5 au toucher, portée 24m. Dégâts : 1d4 + 3 contondants.",
+        "charges": ""
+      },
+      {
+        "name": "Petite dague",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 1d4 - 2 perforants.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

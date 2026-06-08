@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Backpack, Coins, Search, Package } from "lucide-svelte";
+    import { Coins, Search, Package } from "lucide-svelte";
     import IconRenderer from "$lib/components/IconRenderer.svelte";
     import type { Character } from "$lib/types/character";
 

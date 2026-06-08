@@ -1,0 +1,55 @@
+{
+  "name": "Minotaure",
+  "race": "Monstruosité",
+  "sub_race": "Taure",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 76,
+  "current_hp": 76,
+  "money": 0,
+  "initiative": 0,
+  "armor_class": 14,
+  "speed": 12,
+  "height": "2.2m",
+  "weight": "350kg",
+  "experience": 700,
+  "abilities": "- Mémoire parfaite : Se rappelle toujours de son chemin dans les labyrinthes.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 18,
+  "strength_mod": 4,
+  "dexterity": 11,
+  "dexterity_mod": 0,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 6,
+  "intelligence_mod": -2,
+  "wisdom": 16,
+  "wisdom_mod": 3,
+  "charisma": 9,
+  "charisma_mod": -1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Grande hache",
+        "description": "Attaque de corps à corps : +6 au toucher. Dégâts : 2d12 + 4 tranchants.",
+        "charges": ""
+      },
+      {
+        "name": "Cornes",
+        "description": "Attaque de corps à corps : +6 au toucher. Dégâts : 2d8 + 4 perforants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Charge (Cornes)",
+        "description": "Si le minotaure court d'au moins 3m avant de frapper avec ses cornes, il inflige +2d8 dégâts et la cible doit faire un JdS de Force DD 14 ou être repoussée.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

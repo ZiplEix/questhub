@@ -1,21 +1,17 @@
 <script lang="ts">
     import Header from "$lib/components/Header.svelte";
-    import { 
-        BookOpen, 
-        Heart, 
-        Activity, 
-        Skull, 
-        Shield, 
-        RotateCcw, 
-        Play, 
-        Users, 
-        Flame, 
-        Eye, 
+    import {
+        BookOpen,
+        Heart,
+        Activity,
+        Shield,
+        RotateCcw,
+        Play,
+        Users,
+        Eye,
         EyeOff,
         Trash2,
-        X,
         Plus,
-        CheckCircle2,
         HelpCircle,
         Code,
         Settings,
@@ -40,7 +36,7 @@
 
 <div class="h-screen w-screen flex flex-col bg-stone-50 overflow-hidden font-sans text-stone-850">
     <Header />
-    
+
     <div class="flex-1 flex overflow-hidden">
         <!-- Sidebar Navigation -->
         <aside class="w-64 bg-white border-r border-stone-200 flex flex-col p-4 shrink-0 justify-between">

@@ -1,0 +1,43 @@
+{
+  "name": "Loup",
+  "race": "Bête",
+  "sub_race": "Canidé",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 11,
+  "current_hp": 11,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 13,
+  "speed": 12,
+  "height": "0.8m",
+  "weight": "35kg",
+  "experience": 50,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié se trouve à 1.5m de la cible.\n- Ouïe et Odorat aiguisés : Avantage sur les tests de Sagesse (Perception) liés à l'ouïe ou à l'odorat.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 12,
+  "strength_mod": 1,
+  "dexterity": 15,
+  "dexterity_mod": 2,
+  "constitution": 12,
+  "constitution_mod": 1,
+  "intelligence": 3,
+  "intelligence_mod": -4,
+  "wisdom": 12,
+  "wisdom_mod": 1,
+  "charisma": 6,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 2d4 + 2 perforants. Si la cible est une créature, elle doit réussir un JdS de Force (DD 11) ou tomber à terre.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

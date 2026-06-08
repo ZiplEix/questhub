@@ -1,0 +1,48 @@
+{
+  "name": "Gobelin éclaireur",
+  "race": "Humanoïde",
+  "sub_race": "Gobelinoïde",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 7,
+  "current_hp": 7,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 14,
+  "speed": 9,
+  "height": "1.1m",
+  "weight": "22kg",
+  "experience": 50,
+  "abilities": "- Fuite agile : Peut se désengager ou se cacher en action bonus.\n- Discrétion améliorée : Bénéficie d'un bonus de +6 aux jets de discrétion.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 8,
+  "strength_mod": -1,
+  "dexterity": 14,
+  "dexterity_mod": 2,
+  "constitution": 10,
+  "constitution_mod": 0,
+  "intelligence": 10,
+  "intelligence_mod": 0,
+  "wisdom": 10,
+  "wisdom_mod": 0,
+  "charisma": 8,
+  "charisma_mod": -1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Arc court de précision",
+        "description": "Attaque à distance : +4 au toucher, portée 24m. Dégâts : 1d6 + 2 perforants. Avantage si le gobelin est caché.",
+        "charges": ""
+      },
+      {
+        "name": "Dague de combat",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 1d4 + 2 perforants.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

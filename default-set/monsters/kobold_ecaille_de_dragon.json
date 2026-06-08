@@ -1,0 +1,50 @@
+{
+  "name": "Kobold écaille de dragon",
+  "race": "Humanoïde",
+  "sub_race": "Reptilien",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 18,
+  "current_hp": 18,
+  "money": 5,
+  "initiative": 2,
+  "armor_class": 15,
+  "speed": 9,
+  "height": "1.0m",
+  "weight": "18kg",
+  "experience": 100,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié non-incapacité se trouve à 1.5m de la cible.\n- Résistance draconique : Immunisé ou résistant aux dégâts de feu.\n- Courage de dragon : Avantage sur les jets de sauvegarde contre la peur.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 11,
+  "strength_mod": 0,
+  "dexterity": 14,
+  "dexterity_mod": 2,
+  "constitution": 12,
+  "constitution_mod": 1,
+  "intelligence": 8,
+  "intelligence_mod": -1,
+  "wisdom": 9,
+  "wisdom_mod": -1,
+  "charisma": 12,
+  "charisma_mod": 1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Rapière émoussée",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 1d8 + 2 perforants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "Le kobold effectue deux attaques de rapière par tour.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

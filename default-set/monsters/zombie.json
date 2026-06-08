@@ -1,0 +1,43 @@
+{
+  "name": "Zombie",
+  "race": "Mort-vivant",
+  "sub_race": "Zombie",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 22,
+  "current_hp": 22,
+  "money": 0,
+  "initiative": -2,
+  "armor_class": 8,
+  "speed": 6,
+  "height": "1.8m",
+  "weight": "75kg",
+  "experience": 50,
+  "abilities": "- Robustesse de la mort : Si des dégâts le réduisent à 0 PV, il effectue un JdS de Constitution de DD 5 + dégâts subis. S'il réussit, il tombe à 1 PV à la place (sauf si dégâts sacrés ou critiques).",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 13,
+  "strength_mod": 1,
+  "dexterity": 6,
+  "dexterity_mod": -2,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 3,
+  "intelligence_mod": -4,
+  "wisdom": 6,
+  "wisdom_mod": -2,
+  "charisma": 5,
+  "charisma_mod": -3,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Coup",
+        "description": "Attaque de corps à corps : +3 au toucher. Dégâts : 1d6 + 1 contondants.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

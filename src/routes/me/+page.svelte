@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters } from "$lib/api";
+    import { uploadImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
     import Header from "$lib/components/Header.svelte";
@@ -11,6 +12,9 @@
         Skull,
         BookOpen,
         Mail,
+        Camera,
+        Loader2,
+        Check,
     } from "lucide-svelte";
     import type { SessionUser } from "$lib/types/session-user";
 
@@ -21,6 +25,10 @@
     let characters = $state<any[]>([]);
     let monsters = $state<any[]>([]);
     let loading = $state(true);
+    let avatarUploading = $state(false);
+    let avatarSuccess = $state(false);
+    let avatarError = $state("");
+    let fileInput = $state<HTMLInputElement | null>(null);
 
     const tabs = [
         { id: "general", label: "Informations", icon: User },
@@ -82,6 +90,47 @@
             characters = await fetchUserCharacters();
         } catch (e) {
             console.error("Failed to fetch characters", e);
+        }
+    }
+
+    async function handleAvatarUpload(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            avatarError = "Veuillez sélectionner un fichier image.";
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            avatarError = "L'image ne doit pas dépasser 5 Mo.";
+            return;
+        }
+
+        avatarUploading = true;
+        avatarError = "";
+        avatarSuccess = false;
+
+        try {
+            const publicUrl = await uploadImage(file);
+            await authClient.updateUser({ avatar_url: publicUrl });
+
+            // Update the local user state
+            if (user) {
+                user = { ...user, image: publicUrl };
+            }
+            avatarSuccess = true;
+            setTimeout(() => { avatarSuccess = false; }, 2500);
+        } catch (e: any) {
+            console.error("Failed to upload avatar", e);
+            avatarError = e.message || "Erreur lors de l'upload de la photo.";
+        } finally {
+            avatarUploading = false;
+            // Reset the input so the same file can be re-selected
+            if (input) input.value = "";
         }
     }
 
@@ -148,13 +197,47 @@
                         class="animate-in fade-in slide-in-from-bottom-4 duration-300"
                     >
                         <div class="flex items-start gap-8">
-                            <div class="relative">
+                            <div class="relative group">
                                 <img
                                     src={user?.image ||
                                         `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
                                     alt={user?.name}
-                                    class="w-32 h-32 rounded-full object-cover border-4 border-stone-100 shadow-md"
+                                    class="w-32 h-32 rounded-full object-cover border-4 border-stone-100 shadow-md transition-all duration-200 {avatarUploading ? 'opacity-50' : 'group-hover:brightness-75'}"
                                 />
+                                <!-- Upload overlay -->
+                                <button
+                                    type="button"
+                                    onclick={() => fileInput?.click()}
+                                    disabled={avatarUploading}
+                                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full cursor-pointer transition-all duration-200 {avatarUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}"
+                                    title="Changer la photo de profil"
+                                >
+                                    {#if avatarUploading}
+                                        <Loader2 size={28} class="text-white animate-spin" />
+                                    {:else if avatarSuccess}
+                                        <Check size={28} class="text-green-400" />
+                                    {:else}
+                                        <Camera size={28} class="text-white drop-shadow-md" />
+                                        <span class="text-white text-xs font-medium mt-1 drop-shadow-md">Modifier</span>
+                                    {/if}
+                                </button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    bind:this={fileInput}
+                                    onchange={handleAvatarUpload}
+                                />
+                                {#if avatarError}
+                                    <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-red-50 text-red-600 text-xs px-3 py-1 rounded-lg border border-red-100 shadow-sm">
+                                        {avatarError}
+                                    </div>
+                                {/if}
+                                {#if avatarSuccess}
+                                    <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-50 text-green-600 text-xs px-3 py-1 rounded-lg border border-green-100 shadow-sm">
+                                        Photo mise à jour !
+                                    </div>
+                                {/if}
                             </div>
                             <div class="space-y-4 flex-1">
                                 <div>

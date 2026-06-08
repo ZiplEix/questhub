@@ -1,0 +1,60 @@
+{
+  "name": "Orc oeil de gruumsh",
+  "race": "Humanoïde",
+  "sub_race": "Orc",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 30,
+  "current_hp": 30,
+  "money": 15,
+  "initiative": 1,
+  "armor_class": 14,
+  "speed": 9,
+  "height": "2.0m",
+  "weight": "120kg",
+  "experience": 300,
+  "abilities": "- Agressif : Peut se déplacer de sa vitesse vers une créature ennemie visible en action bonus.\n- Bénédiction de Gruumsh : Lanceur de sorts divins de combat utilisant la Sagesse.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 16,
+  "strength_mod": 3,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 14,
+  "constitution_mod": 2,
+  "intelligence": 9,
+  "intelligence_mod": -1,
+  "wisdom": 14,
+  "wisdom_mod": 2,
+  "charisma": 10,
+  "charisma_mod": 0,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Lance à une main",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 1d6 + 3 perforants.",
+        "charges": ""
+      }
+    ],
+    "Sorts": [
+      {
+        "name": "Injonction de Gruumsh",
+        "description": "Force une cible à s'agenouiller ou à fuir (JdS Sagesse DD 12).",
+        "charges": "2 charges"
+      },
+      {
+        "name": "Soins blessures de combat",
+        "description": "Restaure 1d8 + 2 PV à un allié au contact.",
+        "charges": "2 charges"
+      },
+      {
+        "name": "Bénédiction du carnage",
+        "description": "+1d4 aux jets d'attaque de 3 alliés pendant 1 minute.",
+        "charges": "1 charge"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}
