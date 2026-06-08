@@ -1,0 +1,60 @@
+{
+  "name": "Gobelin chaman",
+  "race": "Humanoïde",
+  "sub_race": "Gobelinoïde",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 12,
+  "current_hp": 12,
+  "money": 5,
+  "initiative": 1,
+  "armor_class": 12,
+  "speed": 9,
+  "height": "1.0m",
+  "weight": "20kg",
+  "experience": 100,
+  "abilities": "- Pacte sauvage : Lanceur de sorts utilisant la Sagesse pour ses jets de magie.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 8,
+  "strength_mod": -1,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 10,
+  "constitution_mod": 0,
+  "intelligence": 10,
+  "intelligence_mod": 0,
+  "wisdom": 14,
+  "wisdom_mod": 2,
+  "charisma": 10,
+  "charisma_mod": 0,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Bâton fétiche",
+        "description": "Attaque de corps à corps : +1 au toucher. Dégâts : 1d6 - 1 contondants.",
+        "charges": ""
+      }
+    ],
+    "Sorts": [
+      {
+        "name": "Trait de feu arcanique",
+        "description": "Jet de sort à distance : +4 au toucher, portée 18m. Dégâts : 1d10 feu.",
+        "charges": "Illimité"
+      },
+      {
+        "name": "Mot de guérison fétide",
+        "description": "Soigne un gobelin allié visible à moins de 18m de 1d4 + 2 PV.",
+        "charges": "3 charges"
+      },
+      {
+        "name": "Bouclier d'épines",
+        "description": "Une cible alliée gagne +2 à la CA pendant 1 minute.",
+        "charges": "1 charge"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

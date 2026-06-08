@@ -1,0 +1,48 @@
+{
+  "name": "Araignée géante",
+  "race": "Bête",
+  "sub_race": "Arachnide",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 26,
+  "current_hp": 26,
+  "money": 0,
+  "initiative": 3,
+  "armor_class": 14,
+  "speed": 9,
+  "height": "1.2m",
+  "weight": "50kg",
+  "experience": 200,
+  "abilities": "- Pattes d'araignée : Peut grimper sur les surfaces difficiles et le long des plafonds sans jet de caractéristiques.\n- Déplacement sur toile : Ignore les entraves et restrictions dues aux toiles d'araignées.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 14,
+  "strength_mod": 2,
+  "dexterity": 16,
+  "dexterity_mod": 3,
+  "constitution": 12,
+  "constitution_mod": 1,
+  "intelligence": 2,
+  "intelligence_mod": -4,
+  "wisdom": 11,
+  "wisdom_mod": 0,
+  "charisma": 4,
+  "charisma_mod": -3,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure venimeuse",
+        "description": "Attaque de corps à corps : +5 au toucher. Dégâts : 1d8 + 3 perforants. La cible doit faire un JdS de Constitution (DD 11), subissant 2d8 poison en cas d'échec, ou la moitié sur une réussite.",
+        "charges": ""
+      },
+      {
+        "name": "Toile",
+        "description": "Attaque à distance : +5 au toucher, portée 18m. Cible entravée par la toile (JdS de Force DD 12 pour s'échapper).",
+        "charges": "Recharge (5-6)"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

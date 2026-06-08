@@ -1,0 +1,50 @@
+{
+  "name": "Chef gobelin",
+  "race": "Humanoïde",
+  "sub_race": "Gobelinoïde",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 21,
+  "current_hp": 21,
+  "money": 10,
+  "initiative": 2,
+  "armor_class": 17,
+  "speed": 9,
+  "height": "1.2m",
+  "weight": "28kg",
+  "experience": 200,
+  "abilities": "- Rediriger l'attaque : Réaction pour échanger sa place avec un gobelin allié à moins de 1.5m lorsqu'il est ciblé par une attaque.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 10,
+  "strength_mod": 0,
+  "dexterity": 14,
+  "dexterity_mod": 2,
+  "constitution": 10,
+  "constitution_mod": 0,
+  "intelligence": 10,
+  "intelligence_mod": 0,
+  "wisdom": 8,
+  "wisdom_mod": -1,
+  "charisma": 10,
+  "charisma_mod": 0,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Cimeterre d'apparat",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 1d6 + 2 tranchants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "Le chef gobelin effectue deux attaques de cimeterre par tour.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

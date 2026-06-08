@@ -1,0 +1,60 @@
+{
+  "name": "Dragon rouge adulte",
+  "race": "Dragon",
+  "sub_race": "Rouge",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 256,
+  "current_hp": 256,
+  "money": 0,
+  "initiative": 0,
+  "armor_class": 19,
+  "speed": 12,
+  "height": "6.0m",
+  "weight": "8000kg",
+  "experience": 18000,
+  "abilities": "- Présence terrifiante : Effraie les ennemis à moins de 36m (jet de Sagesse DD 16).\n- Vol aérien : Vitesse de vol de 24m.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 27,
+  "strength_mod": 8,
+  "dexterity": 10,
+  "dexterity_mod": 0,
+  "constitution": 25,
+  "constitution_mod": 7,
+  "intelligence": 16,
+  "intelligence_mod": 3,
+  "wisdom": 13,
+  "wisdom_mod": 1,
+  "charisma": 21,
+  "charisma_mod": 5,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure enflammée",
+        "description": "Attaque de corps à corps : +14 au toucher. Dégâts : 2d10 + 8 perforants + 2d6 de feu.",
+        "charges": ""
+      },
+      {
+        "name": "Griffes",
+        "description": "Attaque de corps à corps : +14 au toucher. Dégâts : 2d6 + 8 tranchants.",
+        "charges": ""
+      },
+      {
+        "name": "Souffle de feu",
+        "description": "Souffle sur un cône de 18m : 18d6 dégâts de feu (JdS de Dextérité DD 21 pour diviser par deux).",
+        "charges": "Recharge (5-6)"
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "Le dragon effectue une morsure et deux attaques de griffes par tour.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

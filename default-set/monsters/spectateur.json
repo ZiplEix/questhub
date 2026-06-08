@@ -1,0 +1,48 @@
+{
+  "name": "Spectateur",
+  "race": "Aberration",
+  "sub_race": "Beholder",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 39,
+  "current_hp": 39,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 14,
+  "speed": 9,
+  "height": "1.2m",
+  "weight": "70kg",
+  "experience": 700,
+  "abilities": "- Vol stationnaire : Flotte magiquement dans les airs et ignore les effets de sol.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 8,
+  "strength_mod": -1,
+  "dexterity": 14,
+  "dexterity_mod": 2,
+  "constitution": 14,
+  "constitution_mod": 2,
+  "intelligence": 13,
+  "intelligence_mod": 1,
+  "wisdom": 14,
+  "wisdom_mod": 2,
+  "charisma": 11,
+  "charisma_mod": 0,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Morsure",
+        "description": "Attaque de corps à corps : +1 au toucher. Dégâts : 1d6 - 1 perforants.",
+        "charges": ""
+      },
+      {
+        "name": "Rayons oculaires",
+        "description": "Tire deux rayons différents au hasard parmi : Rayon de Charme (Sagesse DD 12), Paralysie (Constitution DD 12), Peur (Sagesse DD 12), ou Blessure (3d10 nécrotique, Constitution DD 12 pour moitié).",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

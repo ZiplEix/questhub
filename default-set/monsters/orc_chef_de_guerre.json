@@ -1,0 +1,50 @@
+{
+  "name": "Orc chef de guerre",
+  "race": "Humanoïde",
+  "sub_race": "Orc",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 45,
+  "current_hp": 45,
+  "money": 50,
+  "initiative": 1,
+  "armor_class": 16,
+  "speed": 9,
+  "height": "2.1m",
+  "weight": "135kg",
+  "experience": 450,
+  "abilities": "- Agressif : Peut se déplacer de sa vitesse vers une créature ennemie visible en action bonus.\n- Cri de guerre : Action bonus pour accorder l'avantage aux alliés à moins de 9m sur leur prochain jet d'attaque.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 18,
+  "strength_mod": 4,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 9,
+  "intelligence_mod": -1,
+  "wisdom": 11,
+  "wisdom_mod": 0,
+  "charisma": 14,
+  "charisma_mod": 2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Épée à deux mains",
+        "description": "Attaque de corps à corps : +6 au toucher. Dégâts : 2d6 + 4 tranchants.",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "Le chef de guerre effectue deux attaques d'épée par tour.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

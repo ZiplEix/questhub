@@ -1,0 +1,43 @@
+{
+  "name": "Gobelin lancier",
+  "race": "Humanoïde",
+  "sub_race": "Gobelinoïde",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 9,
+  "current_hp": 9,
+  "money": 0,
+  "initiative": 1,
+  "armor_class": 16,
+  "speed": 9,
+  "height": "1.1m",
+  "weight": "25kg",
+  "experience": 50,
+  "abilities": "- Mur de boucliers : Gagne +1 à la CA si adjacent à un allié équipé d'un bouclier.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 10,
+  "strength_mod": 0,
+  "dexterity": 12,
+  "dexterity_mod": 1,
+  "constitution": 11,
+  "constitution_mod": 0,
+  "intelligence": 9,
+  "intelligence_mod": -1,
+  "wisdom": 8,
+  "wisdom_mod": -1,
+  "charisma": 8,
+  "charisma_mod": -1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Lance",
+        "description": "Attaque de corps à corps : +2 au toucher, allonge 3m. Dégâts : 1d6 perforants (ou 1d8 à deux mains).",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

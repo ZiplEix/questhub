@@ -1,0 +1,60 @@
+{
+  "name": "Liche",
+  "race": "Mort-vivant",
+  "sub_race": "Sorcier",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 135,
+  "current_hp": 135,
+  "money": 0,
+  "initiative": 3,
+  "armor_class": 17,
+  "speed": 9,
+  "height": "1.8m",
+  "weight": "50kg",
+  "experience": 33000,
+  "abilities": "- Résistance légendaire : Peut décider de réussir un jet de sauvegarde raté (3 fois par jour).\n- Volonté inébranlable : Entièrement immunisée aux effets de charme et de peur.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 11,
+  "strength_mod": 0,
+  "dexterity": 16,
+  "dexterity_mod": 3,
+  "constitution": 16,
+  "constitution_mod": 3,
+  "intelligence": 20,
+  "intelligence_mod": 5,
+  "wisdom": 14,
+  "wisdom_mod": 2,
+  "charisma": 16,
+  "charisma_mod": 3,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Toucher paralysant",
+        "description": "Attaque de corps à corps : +12 au toucher. Dégâts : 3d6 dégâts de froid. La cible doit réussir un JdS de Constitution (DD 18) ou être paralysée.",
+        "charges": ""
+      }
+    ],
+    "Sorts": [
+      {
+        "name": "Mot de pouvoir mortel",
+        "description": "Tue instantanément une créature visible à portée avec moins de 100 PV.",
+        "charges": "1 par jour"
+      },
+      {
+        "name": "Boule de feu",
+        "description": "Rayon de 6m : 8d6 dégâts de feu (JdS de Dextérité DD 18 pour moitié).",
+        "charges": "3 charges"
+      },
+      {
+        "name": "Projectile magique",
+        "description": "Tire 3 fléchettes qui infligent automatiquement 1d4 + 1 dégâts de force chacune.",
+        "charges": "Illimité"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

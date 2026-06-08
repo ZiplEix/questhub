@@ -1,0 +1,53 @@
+{
+  "name": "Kobold inventeur",
+  "race": "Humanoïde",
+  "sub_race": "Reptilien",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 13,
+  "current_hp": 13,
+  "money": 0,
+  "initiative": 2,
+  "armor_class": 12,
+  "speed": 9,
+  "height": "0.9m",
+  "weight": "15kg",
+  "experience": 50,
+  "abilities": "- Tactique de meute : Avantage sur les jets d'attaque si au moins un allié non-incapacité se trouve à 1.5m de la cible.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 7,
+  "strength_mod": -2,
+  "dexterity": 15,
+  "dexterity_mod": 2,
+  "constitution": 11,
+  "constitution_mod": 0,
+  "intelligence": 10,
+  "intelligence_mod": 0,
+  "wisdom": 7,
+  "wisdom_mod": -2,
+  "charisma": 8,
+  "charisma_mod": -1,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Dague",
+        "description": "Attaque de corps à corps : +4 au toucher. Dégâts : 1d4 + 2 perforants.",
+        "charges": ""
+      },
+      {
+        "name": "Flasque d'acide",
+        "description": "Attaque à distance : +4 au toucher, portée 9m. Dégâts : 2d4 d'acide.",
+        "charges": "2 charges"
+      },
+      {
+        "name": "Potiche de feu grégeois",
+        "description": "Attaque à distance : +4 au toucher, portée 9m. Dégâts : 1d6 de feu au contact + 1d4 par tour.",
+        "charges": "1 charge"
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}

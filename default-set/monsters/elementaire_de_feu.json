@@ -1,0 +1,50 @@
+{
+  "name": "Élémentaire de feu",
+  "race": "Élémentaire",
+  "sub_race": "Feu",
+  "type": "MONSTER",
+  "is_npc": true,
+  "max_hp": 102,
+  "current_hp": 102,
+  "money": 0,
+  "initiative": 3,
+  "armor_class": 13,
+  "speed": 15,
+  "height": "2.5m",
+  "weight": "0kg",
+  "experience": 1800,
+  "abilities": "- Corps enflammé : Inflige des dégâts de feu directs aux créatures qui le touchent au corps à corps.\n- Forme fluide : Peut traverser des espaces étroits jusqu'à 2cm de large.",
+  "avatar_url": null,
+  "max_spells": 0,
+  "strength": 10,
+  "strength_mod": 0,
+  "dexterity": 17,
+  "dexterity_mod": 3,
+  "constitution": 15,
+  "constitution_mod": 2,
+  "intelligence": 6,
+  "intelligence_mod": -2,
+  "wisdom": 10,
+  "wisdom_mod": 0,
+  "charisma": 7,
+  "charisma_mod": -2,
+  "spells": {
+    "Attaques": [
+      {
+        "name": "Toucher enflammé",
+        "description": "Attaque de corps à corps : +6 au toucher. Dégâts : 2d6 + 3 de feu. La cible prend feu (subit 1d10 feu par tour jusqu'à extinction).",
+        "charges": ""
+      }
+    ],
+    "Capacités": [
+      {
+        "name": "Attaque multiple",
+        "description": "L'élémentaire effectue deux attaques tactiles par tour.",
+        "charges": ""
+      }
+    ]
+  },
+  "stats": {},
+  "inventory": [],
+  "conditions": []
+}
