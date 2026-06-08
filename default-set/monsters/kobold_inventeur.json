@@ -49,5 +49,6 @@
   },
   "stats": {},
   "inventory": [],
-  "conditions": []
+  "conditions": [],
+  "description": "Ce kobold astucieux conçoit des armes de fortune excentriques à base d'insectes venimeux, d'acide ou de récipients inflammables. On le trouve dans les ateliers de la colonie. Au combat, il lance ses inventions bizarres pour infliger des malus et des dégâts de zone imprévisibles, semant le chaos dans les lignes ennemies."
 }

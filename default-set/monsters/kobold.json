@@ -44,5 +44,6 @@
   },
   "stats": {},
   "inventory": [],
-  "conditions": []
+  "conditions": [],
+  "description": "Petite créature reptilienne lâche et industrieuse, souvent asservie par des créatures plus puissantes comme les dragons. Ils vivent en colonies densément peuplées dans des mines ou des réseaux de tunnels truffés de pièges. Au combat, ils attaquent en meute pour bénéficier de leur tactique de meute (avantage sur les attaques si un allié est proche de la cible) et fuient sans hésiter si le nombre tourne à leur désavantage."
 }

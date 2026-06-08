@@ -44,5 +44,6 @@
   },
   "stats": {},
   "inventory": [],
-  "conditions": []
+  "conditions": [],
+  "description": "Un prédateur métamorphe capable de prendre l'apparence d'objets inanimés (comme des coffres, des portes ou des meubles) pour attirer ses proies dans les donjons et les ruines. En combat, il attend que sa proie le touche pour révéler sa vraie nature, collant sa cible grâce à sa substance adhésive pour l'empêcher de fuir avant de la frapper à coups de pseudopodes."
 }

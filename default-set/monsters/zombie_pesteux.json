@@ -39,5 +39,6 @@
   },
   "stats": {},
   "inventory": [],
-  "conditions": []
+  "conditions": [],
+  "description": "Un zombie dont le corps en décomposition est saturé de maladies et de gaz toxiques. Il vit dans les égouts profonds ou les fosses communes profanées. En combat, lorsqu'il est frappé ou détruit, il libère un nuage de spores pestilentielles qui empoisonne et infecte les créatures vivantes à proximité."
 }
