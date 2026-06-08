@@ -24,6 +24,7 @@
 
     // State
     let name = $state("");
+    let description = $state("");
     let race = $state("");
     let subRace = $state("");
     let maxHP = $state(10);
@@ -86,6 +87,7 @@
             if (char) {
                 console.log("Editing character:", char);
                 name = char.name || "";
+                description = char.description || "";
                 race = char.race || "";
                 subRace = char.sub_race || "";
                 maxHP = char.max_hp || 10;
@@ -255,6 +257,7 @@
             } else {
                 // Reset form if opening for create
                 name = "";
+                description = "";
                 race = "";
                 subRace = "";
                 maxHP = 10;
@@ -403,6 +406,7 @@
 
             const payload = {
                 name,
+                description: description || '',
                 race,
                 sub_race: subRace || null,
                 max_hp: maxHP,
@@ -588,6 +592,24 @@
                                 ? "Nom de la créature"
                                 : "Nom du personnage"}
                         />
+                    </div>
+
+                    <div>
+                        <label
+                            for="description"
+                            class="block text-sm font-bold text-dark-gray mb-1"
+                        >
+                            Description
+                        </label>
+                        <textarea
+                            id="description"
+                            bind:value={description}
+                            rows="2"
+                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all resize-y"
+                            placeholder={characterType === "MONSTER"
+                                ? "Description physique, comportement, histoire courte..."
+                                : "Description physique, traits de caractère, histoire courte..."}
+                        ></textarea>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">

@@ -41,6 +41,7 @@ export interface Character {
     game_id: string;
     user_id?: string | null;
     conditions: string[];
+    description?: string | null;
 }
 
 export async function fetchCharacters(gameId: string): Promise<Character[]> {
@@ -123,6 +124,7 @@ export async function createCharacter(gameId: string, payload: any): Promise<Cha
         p_spells: payload.spells || {},
         p_abilities: payload.abilities || null,
         p_experience: payload.experience || 0,
+        p_description: payload.description || '',
     });
 
     if (charErr) throw charErr;

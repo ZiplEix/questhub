@@ -43,6 +43,7 @@ export interface Character {
     armor_class: number;
     speed: number;
     conditions: string[];
+    description?: string | null;
 }
 
 export interface InventoryItem {

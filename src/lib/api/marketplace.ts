@@ -133,7 +133,8 @@ async function cloneCharacterToGame(charData: any, type: 'PERSONNAGE' | 'PNJ' | 
         type: charType,
         armor_class: charData.armor_class || 10,
         speed: charData.speed || 30,
-        user_id: null // initially unassigned
+        user_id: null, // initially unassigned
+        description: charData.description || ''
     };
     
     return await createCharacter(gameId, payload);

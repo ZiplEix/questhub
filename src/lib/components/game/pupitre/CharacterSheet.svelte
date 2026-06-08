@@ -148,6 +148,18 @@
         </div>
     </div>
 
+    <!-- Description -->
+    {#if character.description}
+        <div class="bg-white rounded-2xl p-4 border border-stone-100 shadow-sm space-y-1.5 animate-in fade-in duration-300">
+            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider">
+                Description
+            </h3>
+            <p class="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap">
+                {character.description}
+            </p>
+        </div>
+    {/if}
+
     <!-- Ability Scores -->
     <div>
         <h3
