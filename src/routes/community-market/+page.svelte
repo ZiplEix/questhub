@@ -3,20 +3,16 @@
     import { 
         Search, 
         PackageOpen, 
-        Plus, 
-        Globe, 
         FolderPlus, 
         Trash2, 
         Edit, 
         Check, 
         Package, 
         ExternalLink, 
-        Lock, 
-        Users, 
-        Skull, 
-        BookOpen,
-        X,
-        Sparkles
+        Lock,
+        Sparkles,
+        Upload,
+        Link
     } from "lucide-svelte";
     import { 
         fetchMarketplaceTemplates, 
@@ -27,10 +23,12 @@
         fetchGames,
         fetchUserCharacters,
         fetchUserMonsters,
+        uploadImage,
         type MarketplaceTemplate
     } from "$lib/api";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
+    import { onMount } from "svelte";
 
     let user = $state<any>(null);
     let rawTemplates = $state<MarketplaceTemplate[]>([]);
@@ -97,6 +95,8 @@
     let bundleDescription = $state("");
     let bundleIsPublic = $state(true);
     let bundleCoverUrl = $state("");
+    let bundleCoverType = $state<"upload" | "url">("upload");
+    let bundleCoverFile = $state<File | null>(null);
     let selectedItemIds = $state<string[]>([]);
     let isCreatingBundle = $state(false);
 
@@ -301,6 +301,9 @@
 
             // Use first character avatar as default cover url if empty
             let coverUrl = bundleCoverUrl;
+            if (bundleCoverType === "upload" && bundleCoverFile) {
+                coverUrl = await uploadImage(bundleCoverFile);
+            }
             if (!coverUrl && items.length > 0) {
                 coverUrl = items[0]?.data?.avatar_url || "";
             }
@@ -323,6 +326,8 @@
             bundleName = "";
             bundleDescription = "";
             bundleCoverUrl = "";
+            bundleCoverType = "upload";
+            bundleCoverFile = null;
             selectedItemIds = [];
             
             // Refresh list
@@ -341,6 +346,13 @@
             selectedItemIds = selectedItemIds.filter(itemId => itemId !== id);
         } else {
             selectedItemIds = [...selectedItemIds, id];
+        }
+    }
+
+    function handleBundleCoverFileChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            bundleCoverFile = input.files[0];
         }
     }
 
@@ -795,16 +807,55 @@
                         />
                     </div>
                     <div>
-                        <label for="bundle-cover" class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">
-                            Image de couverture (URL)
-                        </label>
-                        <input
-                            id="bundle-cover"
-                            type="text"
-                            bind:value={bundleCoverUrl}
-                            placeholder="URL de l'image (optionnel - utilisera l'avatar du 1er jeton par défaut)"
-                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 outline-none transition-all text-sm"
-                        />
+                        <span class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">
+                            Image de couverture
+                        </span>
+                        <div class="flex gap-4 mb-1">
+                            <button
+                                type="button"
+                                class="flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer {bundleCoverType === 'upload' ? 'text-burnt-orange' : 'text-stone-400'}"
+                                onclick={() => (bundleCoverType = "upload")}
+                            >
+                                <Upload size={14} /> Télécharger
+                            </button>
+                            <button
+                                type="button"
+                                class="flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer {bundleCoverType === 'url' ? 'text-burnt-orange' : 'text-stone-400'}"
+                                onclick={() => (bundleCoverType = "url")}
+                            >
+                                <Link size={14} /> URL
+                            </button>
+                        </div>
+
+                        {#if bundleCoverType === "upload"}
+                            <div
+                                class="border border-dashed border-stone-300 hover:border-burnt-orange/50 rounded-xl p-3 text-center cursor-pointer relative bg-stone-50/50 hover:bg-stone-50 transition-all"
+                            >
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onchange={handleBundleCoverFileChange}
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                {#if bundleCoverFile}
+                                    <p class="text-xs text-stone-700 font-bold truncate">
+                                        📁 {bundleCoverFile.name}
+                                    </p>
+                                {:else}
+                                    <p class="text-xs text-stone-400 font-semibold">
+                                        Cliquez ou déposez une image ici
+                                    </p>
+                                {/if}
+                            </div>
+                        {:else}
+                            <input
+                                id="bundle-cover"
+                                type="text"
+                                bind:value={bundleCoverUrl}
+                                placeholder="https://example.com/cover.png (optionnel)"
+                                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 outline-none transition-all text-sm font-medium"
+                            />
+                        {/if}
                     </div>
                 </div>
 
