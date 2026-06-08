@@ -212,7 +212,7 @@
                     </li>
                     <li class="flex items-center gap-2">
                         <CircleDot size={12} class="text-burnt-orange" />
-                        Créez des lots (Packs / Bundles) thématiques regroupant plusieurs créations.
+                        Créez des lots (packs) thématiques regroupant plusieurs créations.
                     </li>
                     <li class="flex items-center gap-2">
                         <CircleDot size={12} class="text-burnt-orange" />

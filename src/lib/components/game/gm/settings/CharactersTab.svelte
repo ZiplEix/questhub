@@ -19,8 +19,12 @@
         deleteCharacter as deleteCharacterApi,
         createTemplate,
         fetchMarketplaceTemplates,
-        importTemplateToGame
+        importTemplateToGame,
+        deleteTemplate,
+        updateTemplate
     } from "$lib/api";
+    import { authClient } from "$lib/auth-client";
+    import { onMount } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
@@ -52,6 +56,53 @@
     let marketTemplates = $state<any[]>([]);
     let marketLoading = $state(false);
     let importingTemplateId = $state<string | null>(null);
+    let currentUser = $state<any>(null);
+
+    async function handleDeleteTemplate(template: any, event: Event) {
+        event.stopPropagation();
+        
+        if (template.is_virtual) {
+            if (!confirm(`Êtes-vous sûr de vouloir retirer "${template.name}" du pack "${template.parent_bundle_name}" ?`)) return;
+            
+            try {
+                // Find parent template in marketTemplates
+                const parentTemplate = marketTemplates.find(t => t.id === template.parent_bundle_id);
+                if (!parentTemplate) return;
+                
+                const items = parentTemplate.data?.items || [];
+                const match = template.id.match(/-item-(\d+)$/);
+                const itemIdx = match ? parseInt(match[1]) : -1;
+                
+                let updatedItems;
+                if (itemIdx >= 0 && itemIdx < items.length) {
+                    updatedItems = items.filter((_: any, idx: number) => idx !== itemIdx);
+                } else {
+                    updatedItems = items.filter((item: any) => item.name !== template.name);
+                }
+                const updatedData = { ...parentTemplate.data, items: updatedItems };
+                
+                // Update parent bundle in database
+                await updateTemplate(parentTemplate.id, { data: updatedData });
+                
+                // Reload market templates to refresh the list
+                await loadMarketTemplates();
+                alert("Élément retiré du pack avec succès.");
+            } catch (e) {
+                console.error("Failed to remove item from bundle:", e);
+                alert("Erreur lors du retrait de l'élément du pack.");
+            }
+        } else {
+            if (!confirm("Êtes-vous sûr de vouloir retirer ce modèle du marché ?")) return;
+            try {
+                await deleteTemplate(template.id);
+                marketTemplates = marketTemplates.filter(t => t.id !== template.id);
+                alert("Modèle retiré du marché avec succès.");
+            } catch (e) {
+                console.error("Failed to delete template:", e);
+                alert("Erreur lors de la suppression du modèle.");
+            }
+        }
+    }
 
     async function loadCharacters() {
         try {
@@ -304,6 +355,11 @@
 
     $effect(() => {
         loadCharacters();
+    });
+
+    onMount(async () => {
+        const { data } = await authClient.getSession();
+        currentUser = data?.user || null;
     });
 </script>
 
@@ -648,6 +704,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {#each marketTemplates as template}
                             <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-full group relative {template.is_virtual ? 'pt-8' : ''}">
+                                {#if currentUser && template.created_by === currentUser.id}
+                                    <button
+                                        onclick={(e) => handleDeleteTemplate(template, e)}
+                                        class="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-red-55 text-stone-400 hover:text-red-500 rounded-lg shadow-xs border border-stone-100 transition-all cursor-pointer z-20"
+                                        title={template.is_virtual ? "Retirer le pack parent du marché" : "Retirer du marché"}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                {/if}
                                 {#if template.is_virtual}
                                     <div class="absolute top-0 right-0 left-0 bg-stone-900/90 text-white text-[9px] font-bold py-1 px-3 flex items-center justify-between rounded-t-xl shadow-xs backdrop-blur-md z-10">
                                         <span class="truncate">📦 Pack : {template.parent_bundle_name}</span>
@@ -672,7 +737,7 @@
                                                     {template.name}
                                                 </h4>
                                                 <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200">
-                                                    {template.type === 'BUNDLE' ? 'PACK / BUNDLE' : template.type}
+                                                    {template.type === 'BUNDLE' ? 'PACK' : template.type}
                                                 </span>
                                             </div>
                                         </div>

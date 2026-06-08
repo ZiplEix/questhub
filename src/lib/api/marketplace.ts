@@ -87,6 +87,7 @@ export async function updateTemplate(
         name?: string;
         description?: string | null;
         is_public?: boolean;
+        data?: any;
     }
 ): Promise<void> {
     const { error } = await supabase

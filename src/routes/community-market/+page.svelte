@@ -106,6 +106,29 @@
     let editDescription = $state("");
     let editIsPublic = $state(true);
     let isSavingEdit = $state(false);
+    let editCoverUrl = $state("");
+    let editCoverType = $state<"upload" | "url">("upload");
+    let editCoverFile = $state<File | null>(null);
+    let editCoverPreviewURL = $state("");
+
+    $effect(() => {
+        if (editCoverFile) {
+            const url = URL.createObjectURL(editCoverFile);
+            editCoverPreviewURL = url;
+            return () => {
+                URL.revokeObjectURL(url);
+            };
+        } else {
+            editCoverPreviewURL = "";
+        }
+    });
+
+    function handleEditCoverFileChange(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
+            editCoverFile = input.files[0];
+        }
+    }
 
     // Fetch initial data
     async function loadData() {
@@ -163,17 +186,56 @@
     });
 
     // Handle single template/bundle delete
-    async function handleDelete(templateId: string, event: Event) {
+    async function handleDelete(template: any, event: Event) {
         event.stopPropagation();
-        if (!confirm("Êtes-vous sûr de vouloir supprimer cette publication du marché ?")) return;
+        
+        if (template.is_virtual) {
+            if (!confirm(`Êtes-vous sûr de vouloir retirer "${template.name}" du pack "${template.parent_bundle_name}" ?`)) return;
+            
+            try {
+                // Find parent template
+                const parentTemplate = rawTemplates.find(t => t.id === template.parent_bundle_id);
+                if (!parentTemplate) return;
+                
+                // Remove the item from parent's items array using index
+                const items = parentTemplate.data?.items || [];
+                const match = template.id.match(/-item-(\d+)$/);
+                const itemIdx = match ? parseInt(match[1]) : -1;
+                
+                let updatedItems;
+                if (itemIdx >= 0 && itemIdx < items.length) {
+                    updatedItems = items.filter((_: any, idx: number) => idx !== itemIdx);
+                } else {
+                    updatedItems = items.filter((item: any) => item.name !== template.name);
+                }
+                const updatedData = { ...parentTemplate.data, items: updatedItems };
+                
+                // Update parent bundle in database
+                await updateTemplate(parentTemplate.id, { data: updatedData });
+                
+                // Update local state by updating the parent's data
+                rawTemplates = rawTemplates.map(t => 
+                    t.id === parentTemplate.id 
+                        ? { ...t, data: updatedData }
+                        : t
+                );
+                
+                alert("Élément retiré du pack avec succès.");
+            } catch (error) {
+                console.error("Failed to remove item from bundle:", error);
+                alert("Erreur lors du retrait de l'élément du pack.");
+            }
+        } else {
+            if (!confirm("Êtes-vous sûr de vouloir supprimer cette publication du marché ?")) return;
 
-        try {
-            await deleteTemplate(templateId);
-            rawTemplates = rawTemplates.filter(t => t.id !== templateId);
-            alert("Publication supprimée avec succès.");
-        } catch (error) {
-            console.error("Failed to delete template:", error);
-            alert("Erreur lors de la suppression.");
+            try {
+                await deleteTemplate(template.id);
+                rawTemplates = rawTemplates.filter(t => t.id !== template.id);
+                alert("Publication supprimée avec succès.");
+            } catch (error) {
+                console.error("Failed to delete template:", error);
+                alert("Erreur lors de la suppression.");
+            }
         }
     }
 
@@ -184,6 +246,15 @@
         editName = template.name;
         editDescription = template.description || "";
         editIsPublic = template.is_public;
+        
+        editCoverFile = null;
+        if (template.type === 'BUNDLE') {
+            editCoverUrl = template.data?.cover_url || "";
+        } else {
+            editCoverUrl = template.data?.avatar_url || "";
+        }
+        editCoverType = "upload"; // default to upload preview
+        
         isEditModalOpen = true;
     }
 
@@ -192,16 +263,39 @@
         if (!selectedTemplateForEdit) return;
         try {
             isSavingEdit = true;
-            await updateTemplate(selectedTemplateForEdit.id, {
+            
+            let coverUrl = editCoverUrl;
+            if (editCoverType === "upload" && editCoverFile) {
+                coverUrl = await uploadImage(editCoverFile);
+            }
+            
+            const updatePayload: any = {
                 name: editName,
                 description: editDescription || null,
                 is_public: editIsPublic
-            });
+            };
+
+            const updatedData = { ...selectedTemplateForEdit.data };
+            if (selectedTemplateForEdit.type === 'BUNDLE') {
+                updatedData.cover_url = coverUrl;
+                updatePayload.data = updatedData;
+            } else {
+                updatedData.avatar_url = coverUrl;
+                updatePayload.data = updatedData;
+            }
+
+            await updateTemplate(selectedTemplateForEdit.id, updatePayload);
             
             // Update local state
             rawTemplates = rawTemplates.map(t => 
                 t.id === selectedTemplateForEdit!.id 
-                    ? { ...t, name: editName, description: editDescription, is_public: editIsPublic }
+                    ? { 
+                        ...t, 
+                        name: editName, 
+                        description: editDescription, 
+                        is_public: editIsPublic,
+                        data: updatedData
+                      }
                     : t
             );
             
@@ -370,7 +464,7 @@
         { id: "PERSONNAGE", label: "Personnages" },
         { id: "PNJ", label: "PNJs" },
         { id: "MONSTRE", label: "Monstres" },
-        { id: "PACK", label: "Packs/Bundles" }
+        { id: "PACK", label: "Packs" }
     ];
 </script>
 
@@ -479,7 +573,7 @@
                         {/if}
 
                         <!-- Cover Image / Icon -->
-                        <div class="relative h-44 overflow-hidden bg-stone-50 border-b border-stone-100 flex items-center justify-center shrink-0">
+                        <div class="relative w-full aspect-square overflow-hidden bg-stone-50 border-b border-stone-100 flex items-center justify-center shrink-0">
                             {#if template.type === 'BUNDLE'}
                                 {#if template.data?.cover_url}
                                     <img
@@ -503,7 +597,7 @@
                             <!-- Type badge -->
                             <div class="absolute top-3 left-3 flex gap-1.5 {template.is_virtual ? 'mt-6' : ''}">
                                 <span class="bg-white/90 text-dark-gray px-2.5 py-1 rounded-lg text-[10px] font-extrabold shadow-xs backdrop-blur-md border border-stone-100 uppercase tracking-wider">
-                                    {template.type === 'BUNDLE' ? 'PACK / BUNDLE' : template.type}
+                                    {template.type === 'BUNDLE' ? 'PACK' : template.type}
                                 </span>
                                 {#if !template.is_public}
                                     <span class="bg-stone-900/90 text-white p-1 rounded-lg shadow-xs backdrop-blur-md" title="Bibliothèque privée">
@@ -565,19 +659,21 @@
                             <!-- Card Footer -->
                             <div class="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between">
                                 <div class="flex items-center gap-1.5">
-                                    <!-- Only show edit/delete for non-virtual templates owned by the user -->
-                                    {#if user && template.created_by === user.id && !template.is_virtual}
+                                    <!-- Only show edit/delete for templates owned by the user -->
+                                    {#if user && template.created_by === user.id}
+                                        {#if !template.is_virtual}
+                                            <button
+                                                onclick={(e) => openEditModal(template, e)}
+                                                class="p-2 text-stone-400 hover:text-burnt-orange hover:bg-stone-50 rounded-lg transition-colors cursor-pointer"
+                                                title="Modifier les détails"
+                                            >
+                                                <Edit size={14} />
+                                            </button>
+                                        {/if}
                                         <button
-                                            onclick={(e) => openEditModal(template, e)}
-                                            class="p-2 text-stone-400 hover:text-burnt-orange hover:bg-stone-50 rounded-lg transition-colors cursor-pointer"
-                                            title="Modifier les détails"
-                                        >
-                                            <Edit size={14} />
-                                        </button>
-                                        <button
-                                            onclick={(e) => handleDelete(template.id, e)}
+                                            onclick={(e) => handleDelete(template, e)}
                                             class="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                            title="Supprimer la publication"
+                                            title={template.is_virtual ? "Retirer le pack parent du marché" : "Supprimer la publication"}
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -585,14 +681,6 @@
                                 </div>
 
                                 <div class="flex gap-1.5">
-                                    {#if template.type === 'BUNDLE' && !template.is_virtual}
-                                        <button
-                                            onclick={(e) => { e.stopPropagation(); openBundleDetails(template); }}
-                                            class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
-                                        >
-                                            Contenu
-                                        </button>
-                                    {/if}
                                     <button
                                         onclick={(e) => { e.stopPropagation(); openImportModal(template); }}
                                         class="px-4 py-1.5 bg-burnt-orange text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs hover:bg-opacity-95 hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5"
@@ -688,7 +776,7 @@
 {/if}
 
 <!-- Edit Template Modal -->
-{#if isEditModalOpen}
+{#if isEditModalOpen && selectedTemplateForEdit}
     <div
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
     >
@@ -716,6 +804,89 @@
                         bind:value={editName}
                         class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 outline-none transition-all text-sm font-medium"
                     />
+                </div>
+                
+                <div>
+                    <span class="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">
+                        Image de couverture
+                    </span>
+                    <div class="flex gap-4 mb-2">
+                        <button
+                            type="button"
+                            class="flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer {editCoverType === 'upload' ? 'text-burnt-orange' : 'text-stone-400'}"
+                            onclick={() => (editCoverType = "upload")}
+                        >
+                            <Upload size={14} /> Télécharger
+                        </button>
+                        <button
+                            type="button"
+                            class="flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer {editCoverType === 'url' ? 'text-burnt-orange' : 'text-stone-400'}"
+                            onclick={() => (editCoverType = "url")}
+                        >
+                            <Link size={14} /> URL
+                        </button>
+                    </div>
+
+                    {#if editCoverType === "upload"}
+                        {#if editCoverFile || (selectedTemplateForEdit && (selectedTemplateForEdit.type === 'BUNDLE' ? selectedTemplateForEdit.data?.cover_url : selectedTemplateForEdit.data?.avatar_url))}
+                            <div class="relative w-full h-32 group cursor-pointer overflow-hidden rounded-xl border border-stone-200 hover:border-burnt-orange/50 transition-all flex items-center justify-center bg-stone-50 shadow-xs">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onchange={handleEditCoverFileChange}
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <img
+                                    src={editCoverPreviewURL || (selectedTemplateForEdit.type === 'BUNDLE' ? selectedTemplateForEdit.data?.cover_url : selectedTemplateForEdit.data?.avatar_url)}
+                                    alt="Aperçu de la couverture"
+                                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-103"
+                                />
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 z-0">
+                                    <Upload size={20} />
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Modifier l'image</span>
+                                </div>
+                            </div>
+                            {#if editCoverFile}
+                                <p class="text-xs text-stone-500 text-center mt-2 truncate max-w-[280px] mx-auto font-medium">
+                                    Nouveau fichier : {editCoverFile.name}
+                                </p>
+                            {/if}
+                        {:else}
+                            <div
+                                class="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center hover:border-burnt-orange/50 transition-colors cursor-pointer relative bg-stone-50/50 hover:bg-stone-50 transition-all"
+                            >
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onchange={handleEditCoverFileChange}
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <p class="text-xs text-stone-400 font-semibold animate-pulse">
+                                    Cliquez ou glissez une image ici
+                                </p>
+                            </div>
+                        {/if}
+                    {:else}
+                        <div class="space-y-3">
+                            <input
+                                id="edit-cover-url"
+                                type="text"
+                                bind:value={editCoverUrl}
+                                placeholder="https://example.com/cover.png"
+                                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 outline-none transition-all text-sm font-medium"
+                            />
+                            {#if editCoverUrl}
+                                <div class="relative w-full h-32 rounded-xl overflow-hidden border border-stone-200 bg-stone-50 flex items-center justify-center shadow-xs">
+                                    <img
+                                        src={editCoverUrl}
+                                        alt="Aperçu URL"
+                                        class="w-full h-full object-cover"
+                                        onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
                 </div>
                 <div>
                     <label for="edit-desc" class="block text-sm font-medium text-stone-700 mb-1">

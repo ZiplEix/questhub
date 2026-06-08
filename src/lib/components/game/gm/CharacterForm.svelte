@@ -33,7 +33,20 @@
     let characterType = $state(type);
     let avatarType = $state<"upload" | "url">("upload");
     let avatarFile = $state<File | null>(null);
+    let avatarPreviewURL = $state("");
     let avatarURL = $state("");
+
+    $effect(() => {
+        if (avatarFile) {
+            const url = URL.createObjectURL(avatarFile);
+            avatarPreviewURL = url;
+            return () => {
+                URL.revokeObjectURL(url);
+            };
+        } else {
+            avatarPreviewURL = "";
+        }
+    });
     let strength = $state(10);
     let strengthMod = $state(0);
     let dexterity = $state(10);
@@ -142,7 +155,7 @@
                 }
 
                 if (char.avatar_url) {
-                    avatarType = "url";
+                    avatarType = "upload";
                     avatarURL = char.avatar_url;
                 } else {
                     avatarType = "upload";
@@ -546,32 +559,63 @@
                     </div>
 
                     {#if avatarType === "upload"}
-                        <div
-                            class="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center hover:border-burnt-orange/50 transition-colors cursor-pointer relative"
-                        >
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onchange={handleFileChange}
-                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
+                        {#if avatarFile || (character && character.avatar_url)}
+                            <div class="relative w-36 h-36 mx-auto group cursor-pointer overflow-hidden rounded-2xl border border-stone-200 hover:border-burnt-orange/50 transition-all flex items-center justify-center bg-stone-50 shadow-sm">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onchange={handleFileChange}
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <img
+                                    src={avatarPreviewURL || character.avatar_url}
+                                    alt="Aperçu de l'avatar"
+                                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 z-0">
+                                    <Upload size={20} />
+                                    <span class="text-[10px] font-bold uppercase tracking-wider">Modifier</span>
+                                </div>
+                            </div>
                             {#if avatarFile}
-                                <p class="text-sm text-dark-gray font-medium">
-                                    {avatarFile.name}
-                                </p>
-                            {:else}
-                                <p class="text-sm text-stone-500">
-                                    Cliquez ou glissez une image ici
+                                <p class="text-xs text-stone-500 text-center mt-2 truncate max-w-[200px] mx-auto font-medium">
+                                    Nouveau fichier : {avatarFile.name}
                                 </p>
                             {/if}
-                        </div>
+                        {:else}
+                            <div
+                                class="border-2 border-dashed border-stone-200 rounded-xl p-8 text-center hover:border-burnt-orange/50 transition-colors cursor-pointer relative"
+                            >
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onchange={handleFileChange}
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <p class="text-sm text-stone-500 font-medium">
+                                    Cliquez ou glissez une image ici
+                                </p>
+                            </div>
+                        {/if}
                     {:else}
-                        <input
-                            type="url"
-                            bind:value={avatarURL}
-                            class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
-                            placeholder="https://example.com/avatar.png"
-                        />
+                        <div class="space-y-4">
+                            <input
+                                type="url"
+                                bind:value={avatarURL}
+                                class="w-full px-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                                placeholder="https://example.com/avatar.png"
+                            />
+                            {#if avatarURL}
+                                <div class="relative w-36 h-36 mx-auto rounded-2xl overflow-hidden border border-stone-200 bg-stone-50 flex items-center justify-center shadow-sm">
+                                    <img
+                                        src={avatarURL}
+                                        alt="Aperçu URL"
+                                        class="w-full h-full object-cover"
+                                        onerror={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                </div>
+                            {/if}
+                        </div>
                     {/if}
                 </div>
 
