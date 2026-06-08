@@ -3,7 +3,6 @@
     import Header from "$lib/components/Header.svelte";
     import { onMount } from "svelte";
     import { fetchGame, fetchPlayers, fetchInvitations } from "$lib/api";
-    import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
     import GeneralTab from "$lib/components/game/gm/settings/GeneralTab.svelte";
     import PlayersTab from "$lib/components/game/gm/settings/PlayersTab.svelte";

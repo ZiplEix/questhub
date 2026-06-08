@@ -1,7 +1,6 @@
 <script lang="ts">
     import { activeBoardStore, sendPing, onPingReceived, onTokenDragged, sendTokenDrag } from "$lib/websocket";
     import { Compass, Minus, Plus, Trash2, Swords, Eye, EyeOff, Activity } from "lucide-svelte";
-    import { fade } from "svelte/transition";
     import { onMount, untrack } from "svelte";
     import { page } from "$app/state";
     import { fetchPlayers, fetchGame } from "$lib/api";
@@ -36,11 +35,8 @@
     let draggedTokenId = $state<string | null>(null);
     let dragOffset = { x: 0, y: 0 };
     let tokenImages = $state<Record<string, HTMLImageElement>>({});
-    let activeBoardTokensLoading = $state(true);
     const activeBoardId = $derived($activeBoardStore?.id || "");
     const pixelsPerCell = $derived($activeBoardStore?.pixels_per_cell || 70);
-    const gridOffsetX = $derived($activeBoardStore?.grid_offset_x || 0);
-    const gridOffsetY = $derived($activeBoardStore?.grid_offset_y || 0);
     // Token radius is 45% of a cell (leaves a 10% margin on each side)
     const tokenRadius = $derived(pixelsPerCell * 0.45);
 
@@ -130,10 +126,10 @@
     async function promptCircleDiameter(tokenId: string, currentRadius: number | null) {
         contextMenu = null;
         const currentDiameter = currentRadius ? currentRadius * 2 : 0;
-        const msg = currentDiameter > 0 
+        const msg = currentDiameter > 0
             ? `Entrez le diamètre du cercle en mètres (actuel : ${currentDiameter}m, ou 0 pour le supprimer) :`
             : "Entrez le diamètre du cercle à dessiner autour du jeton (en mètres, ex : 6) :";
-        
+
         const input = prompt(msg, currentDiameter > 0 ? String(currentDiameter) : "6");
         if (input === null) return;
 
@@ -249,13 +245,10 @@
             return;
         }
         try {
-            activeBoardTokensLoading = true;
             tokens = await fetchBoardTokens(activeBoardId);
             draw();
         } catch (error) {
             console.error("Failed to fetch board tokens:", error);
-        } finally {
-            activeBoardTokensLoading = false;
         }
     }
 

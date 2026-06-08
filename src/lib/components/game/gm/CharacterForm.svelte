@@ -1,21 +1,15 @@
 <script lang="ts">
     import {
-        X,
         Upload,
         Link,
         Plus,
         Trash2,
-        Sticker,
         Save,
         ArrowLeft,
     } from "lucide-svelte";
-    import IconRenderer from "$lib/components/IconRenderer.svelte";
     import IconPicker from "$lib/components/IconPicker.svelte";
     import { createCharacter, updateCharacter, uploadImage } from "$lib/api";
-    import { authClient } from "$lib/auth-client";
-    import { page } from "$app/state";
     import { goto } from "$app/navigation";
-    import type { Character } from "$lib/types/character";
     import { untrack } from "svelte";
 
     let {

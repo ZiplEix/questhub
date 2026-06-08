@@ -15,7 +15,7 @@
     let isRightPanelOpen = $state(true);
     let currentUserId = $state("");
     let gmCharacterId = $state("");
-    
+
     let leftPanelWidth = $state(380);
     let isDraggingLeft = $state(false);
     let rightPanelWidth = $state(400);

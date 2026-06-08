@@ -3,7 +3,6 @@
     import { page } from "$app/state";
     import { fetchCharacter } from "$lib/api";
     import { authClient } from "$lib/auth-client";
-    import { onMount } from "svelte";
 
     import Header from "$lib/components/Header.svelte";
 

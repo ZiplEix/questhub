@@ -12,7 +12,6 @@
     import { parseDiceAndMath } from "$lib/utils/diceParser";
     import { sendMessage } from "$lib/chat";
     import { page } from "$app/state";
-    import { onMount, onDestroy } from "svelte";
     import {
         Play,
         Trash2,
@@ -30,7 +29,6 @@
         Skull,
         Moon,
         Ghost,
-        Search,
         X
     } from "lucide-svelte";
 

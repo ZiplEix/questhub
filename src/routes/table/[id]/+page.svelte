@@ -10,7 +10,7 @@
         User,
         Pause,
     } from "lucide-svelte";
-    import { onMount, onDestroy, untrack } from "svelte";
+    import { onMount, untrack } from "svelte";
     import { page } from "$app/state";
     import { fetchGame, fetchCharacter, fetchCharacters } from "$lib/api";
     import { authClient } from "$lib/auth-client";
@@ -25,7 +25,7 @@
     let players = $state<any[]>([]);
     let error = $state<string | null>(null);
     let currentUserId = $state("");
-    
+
     let dashboardWidth = $state(400);
     let isDraggingDashboard = $state(false);
 

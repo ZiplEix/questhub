@@ -1,15 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { page } from "$app/state";
-    import { 
-        Search, 
-        User, 
-        Users, 
-        ArrowLeft, 
-        Pencil, 
-        Shield, 
-        Heart, 
-        Sparkles,
+    import {
+        Search,
+        Users,
+        ArrowLeft,
+        Pencil,
+        Shield,
+        Heart,
         UserCheck,
         UserX,
         MapPin

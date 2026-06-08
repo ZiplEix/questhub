@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Shield, Heart, Zap, Sword, Book, Swords } from "lucide-svelte";
+    import { Shield, Zap, Book, Swords } from "lucide-svelte";
     import type { Character } from "$lib/types/character";
 
     let { character } = $props<{ character: Character }>();

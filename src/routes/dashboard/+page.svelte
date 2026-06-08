@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         Dice5,
-        LogOut,
         Archive,
         ArchiveRestore,
         X,
@@ -15,7 +14,6 @@
     import { authClient } from "$lib/auth-client";
     import type { SessionUser } from "$lib/types/session-user";
 
-    let jwtToken = $state<string | null>(null);
     let games = $state<any[]>([]);
     let loading = $state(true);
     let user = $state<SessionUser | null>(null);
@@ -30,7 +28,6 @@
                 return;
             }
 
-            jwtToken = data.token;
             await fetchGamesList();
         } catch (error) {
             console.error(error);

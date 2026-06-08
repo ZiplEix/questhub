@@ -2,7 +2,7 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
     import { acceptInvitation as acceptInvitationApi, declineInvitation as declineInvitationApi, kickPlayer } from "$lib/api";
-    import { UserPlus, Trash2, Check, X } from "lucide-svelte";
+    import { UserPlus, Trash2 } from "lucide-svelte";
 
     let { players, invitations, onRefresh } = $props<{
         players: any[];

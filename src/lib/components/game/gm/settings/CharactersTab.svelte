@@ -10,7 +10,6 @@
         Upload,
     } from "lucide-svelte";
     import { fetchCharacters, assignCharacter as assignCharacterApi, deleteCharacter as deleteCharacterApi } from "$lib/api";
-    import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
     let { players, gameId } = $props<{
