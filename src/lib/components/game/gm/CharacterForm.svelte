@@ -33,16 +33,20 @@
     let avatarType = $state<"upload" | "url">("upload");
     let avatarFile = $state<File | null>(null);
     let avatarURL = $state("");
-    let stats = $state<Array<{ key: string; value: string; modifier: string }>>(
-        [
-            { key: "Force", value: "10", modifier: "0" },
-            { key: "Dextérité", value: "10", modifier: "0" },
-            { key: "Constitution", value: "10", modifier: "0" },
-            { key: "Intelligence", value: "10", modifier: "0" },
-            { key: "Sagesse", value: "10", modifier: "0" },
-            { key: "Charisme", value: "10", modifier: "0" },
-        ],
-    );
+    let strength = $state(10);
+    let strengthMod = $state(0);
+    let dexterity = $state(10);
+    let dexterityMod = $state(0);
+    let constitution = $state(10);
+    let constitutionMod = $state(0);
+    let intelligence = $state(10);
+    let intelligenceMod = $state(0);
+    let wisdom = $state(10);
+    let wisdomMod = $state(0);
+    let charisma = $state(10);
+    let charismaMod = $state(0);
+
+    let stats = $state<Array<{ key: string; value: string; modifier: string }>>([]);
     let inventory = $state<
         {
             name: string;
@@ -144,23 +148,82 @@
                 }
 
                 // Stats
+                strength = char.strength !== undefined ? char.strength : 10;
+                strengthMod = char.strength_mod !== undefined ? char.strength_mod : 0;
+                dexterity = char.dexterity !== undefined ? char.dexterity : 10;
+                dexterityMod = char.dexterity_mod !== undefined ? char.dexterity_mod : 0;
+                constitution = char.constitution !== undefined ? char.constitution : 10;
+                constitutionMod = char.constitution_mod !== undefined ? char.constitution_mod : 0;
+                intelligence = char.intelligence !== undefined ? char.intelligence : 10;
+                intelligenceMod = char.intelligence_mod !== undefined ? char.intelligence_mod : 0;
+                wisdom = char.wisdom !== undefined ? char.wisdom : 10;
+                wisdomMod = char.wisdom_mod !== undefined ? char.wisdom_mod : 0;
+                charisma = char.charisma !== undefined ? char.charisma : 10;
+                charismaMod = char.charisma_mod !== undefined ? char.charisma_mod : 0;
+
+                // Support extracting from stats field (legacy or JSON import)
+                if (char.stats && typeof char.stats === "object") {
+                    const findStat = (names: string[]) => {
+                        for (const name of names) {
+                            if (char.stats[name] !== undefined) {
+                                return char.stats[name];
+                            }
+                        }
+                        return null;
+                    };
+
+                    const strData = findStat(["Force", "strength"]);
+                    if (strData) {
+                        strength = strData.value ?? strength;
+                        strengthMod = strData.modifier ?? strengthMod;
+                    }
+                    const dexData = findStat(["Dextérité", "dexterity"]);
+                    if (dexData) {
+                        dexterity = dexData.value ?? dexterity;
+                        dexterityMod = dexData.modifier ?? dexterityMod;
+                    }
+                    const conData = findStat(["Constitution", "constitution"]);
+                    if (conData) {
+                        constitution = conData.value ?? constitution;
+                        constitutionMod = conData.modifier ?? constitutionMod;
+                    }
+                    const intData = findStat(["Intelligence", "intelligence"]);
+                    if (intData) {
+                        intelligence = intData.value ?? intelligence;
+                        intelligenceMod = intData.modifier ?? intelligenceMod;
+                    }
+                    const wisData = findStat(["Sagesse", "wisdom"]);
+                    if (wisData) {
+                        wisdom = wisData.value ?? wisdom;
+                        wisdomMod = wisData.modifier ?? wisdomMod;
+                    }
+                    const chaData = findStat(["Charisme", "charisma"]);
+                    if (chaData) {
+                        charisma = chaData.value ?? charisma;
+                        charismaMod = chaData.modifier ?? charismaMod;
+                    }
+                }
+
                 stats = [];
                 if (char.stats && typeof char.stats === "object") {
                     try {
-                        stats = Object.entries(char.stats).map(
-                            ([key, data]) => {
-                                const statData = data as {
-                                    value: number;
-                                    modifier: number;
-                                };
-                                return {
-                                    key,
-                                    value: statData.value?.toString() || "10",
-                                    modifier:
-                                        statData.modifier?.toString() || "0",
-                                };
-                            },
-                        );
+                        const classicKeys = ["Force", "Dextérité", "Constitution", "Intelligence", "Sagesse", "Charisme", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+                        stats = Object.entries(char.stats)
+                            .filter(([key]) => !classicKeys.includes(key))
+                            .map(
+                                ([key, data]) => {
+                                    const statData = data as {
+                                        value: number;
+                                        modifier: number;
+                                    };
+                                    return {
+                                        key,
+                                        value: statData.value?.toString() || "10",
+                                        modifier:
+                                            statData.modifier?.toString() || "0",
+                                    };
+                                },
+                            );
                     } catch (e) {
                         console.error("Error parsing stats:", e);
                     }
@@ -214,6 +277,18 @@
                 spellsList = [];
                 abilities = "";
                 experience = 0;
+                strength = 10;
+                strengthMod = 0;
+                dexterity = 10;
+                dexterityMod = 0;
+                constitution = 10;
+                constitutionMod = 0;
+                intelligence = 10;
+                intelligenceMod = 0;
+                wisdom = 10;
+                wisdomMod = 0;
+                charisma = 10;
+                charismaMod = 0;
             }
         });
     });
@@ -348,6 +423,18 @@
                 avatar_url: uploadedAvatarUrl,
                 stats: statsObj,
                 inventory: inventoryItems,
+                strength,
+                strength_mod: strengthMod,
+                dexterity,
+                dexterity_mod: dexterityMod,
+                constitution,
+                constitution_mod: constitutionMod,
+                intelligence,
+                intelligence_mod: intelligenceMod,
+                wisdom,
+                wisdom_mod: wisdomMod,
+                charisma,
+                charisma_mod: charismaMod,
             };
 
             if (character && character.id) {
@@ -712,6 +799,153 @@
             </div>
         </section>
 
+        <!-- Caractéristiques de Base -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-dark-gray border-b border-stone-100 pb-2">
+                Caractéristiques de base (D&D)
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Force -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="strength" class="text-xs font-bold text-stone-500 uppercase mb-1">Force</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="strength"
+                                bind:value={strength}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={strengthMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Dexterity -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="dexterity" class="text-xs font-bold text-stone-500 uppercase mb-1">Dextérité</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="dexterity"
+                                bind:value={dexterity}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={dexterityMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Constitution -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="constitution" class="text-xs font-bold text-stone-500 uppercase mb-1">Constitution</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="constitution"
+                                bind:value={constitution}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={constitutionMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Intelligence -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="intelligence" class="text-xs font-bold text-stone-500 uppercase mb-1">Intelligence</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="intelligence"
+                                bind:value={intelligence}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={intelligenceMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Wisdom -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="wisdom" class="text-xs font-bold text-stone-500 uppercase mb-1">Sagesse</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="wisdom"
+                                bind:value={wisdom}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={wisdomMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Charisma -->
+                <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60 flex flex-col items-center">
+                    <label for="charisma" class="text-xs font-bold text-stone-500 uppercase mb-1">Charisme</label>
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Val.</span>
+                            <input
+                                type="number"
+                                id="charisma"
+                                bind:value={charisma}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange"
+                            />
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] text-stone-400 block text-center">Mod.</span>
+                            <input
+                                type="number"
+                                bind:value={charismaMod}
+                                class="w-full px-2 py-1 bg-white border border-stone-200 rounded-lg text-sm text-center focus:outline-none focus:border-burnt-orange font-mono"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Abilities -->
         <section class="space-y-4">
             <h3
@@ -755,7 +989,7 @@
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <label class="text-sm font-bold text-dark-gray" for="stats"
-                        >Statistiques</label
+                        >Statistiques personnalisées / additionnelles</label
                     >
                     <button
                         onclick={addStat}
@@ -1043,4 +1277,3 @@
         </div>
     </div>
 </div>
-```

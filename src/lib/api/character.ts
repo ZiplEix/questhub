@@ -4,6 +4,20 @@ export interface Character {
     id: string;
     name: string;
     avatar_url: string | null;
+    // Core D&D ability scores
+    strength: number;
+    strength_mod: number;
+    dexterity: number;
+    dexterity_mod: number;
+    constitution: number;
+    constitution_mod: number;
+    intelligence: number;
+    intelligence_mod: number;
+    wisdom: number;
+    wisdom_mod: number;
+    charisma: number;
+    charisma_mod: number;
+    // Additional custom stats (beyond the 6 core)
     stats: any;
     inventory: any;
     is_npc: boolean;
@@ -20,7 +34,7 @@ export interface Character {
     spells?: any;
     abilities?: string;
     experience?: number;
-    type: string; // 'PLAYER', 'NPC', 'MONSTER', 'GM_HIDDEN'
+    type: string;
     sub_race?: string | null;
     armor_class: number;
     speed: number;
@@ -89,7 +103,26 @@ export async function createCharacter(gameId: string, payload: any): Promise<Cha
         p_type: payload.type || 'PLAYER',
         p_sub_race: payload.sub_race || null,
         p_armor_class: payload.armor_class || 10,
-        p_speed: payload.speed || 30
+        p_speed: payload.speed || 30,
+        p_strength: payload.strength ?? 10,
+        p_strength_mod: payload.strength_mod ?? 0,
+        p_dexterity: payload.dexterity ?? 10,
+        p_dexterity_mod: payload.dexterity_mod ?? 0,
+        p_constitution: payload.constitution ?? 10,
+        p_constitution_mod: payload.constitution_mod ?? 0,
+        p_intelligence: payload.intelligence ?? 10,
+        p_intelligence_mod: payload.intelligence_mod ?? 0,
+        p_wisdom: payload.wisdom ?? 10,
+        p_wisdom_mod: payload.wisdom_mod ?? 0,
+        p_charisma: payload.charisma ?? 10,
+        p_charisma_mod: payload.charisma_mod ?? 0,
+        p_age: payload.age || null,
+        p_height: payload.height || null,
+        p_weight: payload.weight || null,
+        p_max_spells: payload.max_spells || 0,
+        p_spells: payload.spells || {},
+        p_abilities: payload.abilities || null,
+        p_experience: payload.experience || 0,
     });
 
     if (charErr) throw charErr;

@@ -4,33 +4,46 @@
 
     let { character } = $props<{ character: Character }>();
 
-    let stats = $derived(
+    const classicKeys = ["Force", "Dextérité", "Constitution", "Intelligence", "Sagesse", "Charisme", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+
+    let classicStats = $derived([
+        { key: "Force", val: character.strength ?? 10, mod: character.strength_mod ?? 0 },
+        { key: "Dextérité", val: character.dexterity ?? 10, mod: character.dexterity_mod ?? 0 },
+        { key: "Constitution", val: character.constitution ?? 10, mod: character.constitution_mod ?? 0 },
+        { key: "Intelligence", val: character.intelligence ?? 10, mod: character.intelligence_mod ?? 0 },
+        { key: "Sagesse", val: character.wisdom ?? 10, mod: character.wisdom_mod ?? 0 },
+        { key: "Charisme", val: character.charisma ?? 10, mod: character.charisma_mod ?? 0 },
+    ]);
+
+    let customStats = $derived(
         character.stats
-            ? Object.entries(character.stats).map(([key, data]) => {
-                  let value = "10";
-                  let mod = 0;
+            ? Object.entries(character.stats)
+                  .filter(([key]) => !classicKeys.includes(key))
+                  .map(([key, data]) => {
+                      let value = "10";
+                      let mod = 0;
 
-                  if (
-                      typeof data === "object" &&
-                      data !== null &&
-                      "value" in data
-                  ) {
-                      const statData = data as {
-                          value: number;
-                          modifier: number;
+                      if (
+                          typeof data === "object" &&
+                          data !== null &&
+                          "value" in data
+                      ) {
+                          const statData = data as {
+                              value: number;
+                              modifier: number;
+                          };
+                          value = statData.value?.toString() || "10";
+                          mod = statData.modifier || 0;
+                      } else {
+                          value = String(data);
+                      }
+
+                      return {
+                          key,
+                          value,
+                          mod,
                       };
-                      value = statData.value?.toString() || "10";
-                      mod = statData.modifier || 0;
-                  } else {
-                      value = String(data);
-                  }
-
-                  return {
-                      key,
-                      value,
-                      mod,
-                  };
-              })
+                  })
             : [],
     );
 
@@ -136,15 +149,44 @@
     </div>
 
     <!-- Ability Scores -->
-    {#if stats.length > 0}
+    <div>
+        <h3
+            class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
+        >
+            Caractéristiques (D&D)
+        </h3>
+        <div class="grid grid-cols-3 gap-2">
+            {#each classicStats as stat}
+                <div class="bg-stone-50 p-2 rounded-lg text-center">
+                    <div
+                        class="text-[10px] uppercase font-bold text-stone-400 truncate"
+                        title={stat.key}
+                    >
+                        {stat.key}
+                    </div>
+                    <div class="font-bold text-dark-gray text-lg">
+                        {stat.val}
+                    </div>
+                    <div
+                        class="text-xs font-bold font-mono text-burnt-orange"
+                    >
+                        {stat.mod >= 0 ? "+" : ""}{stat.mod}
+                    </div>
+                </div>
+            {/each}
+        </div>
+    </div>
+
+    <!-- Custom/Additional Stats -->
+    {#if customStats.length > 0}
         <div>
             <h3
                 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3"
             >
-                Caractéristiques
+                Statistiques additionnelles
             </h3>
             <div class="grid grid-cols-3 gap-2">
-                {#each stats as stat}
+                {#each customStats as stat}
                     <div class="bg-stone-50 p-2 rounded-lg text-center">
                         <div
                             class="text-[10px] uppercase font-bold text-stone-400 truncate"

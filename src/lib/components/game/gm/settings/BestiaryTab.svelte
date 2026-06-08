@@ -7,6 +7,8 @@
         Search,
         Skull,
         Copy,
+        Download,
+        Upload,
     } from "lucide-svelte";
     import { fetchMonsters as fetchMonstersApi, deleteCharacter } from "$lib/api";
     import { onMount } from "svelte";
@@ -19,6 +21,7 @@
     let loading = $state(true);
     let error = $state<string | null>(null);
     let searchQuery = $state("");
+    let fileInput: HTMLInputElement;
 
     // Filtered monsters
     let filteredMonsters = $derived(
@@ -66,6 +69,62 @@
         goto(`/table/${gameId}/gm/monsters/create?import=true`);
     }
 
+    async function handleImport(event: Event) {
+        const target = event.target as HTMLInputElement;
+        if (!target.files || target.files.length === 0) return;
+
+        const file = target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const json = e.target?.result as string;
+                const monsterData = JSON.parse(json);
+
+                // Remove system fields to treat as new monster
+                const { id, game_id, user_id, created_at, ...cleanData } = monsterData;
+
+                // Ensure type is MONSTER
+                cleanData.type = "MONSTER";
+
+                localStorage.setItem("importedMonster", JSON.stringify(cleanData));
+                goto(`/table/${gameId}/gm/monsters/create?import=true`);
+
+                target.value = "";
+            } catch (error) {
+                console.error("Failed to import monster:", error);
+                alert("Erreur lors de l'import du monstre. Vérifiez le format du fichier JSON.");
+            }
+        };
+
+        reader.readAsText(file);
+    }
+
+    function exportMonster(monster: Character) {
+        const {
+            id,
+            game_id,
+            user_id,
+            created_at,
+            player_name,
+            ...monsterData
+        } = monster as any;
+
+        const exportData = JSON.stringify(monsterData, null, 2);
+        const blob = new Blob([exportData], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${(monster.name || "monstre").replace(/\s+/g, "_").toLowerCase()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        openMenuId = null;
+    }
+
     onMount(() => {
         fetchMonsters();
     });
@@ -101,13 +160,29 @@
                 class="w-full pl-10 pr-4 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
             />
         </div>
-        <button
-            onclick={openCreatePage}
-            class="flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white rounded-xl font-bold shadow-sm hover:bg-opacity-90 transition-all hover:-translate-y-0.5"
-        >
-            <Plus size={20} />
-            Créer un monstre
-        </button>
+        <div class="flex gap-2">
+            <input
+                bind:this={fileInput}
+                type="file"
+                accept=".json"
+                class="hidden"
+                onchange={handleImport}
+            />
+            <button
+                onclick={() => fileInput.click()}
+                class="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-700 rounded-xl font-bold hover:bg-stone-200 transition-colors text-sm"
+            >
+                <Upload size={18} />
+                Importer
+            </button>
+            <button
+                onclick={openCreatePage}
+                class="flex items-center gap-2 px-4 py-2 bg-burnt-orange text-white rounded-xl font-bold shadow-sm hover:bg-opacity-90 transition-all hover:-translate-y-0.5"
+            >
+                <Plus size={20} />
+                Créer un monstre
+            </button>
+        </div>
     </div>
 
     {#if loading}
@@ -213,6 +288,14 @@
                                             >
                                                 <Copy size={16} />
                                                 Dupliquer
+                                            </button>
+                                            <button
+                                                onclick={() =>
+                                                    exportMonster(monster)}
+                                                class="w-full px-4 py-2 text-left text-sm text-stone-600 hover:bg-stone-50 hover:text-burnt-orange flex items-center gap-2"
+                                            >
+                                                <Download size={16} />
+                                                Exporter
                                             </button>
                                             <button
                                                 onclick={() =>
