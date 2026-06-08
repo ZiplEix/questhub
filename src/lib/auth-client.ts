@@ -114,6 +114,10 @@ export const authClient = {
                 if (error) throw error;
 
                 options?.onSuccess?.({ data: resData });
+
+                if (data.callbackURL) {
+                    window.location.href = data.callbackURL;
+                }
                 return resData;
             } catch (err: any) {
                 options?.onError?.({ error: { message: err.message || 'Erreur lors de l\'inscription.' } });
@@ -202,5 +206,23 @@ export const authClient = {
             options?.fetchOptions?.onError?.({ error: { message: err.message || 'Erreur lors de la déconnexion.' } });
             throw err;
         }
+    },
+
+    async updateUser(updates: { name?: string; avatar_url?: string }) {
+        const { data, error } = await supabase.auth.updateUser({
+            data: updates
+        });
+
+        if (error) throw error;
+
+        // Refresh the session store so all components reflect the change
+        const { data: { session } } = await supabase.auth.getSession();
+        sessionStore.set({
+            data: mapSession(session),
+            isPending: false,
+            error: null
+        });
+
+        return data;
     }
 };
