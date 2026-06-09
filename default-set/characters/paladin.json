@@ -1,0 +1,76 @@
+{
+  "age": "34",
+  "name": "Arthur",
+  "race": "Humain",
+  "type": "PLAYER",
+  "money": 15,
+  "speed": 9,
+  "stats": {},
+  "height": "1.80m",
+  "is_npc": false,
+  "max_hp": 12,
+  "spells": {
+    "0": [
+      {
+        "name": "Épée longue",
+        "charges": "",
+        "description": "Attaque de mêlée : +5 au toucher. Dégâts : 1d8 + 3 tranchants."
+      }
+    ],
+    "1": [
+      {
+        "name": "Bénédiction",
+        "charges": "2",
+        "description": "Jusqu'à 3 créatures ajoutent 1d4 à leurs jets d'attaque et de sauvegarde pendant 1 minute (concentration)."
+      },
+      {
+        "name": "Soin",
+        "charges": "2",
+        "description": "Une créature récupère 1d8 + modificateur de Charisme points de vie."
+      }
+    ]
+  },
+  "weight": "85kg",
+  "wisdom": 10,
+  "charisma": 14,
+  "strength": 16,
+  "sub_race": "Aucun",
+  "abilities": "- Sens divin : Détecte les célestes, fiélons et morts-vivants à proximité.\n- Imposition des mains : Réserve de soins égale à 5 PV, utilisable au toucher.",
+  "dexterity": 10,
+  "inventory": [
+    {
+      "name": "Bouclier",
+      "quantity": "1",
+      "icon_name": "shield",
+      "description": "Bouclier en acier accordant +2 CA."
+    },
+    {
+      "name": "Symbole sacré",
+      "quantity": "1",
+      "icon_name": "book",
+      "description": "Focaliseur pour les sorts de paladin."
+    },
+    {
+      "name": "Épée sacré",
+      "quantity": "1",
+      "icon_name": "sword",
+      "description": "Une épée longue ornée d'or et d'argent"
+    }
+  ],
+  "avatar_url": null,
+  "conditions": [],
+  "current_hp": 12,
+  "experience": 3,
+  "initiative": 0,
+  "max_spells": 2,
+  "wisdom_mod": 0,
+  "armor_class": 18,
+  "description": "Guerrier sacré protégé par son serment, ce paladin sert d'avant-garde et de soutien au groupe. Il encaisse les coups en première ligne, protège ses alliés et soigne les blessés lorsque la bataille s'éternise.",
+  "charisma_mod": 2,
+  "constitution": 14,
+  "intelligence": 8,
+  "strength_mod": 3,
+  "dexterity_mod": 0,
+  "constitution_mod": 2,
+  "intelligence_mod": -1
+}
