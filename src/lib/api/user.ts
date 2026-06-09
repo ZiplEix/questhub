@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { listStoryAssets } from './storage';
 
 export interface UserProfile {
     id: string;
@@ -172,4 +173,121 @@ export async function fetchUserMonsters(): Promise<any[]> {
             assigned_at: gc.assigned_at
         };
     });
+}
+
+function getStoragePath(url: string | null | undefined): string | null {
+    if (!url) return null;
+    const marker = '/storage/v1/object/public/images/';
+    const index = url.indexOf(marker);
+    if (index !== -1) {
+        return url.substring(index + marker.length);
+    }
+    return null;
+}
+
+async function deleteUserImages(userId: string): Promise<void> {
+    const pathsToDelete: string[] = [];
+
+    // 1. User avatar
+    const { data: userData } = await supabase.auth.getUser();
+    const avatarUrl = userData?.user?.user_metadata?.avatar_url;
+    if (avatarUrl) {
+        const path = getStoragePath(avatarUrl);
+        if (path) pathsToDelete.push(path);
+    }
+
+    // Fetch user's mastered games
+    const { data: myGames } = await supabase
+        .from('games')
+        .select('id, image_url')
+        .eq('gm_id', userId);
+
+    if (myGames && myGames.length > 0) {
+        const gameIds = myGames.map(g => g.id);
+
+        // 2. Mastered games images
+        myGames.forEach(g => {
+            if (g.image_url) {
+                const path = getStoragePath(g.image_url);
+                if (path) pathsToDelete.push(path);
+            }
+        });
+
+        // 3. Map images for those games
+        const { data: myMaps } = await supabase
+            .from('maps')
+            .select('image_url')
+            .in('game_id', gameIds);
+
+        if (myMaps) {
+            myMaps.forEach(m => {
+                if (m.image_url) {
+                    const path = getStoragePath(m.image_url);
+                    if (path) pathsToDelete.push(path);
+                }
+            });
+        }
+
+        // 4. Story assets for those games
+        for (const gameId of gameIds) {
+            try {
+                const assets = await listStoryAssets(gameId);
+                assets.forEach(asset => {
+                    const path = getStoragePath(asset.url);
+                    if (path) pathsToDelete.push(path);
+                });
+            } catch (e) {
+                console.error(`Failed to list story assets for game ${gameId}`, e);
+            }
+        }
+    }
+
+    // 5. Character avatars (assigned to the user)
+    const { data: myChars } = await supabase
+        .from('game_characters')
+        .select('characters(avatar_url)')
+        .eq('user_id', userId);
+
+    if (myChars) {
+        myChars.forEach((gc: any) => {
+            const charObj = Array.isArray(gc.characters) ? gc.characters[0] : gc.characters;
+            if (charObj?.avatar_url) {
+                const path = getStoragePath(charObj.avatar_url);
+                if (path) pathsToDelete.push(path);
+            }
+        });
+    }
+
+    // Clean up unique and valid paths
+    const uniquePaths = [...new Set(pathsToDelete.filter(Boolean))] as string[];
+    if (uniquePaths.length > 0) {
+        const { error } = await supabase.storage.from('images').remove(uniquePaths);
+        if (error) {
+            console.error("Failed to delete some storage files", error);
+        }
+    }
+}
+
+export async function deleteUserAccount(options: {
+    deleteMonsters: boolean;
+    deleteGames: boolean;
+    deleteCharacters: boolean;
+    deleteImages: boolean;
+}): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Unauthorized');
+
+    // 1. Delete images first if requested
+    if (options.deleteImages) {
+        await deleteUserImages(user.id);
+    }
+
+    // 2. Call RPC to clean up DB and delete auth.users row
+    const { error } = await supabase.rpc('delete_user_account', {
+        p_delete_monsters: options.deleteMonsters,
+        p_delete_games: options.deleteGames,
+        p_delete_characters: options.deleteCharacters
+    });
+
+    if (error) throw error;
 }

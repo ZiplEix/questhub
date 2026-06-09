@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters } from "$lib/api";
+    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters, deleteUserAccount } from "$lib/api";
     import { uploadImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
@@ -29,6 +29,14 @@
     let avatarSuccess = $state(false);
     let avatarError = $state("");
     let fileInput = $state<HTMLInputElement | null>(null);
+ 
+    let showDeleteConfirm = $state(false);
+    let deleteMonsters = $state(true);
+    let deleteGames = $state(true);
+    let deleteCharacters = $state(true);
+    let deleteImages = $state(true);
+    let deletingAccount = $state(false);
+    let deleteError = $state("");
 
     const tabs = [
         { id: "general", label: "Informations", icon: User },
@@ -139,6 +147,25 @@
             monsters = await fetchUserMonsters();
         } catch (e) {
             console.error("Failed to fetch monsters", e);
+        }
+    }
+
+    async function handleDeleteAccount() {
+        deletingAccount = true;
+        deleteError = "";
+        try {
+            await deleteUserAccount({
+                deleteMonsters,
+                deleteGames,
+                deleteCharacters,
+                deleteImages
+            });
+            await authClient.signOut();
+            goto("/");
+        } catch (e: any) {
+            console.error("Failed to delete account", e);
+            deleteError = e.message || "Une erreur est survenue lors de la suppression du compte.";
+            deletingAccount = false;
         }
     }
 </script>
@@ -261,6 +288,32 @@
                                         <span>{user?.email}</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="mt-12 pt-8 border-t border-stone-200 space-y-6">
+                            <div>
+                                <h3 class="text-lg font-display font-black text-red-600">Zone de danger</h3>
+                                <p class="text-sm text-stone-500">
+                                    Gérez la suppression définitive de vos données et de votre compte utilisateur.
+                                </p>
+                            </div>
+
+                            <div class="bg-red-50/20 border border-red-100 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-dark-gray text-sm">Supprimer mon compte QuestHub</h4>
+                                    <p class="text-xs text-stone-500">
+                                        Cette action supprimera définitivement votre profil d'utilisateur et vous permettra de choisir les données associées à effacer.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onclick={() => showDeleteConfirm = true}
+                                    class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all hover:shadow-md cursor-pointer flex items-center gap-2 shrink-0"
+                                >
+                                    Supprimer mon compte
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -573,4 +626,99 @@
             </div>
         {/if}
     </main>
+
+    {#if showDeleteConfirm}
+        <!-- Confirmation Dialog -->
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+            <div class="bg-white rounded-3xl p-6 md:p-8 max-w-xl w-full border border-stone-200 shadow-xl space-y-6">
+                <div>
+                    <h3 class="font-display font-black text-2xl text-red-600">Supprimer définitivement le compte ?</h3>
+                    <p class="text-sm text-stone-500 mt-2 leading-relaxed">
+                        Cette action est irréversible. Cochez ci-dessous les données que vous souhaitez supprimer en même temps que votre compte :
+                    </p>
+                </div>
+
+                <!-- Checkboxes inside the popup -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-start gap-2.5 p-3 bg-stone-50 rounded-xl border border-stone-200/60 shadow-3xs cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all select-none">
+                        <input
+                            type="checkbox"
+                            bind:checked={deleteMonsters}
+                            class="mt-1 rounded text-red-600 focus:ring-red-500 border-stone-300 w-4 h-4 cursor-pointer"
+                        />
+                        <div>
+                            <span class="block text-xs font-bold text-dark-gray">Monstres du bestiaire</span>
+                            <span class="block text-[10px] text-stone-400 mt-0.5">Supprime tous les monstres créés dans vos parties.</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-2.5 p-3 bg-stone-50 rounded-xl border border-stone-200/60 shadow-3xs cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all select-none">
+                        <input
+                            type="checkbox"
+                            bind:checked={deleteGames}
+                            class="mt-1 rounded text-red-600 focus:ring-red-500 border-stone-300 w-4 h-4 cursor-pointer"
+                        />
+                        <div>
+                            <span class="block text-xs font-bold text-dark-gray">Tables & Campagnes (si MJ)</span>
+                            <span class="block text-[10px] text-stone-400 mt-0.5">Supprime définitivement toutes les tables dont vous êtes le MJ.</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-2.5 p-3 bg-stone-50 rounded-xl border border-stone-200/60 shadow-3xs cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all select-none">
+                        <input
+                            type="checkbox"
+                            bind:checked={deleteCharacters}
+                            class="mt-1 rounded text-red-600 focus:ring-red-500 border-stone-300 w-4 h-4 cursor-pointer"
+                        />
+                        <div>
+                            <span class="block text-xs font-bold text-dark-gray">Personnages de jeu</span>
+                            <span class="block text-[10px] text-stone-400 mt-0.5">Supprime vos fiches de personnages ainsi que celles créées pour vos parties.</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-2.5 p-3 bg-stone-50 rounded-xl border border-stone-200/60 shadow-3xs cursor-pointer hover:border-red-200 hover:bg-red-50/10 transition-all select-none">
+                        <input
+                            type="checkbox"
+                            bind:checked={deleteImages}
+                            class="mt-1 rounded text-red-600 focus:ring-red-500 border-stone-300 w-4 h-4 cursor-pointer"
+                        />
+                        <div>
+                            <span class="block text-xs font-bold text-dark-gray">Photos, cartes & médias</span>
+                            <span class="block text-[10px] text-stone-400 mt-0.5">Supprime vos images et photos importées de notre stockage.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <p class="text-xs text-stone-400 leading-relaxed italic bg-stone-50 p-3 rounded-lg border border-stone-200/50">
+                    Remarque : L'historique et les données des autres joueurs sur vos tables supprimées seront également perdus.
+                </p>
+
+                <div class="flex gap-3 justify-end pt-2 border-t border-stone-100">
+                    <button
+                        type="button"
+                        onclick={() => showDeleteConfirm = false}
+                        class="px-4 py-2 border border-stone-200 hover:bg-stone-50 text-stone-600 font-bold rounded-xl text-sm transition-colors cursor-pointer"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="button"
+                        onclick={handleDeleteAccount}
+                        disabled={deletingAccount}
+                        class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                        {#if deletingAccount}
+                            <Loader2 size={16} class="animate-spin" />
+                            Suppression...
+                        {:else}
+                            Confirmer la suppression
+                        {/if}
+                    </button>
+                </div>
+                {#if deleteError}
+                    <p class="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">{deleteError}</p>
+                {/if}
+            </div>
+        </div>
+    {/if}
 </div>
