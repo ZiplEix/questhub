@@ -29,10 +29,10 @@
                 1. Éditeur du Site
             </h2>
             <p class="text-sm">
-                Le site internet <strong>QuestHub</strong> est un projet personnel développé et édité à titre non professionnel par <strong>Baptiste</strong>.
+                Le site internet <strong>QuestHub</strong> est un projet personnel développé et édité à titre non professionnel par <strong>ZiplEix</strong>.
             </p>
             <p class="text-sm mt-1">
-                <strong>Directeur de la publication :</strong> Baptiste. <br />
+                <strong>Directeur de la publication :</strong> ZiplEix. <br />
                 <strong>Contact Email :</strong> <a href="mailto:support@questhub.fr" class="text-burnt-orange hover:underline font-semibold">support@questhub.fr</a>
             </p>
         </section>
@@ -47,7 +47,7 @@
                 L'infrastructure applicative et le serveur d'hébergement du site sont fournis par :
             </p>
             <ul class="list-disc list-inside text-sm pl-2 space-y-1.5">
-                <li><strong>Hébergement Frontend :</strong> Vercel Inc., 340 S Lemon Ave #4133 Walnut, CA 91789, États-Unis.</li>
+                <li><strong>Hébergement Frontend :</strong> ZiplEix sur son serveur personnel.</li>
                 <li><strong>Hébergement Base de Données & Stockage :</strong> Supabase Inc., 970 Topper Ln, Lafayette, CA 94549, États-Unis (serveurs localisés au sein de l'Union Européenne - Frankfurt, Allemagne).</li>
             </ul>
         </section>
