@@ -4,8 +4,26 @@
     import FeatureCard from "$lib/components/FeatureCard.svelte";
     import PreviewSection from "$lib/components/PreviewSection.svelte";
     import MarketplacePreview from "$lib/components/MarketplacePreview.svelte";
-    import { Sword, Backpack, Book, BookOpen } from "lucide-svelte";
+    import { Sword, Backpack, Book, BookOpen, TriangleAlert, X } from "lucide-svelte";
+
+    let betaBannerOpen = $state(true);
 </script>
+
+{#if betaBannerOpen}
+    <div class="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-center gap-3 text-sm text-amber-800">
+        <TriangleAlert size={16} class="text-amber-500 shrink-0" />
+        <span>
+            <strong>Version bêta</strong> — QuestHub est en cours de développement. Nous ne pouvons pas garantir l'intégrité des données stockées sur le site.
+        </span>
+        <button
+            onclick={() => (betaBannerOpen = false)}
+            class="ml-2 p-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 rounded-full transition-all cursor-pointer shrink-0"
+            aria-label="Fermer"
+        >
+            <X size={14} />
+        </button>
+    </div>
+{/if}
 
 <Header />
 
