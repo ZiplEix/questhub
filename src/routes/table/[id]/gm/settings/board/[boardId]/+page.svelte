@@ -8,7 +8,7 @@
     import { authClient } from "$lib/auth-client";
     import {
         ArrowLeft, Check, Upload, Link as LinkIcon,
-        Loader2, Image, Layers, Grid3x3,
+        Loader2, Image as ImageIcon, Layers, Grid3x3,
         ZoomIn, ZoomOut
     } from "lucide-svelte";
 
