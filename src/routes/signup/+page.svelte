@@ -6,6 +6,7 @@
     let email = $state("");
     let password = $state("");
     let confirmPassword = $state("");
+    let acceptedCgu = $state(false);
     let error = $state("");
     let loading = $state(false);
 
@@ -15,6 +16,11 @@
 
         if (password !== confirmPassword) {
             error = "Les mots de passe ne correspondent pas.";
+            return;
+        }
+
+        if (!acceptedCgu) {
+            error = "Vous devez avoir lu et accepté les CGU.";
             return;
         }
 
@@ -117,6 +123,20 @@
                         class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/50 focus:border-burnt-orange transition-all bg-stone-50"
                         placeholder="Confirmez le mot de passe"
                     />
+                </div>
+
+                <div class="flex items-start gap-3 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5">
+                    <input
+                        id="accept-cgu"
+                        type="checkbox"
+                        bind:checked={acceptedCgu}
+                        required
+                        class="mt-0.5 h-4 w-4 rounded border-stone-300 text-burnt-orange focus:ring-burnt-orange"
+                    />
+                    <label for="accept-cgu" class="text-sm text-dark-gray/80 leading-relaxed">
+                        J'ai lu et j'accepte les
+                        <a href="/conditions-utilisation" class="text-burnt-orange font-medium hover:underline">conditions générales d'utilisation (CGU)</a>.
+                    </label>
                 </div>
 
                 {#if error}

@@ -6,6 +6,7 @@
     <div class="flex justify-center flex-wrap gap-x-6 gap-y-2 mb-4 font-semibold">
         <a href="/about" class="hover:text-burnt-orange transition-colors">À propos</a>
         <a href="/mentions-legales" class="hover:text-burnt-orange transition-colors">Mentions légales</a>
+        <a href="/conditions-utilisation" class="hover:text-burnt-orange transition-colors">Conditions d'utilisation</a>
         <a href="/contact" class="hover:text-burnt-orange transition-colors">Contact & Signalement</a>
     </div>
     <p class="font-medium">© {currentYear} QuestHub. Tous droits réservés.</p>
