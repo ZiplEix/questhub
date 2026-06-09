@@ -7,7 +7,7 @@
         Users, 
         Sparkles, 
         Layout, 
-        Play,
+        Play, 
         CircleDot,
         Info
     } from "lucide-svelte";
@@ -219,6 +219,45 @@
                         Importation directe d'éléments ou de packs entiers dans vos campagnes actives.
                     </li>
                 </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Policy Section -->
+    <div class="bg-stone-50 border border-stone-200/80 rounded-3xl p-8 md:p-12 space-y-8">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-burnt-orange/15 rounded-xl flex items-center justify-center text-burnt-orange border border-burnt-orange/20 shadow-xs">
+                <Sparkles size={20} />
+            </div>
+            <h2 class="text-2xl font-display font-black text-dark-gray">
+                Politique & Éthique : L'usage de l'I.A. sur QuestHub
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-stone-600 leading-relaxed text-sm md:text-base">
+            <div class="space-y-4">
+                <h3 class="text-base font-bold text-dark-gray">Une plateforme ouverte, mais respectueuse des artistes</h3>
+                <p>
+                    QuestHub est né de la volonté de simplifier l'accès au jeu de rôle sur table. Dans cette optique, l'utilisation de l'intelligence artificielle est tolérée et acceptée sur la plateforme, notamment pour aider à la création et à l'illustration rapide de vos campagnes personnelles.
+                </p>
+                <p>
+                    Cependant, nous croyons fermement que rien ne remplace le talent, l'émotion et la vision des <strong>artistes humains</strong>. Dans un monde idéal, nous encourageons vivement les maîtres de jeu et les joueurs à faire vivre les illustrateurs et illustratrices en utilisant leurs créations ou en leur commandant des œuvres originales pour leurs tables de jeu.
+                </p>
+            </div>
+            <div class="space-y-4 bg-white p-6 rounded-2xl border border-stone-200/50 shadow-3xs">
+                <h3 class="text-base font-bold text-dark-gray flex items-center gap-2">
+                    <Info size={16} class="text-burnt-orange" />
+                    Pourquoi un set par défaut généré par I.A. ?
+                </h3>
+                <p class="text-stone-600 text-sm">
+                    Le créateur de QuestHub est un développeur indépendant travaillant seul sur son temps libre. Proposer dès le lancement un catalogue de monstres et de personnages prêt à l'emploi, riche et visuellement cohérent pour que les joueurs puissent démarrer immédiatement des parties, représentait un défi colossal.
+                </p>
+                <p class="text-stone-600 text-sm">
+                    Faire appel à la génération d'images était la seule alternative réaliste pour y parvenir avec nos ressources actuelles. C'est pourquoi l'intégralité du set par défaut (monstres et personnages) a été générée grâce à l'intelligence artificielle <strong>nano banana pro 2</strong>.
+                </p>
+                <p class="text-stone-600 text-[13px] italic bg-stone-50 p-3 rounded-lg border border-stone-200/50">
+                    Nous tenons à cette totale transparence et espérons que ces illustrations temporaires vous permettront de plonger rapidement dans vos aventures, tout en vous incitant à soutenir la communauté des créateurs.
+                </p>
             </div>
         </div>
     </div>
