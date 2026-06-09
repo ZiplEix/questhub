@@ -12,7 +12,16 @@
         Lock,
         Sparkles,
         Upload,
-        Link
+        Link,
+        Heart,
+        Shield,
+        Zap,
+        Wand2,
+        Scroll,
+        Users,
+        BookOpen,
+        Sword,
+        X
     } from "lucide-svelte";
     import { 
         fetchMarketplaceTemplates, 
@@ -89,6 +98,9 @@
 
     let isBundleDetailsModalOpen = $state(false);
     let selectedBundleForDetails = $state<MarketplaceTemplate | null>(null);
+
+    let isCharacterDetailsModalOpen = $state(false);
+    let selectedCharacterForDetails = $state<MarketplaceTemplate | null>(null);
 
     let isCreateBundleModalOpen = $state(false);
     let bundleName = $state("");
@@ -327,6 +339,35 @@
         isBundleDetailsModalOpen = true;
     }
 
+    function openBundleItemDetails(item: any) {
+        if (!selectedBundleForDetails) return;
+
+        selectedCharacterForDetails = {
+            id: `${selectedBundleForDetails.id}-details-${item.name}`,
+            name: item.name,
+            type: item.type,
+            data: item.data || {},
+            description: item.data?.description || "",
+            author_name: selectedBundleForDetails.author_name,
+            uses: selectedBundleForDetails.uses || 0,
+            is_public: selectedBundleForDetails.is_public,
+            created_by: selectedBundleForDetails.created_by,
+            created_at: selectedBundleForDetails.created_at
+        } as any;
+
+        isBundleDetailsModalOpen = false;
+        isCharacterDetailsModalOpen = true;
+    }
+
+    // Open Character/Monster Details Modal
+    function openCharacterDetails(template: MarketplaceTemplate, event?: Event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        selectedCharacterForDetails = template;
+        isCharacterDetailsModalOpen = true;
+    }
+
     // Import template or bundle into game
     async function handleImport() {
         if (!selectedTemplateForImport || !targetGameId) return;
@@ -552,8 +593,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {#each processedTemplates as template}
                     <div 
-                        onclick={() => template.type === 'BUNDLE' && !template.is_virtual && openBundleDetails(template)}
-                        class="group bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:shadow-md hover:border-stone-300 transition-all duration-300 flex flex-col h-full overflow-hidden relative {template.type === 'BUNDLE' && !template.is_virtual ? 'cursor-pointer' : ''}"
+                        onclick={() => {
+                            if (template.type === 'BUNDLE' && !template.is_virtual) {
+                                openBundleDetails(template);
+                            } else if (template.type !== 'BUNDLE') {
+                                openCharacterDetails(template);
+                            }
+                        }}
+                        class="group bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:shadow-md hover:border-stone-300 transition-all duration-300 flex flex-col h-full overflow-hidden relative {(template.type === 'BUNDLE' && !template.is_virtual) || template.type !== 'BUNDLE' ? 'cursor-pointer' : ''}"
                     >
                         <!-- Parent bundle indicator for virtual templates -->
                         {#if template.is_virtual}
@@ -1196,7 +1243,7 @@
                 </div>
                 
                 {#if selectedBundleForDetails.description}
-                    <p class="text-xs text-stone-500 mt-4 bg-stone-50 p-3 rounded-xl border border-stone-150 leading-relaxed">
+                    <p class="text-xs text-stone-500 mt-4 bg-stone-50 p-3 rounded-xl border border-stone-150 leading-relaxed whitespace-pre-wrap">
                         {selectedBundleForDetails.description}
                     </p>
                 {/if}
@@ -1209,7 +1256,9 @@
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {#each selectedBundleForDetails.data?.items || [] as item, idx}
-                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-xs hover:border-burnt-orange/20 transition-all flex flex-col justify-between h-full group">
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-xs hover:border-burnt-orange/20 transition-all flex flex-col justify-between h-full group cursor-pointer"
+                            onclick={() => openBundleItemDetails(item)}
+                        >
                             <div class="flex items-center gap-3">
                                 <img
                                     src={item.data?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${item.name}`}
@@ -1237,7 +1286,8 @@
                                     <span>AC {item.data?.armor_class || 10}</span>
                                 </div>
                                 <button
-                                    onclick={() => {
+                                    onclick={(e) => {
+                                        e.stopPropagation();
                                         // Construct virtual single item payload to import
                                         const virtualItem = {
                                             name: item.name,
@@ -1275,6 +1325,293 @@
                     Importer tout le pack
                     <ExternalLink size={14} />
                 </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Character/Monster Details Modal -->
+{#if isCharacterDetailsModalOpen && selectedCharacterForDetails}
+    <div
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+    >
+        <div
+            class="bg-white rounded-3xl shadow-xl w-full max-w-5xl max-h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-200"
+        >
+            <!-- Left Sidebar - Image -->
+            <div class="relative w-80 shrink-0 bg-gradient-to-br from-burnt-orange/10 via-stone-50 to-stone-100 border-r border-stone-200/50 flex flex-col items-center justify-center p-4">
+                <!-- Close button -->
+                <button
+                    onclick={() => (isCharacterDetailsModalOpen = false)}
+                    class="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-all z-10"
+                >
+                    <X size={20} />
+                </button>
+
+                <!-- Image -->
+                <div class="w-full aspect-square rounded-2xl overflow-hidden border-2 border-stone-200/60 shadow-lg flex-shrink-0">
+                    <img
+                        src={selectedCharacterForDetails.data?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${selectedCharacterForDetails.name}`}
+                        alt={selectedCharacterForDetails.name}
+                        class="w-full h-full object-cover"
+                    />
+                </div>
+
+                <!-- Type badge at bottom -->
+                <div class="mt-4 w-full text-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-burnt-orange/10 text-burnt-orange border border-burnt-orange/30 shadow-xs">
+                        <Sparkles size={12} />
+                        {selectedCharacterForDetails.type}
+                    </span>
+                </div>
+
+                <!-- Meta info -->
+                <p class="text-xs text-stone-500 font-semibold mt-4 text-center px-2">
+                    Créé par @{selectedCharacterForDetails.author_name}
+                </p>
+            </div>
+
+            <!-- Right Content Area -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header with Title -->
+                <div class="px-6 pt-6 pb-4 border-b border-stone-100 bg-gradient-to-b from-white/80 to-white shrink-0">
+                    <h2 class="text-3xl font-bold text-dark-gray leading-tight mb-2">
+                        {selectedCharacterForDetails.name}
+                    </h2>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <!-- Description -->
+                    {#if selectedCharacterForDetails.description}
+                        <div class="space-y-2">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                                <BookOpen size={14} class="text-burnt-orange" />
+                                Description
+                            </h4>
+                            <p class="text-sm text-stone-600 leading-relaxed bg-gradient-to-br from-stone-50 to-stone-50/50 p-4 rounded-2xl border border-stone-200/60 whitespace-pre-wrap shadow-xs">
+                                {selectedCharacterForDetails.description}
+                            </p>
+                        </div>
+                    {/if}
+
+                <!-- Stats Grid -->
+                <div class="space-y-3">
+                    <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                        <Sword size={14} class="text-burnt-orange" />
+                        Caractéristiques Principales
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <!-- HP -->
+                        <div class="bg-gradient-to-br from-red-50 to-red-50/50 p-4 rounded-2xl border border-red-200/60 shadow-xs hover:shadow-md transition-all">
+                            <div class="flex items-center gap-2 mb-2">
+                                <Heart size={14} class="text-red-500" />
+                                <span class="text-xs text-red-600 font-bold uppercase tracking-wider">PV</span>
+                            </div>
+                            <span class="text-2xl font-bold text-red-700">
+                                {selectedCharacterForDetails.data?.max_hp || selectedCharacterForDetails.data?.hp || '-'}
+                            </span>
+                        </div>
+
+                        <!-- AC -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-50/50 p-4 rounded-2xl border border-blue-200/60 shadow-xs hover:shadow-md transition-all">
+                            <div class="flex items-center gap-2 mb-2">
+                                <Shield size={14} class="text-blue-500" />
+                                <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">CA</span>
+                            </div>
+                            <span class="text-2xl font-bold text-blue-700">
+                                {selectedCharacterForDetails.data?.armor_class || selectedCharacterForDetails.data?.ac || '-'}
+                            </span>
+                        </div>
+
+                        <!-- Speed -->
+                        {#if selectedCharacterForDetails.data?.speed}
+                            <div class="bg-gradient-to-br from-green-50 to-green-50/50 p-4 rounded-2xl border border-green-200/60 shadow-xs hover:shadow-md transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <Zap size={14} class="text-green-500" />
+                                    <span class="text-xs text-green-600 font-bold uppercase tracking-wider">Vitesse</span>
+                                </div>
+                                <span class="text-2xl font-bold text-green-700">
+                                    {selectedCharacterForDetails.data.speed}
+                                </span>
+                            </div>
+                        {/if}
+
+                        <!-- Race -->
+                        {#if selectedCharacterForDetails.data?.race}
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-50/50 p-4 rounded-2xl border border-purple-200/60 shadow-xs hover:shadow-md transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <Users size={14} class="text-purple-500" />
+                                    <span class="text-xs text-purple-600 font-bold uppercase tracking-wider">Race</span>
+                                </div>
+                                <span class="text-lg font-bold text-purple-700">
+                                    {selectedCharacterForDetails.data.race}
+                                </span>
+                            </div>
+                        {/if}
+
+                        <!-- Class/Type -->
+                        {#if selectedCharacterForDetails.data?.class}
+                            <div class="bg-gradient-to-br from-amber-50 to-amber-50/50 p-4 rounded-2xl border border-amber-200/60 shadow-xs hover:shadow-md transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <Scroll size={14} class="text-amber-500" />
+                                    <span class="text-xs text-amber-600 font-bold uppercase tracking-wider">Classe</span>
+                                </div>
+                                <span class="text-lg font-bold text-amber-700">
+                                    {selectedCharacterForDetails.data.class}
+                                </span>
+                            </div>
+                        {/if}
+
+                        <!-- Level -->
+                        {#if selectedCharacterForDetails.data?.level}
+                            <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                                <span class="text-xs text-yellow-600 font-bold uppercase tracking-wider block mb-1">Niveau</span>
+                                <span class="text-2xl font-bold text-yellow-700">
+                                    {selectedCharacterForDetails.data.level}
+                                </span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+
+                <!-- Attributes Section -->
+                {#if selectedCharacterForDetails.data?.attributes || selectedCharacterForDetails.data?.strength || selectedCharacterForDetails.data?.dexterity}
+                    <div class="space-y-3">
+                        <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                            <Wand2 size={14} class="text-burnt-orange" />
+                            Attributs
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {#if selectedCharacterForDetails.data?.strength}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Force</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.strength}</span>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.dexterity}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Dext.</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.dexterity}</span>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.constitution}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Const.</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.constitution}</span>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.intelligence}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Int.</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.intelligence}</span>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.wisdom}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Sag.</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.wisdom}</span>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.charisma}
+                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
+                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Cha.</span>
+                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.charisma}</span>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Additional Info -->
+                {#if selectedCharacterForDetails.data?.abilities || selectedCharacterForDetails.data?.skills}
+                    <div class="space-y-3">
+                        <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                            <Scroll size={14} class="text-burnt-orange" />
+                            Détails supplémentaires
+                        </h4>
+                        <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-4 rounded-2xl border border-stone-200/60 shadow-xs space-y-3 text-sm text-stone-600">
+                            {#if selectedCharacterForDetails.data?.abilities}
+                                <div>
+                                    <span class="font-bold text-stone-700 block mb-1">📋 Capacités :</span>
+                                    <p class="whitespace-pre-wrap">{selectedCharacterForDetails.data.abilities}</p>
+                                </div>
+                            {/if}
+                            {#if selectedCharacterForDetails.data?.skills}
+                                <div>
+                                    <span class="font-bold text-stone-700 block mb-1">⚡ Compétences :</span>
+                                    <p class="whitespace-pre-wrap">{selectedCharacterForDetails.data.skills}</p>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Spells Section -->
+                {#if selectedCharacterForDetails.data?.spells && typeof selectedCharacterForDetails.data.spells === 'object'}
+                    <div class="space-y-3">
+                        <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                            <Wand2 size={14} class="text-burnt-orange" />
+                            Sorts & Capacités
+                        </h4>
+                        <div class="space-y-3">
+                            {#each Object.entries(selectedCharacterForDetails.data.spells) as [category, items]}
+                                {#if Array.isArray(items) && items.length > 0}
+                                    <div class="space-y-2">
+                                        {#each items as spell}
+                                            <div class="bg-gradient-to-r from-burnt-orange/5 to-transparent p-3 rounded-2xl border border-burnt-orange/20 shadow-xs hover:shadow-md transition-all">
+                                                <div class="font-bold text-stone-800 text-sm flex items-start gap-2">
+                                                    <span class="text-burnt-orange">✦</span>
+                                                    {spell.name}
+                                                </div>
+                                                {#if spell.description}
+                                                    <p class="text-xs text-stone-600 mt-2 whitespace-pre-wrap leading-relaxed pl-5">
+                                                        {spell.description}
+                                                    </p>
+                                                {/if}
+                                                {#if spell.charges}
+                                                    <p class="text-[10px] text-stone-400 mt-2 font-semibold pl-5">
+                                                        ⚡ Charges: {spell.charges}
+                                                    </p>
+                                                {/if}
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            {/each}
+                        </div>
+                    </div>
+                {/if}
+
+                <!-- Uses counter -->
+                <div class="flex items-center justify-between p-4 bg-gradient-to-r from-burnt-orange/10 to-transparent rounded-2xl border border-burnt-orange/20 shadow-xs">
+                    <span class="flex items-center gap-2 text-xs text-stone-600 font-semibold">
+                        <Sparkles size={14} class="text-burnt-orange" />
+                        Importations
+                    </span>
+                    <span class="text-lg font-bold text-burnt-orange">{selectedCharacterForDetails.uses || 0}</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-stone-100 shrink-0 bg-gradient-to-r from-white via-white to-burnt-orange/5 flex justify-end gap-3">
+                    <button
+                        onclick={() => (isCharacterDetailsModalOpen = false)}
+                        class="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-2xl text-sm transition-all cursor-pointer shadow-xs"
+                    >
+                        Fermer
+                    </button>
+                    <button
+                        onclick={() => {
+                            isCharacterDetailsModalOpen = false;
+                            openImportModal(selectedCharacterForDetails!);
+                        }}
+                        class="px-5 py-2.5 bg-burnt-orange hover:bg-burnt-orange/90 text-white rounded-2xl font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                        Importer
+                        <ExternalLink size={14} />
+                    </button>
+                </div>
             </div>
         </div>
     </div>
