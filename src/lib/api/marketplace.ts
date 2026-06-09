@@ -36,7 +36,9 @@ export async function fetchMarketplaceTemplates(filters?: {
         query = query.eq('created_by', user.id);
     }
     
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query
+        .order('uses', { ascending: false })
+        .order('created_at', { ascending: false });
     if (error) throw error;
     
     let list = data || [];

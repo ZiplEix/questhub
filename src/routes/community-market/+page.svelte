@@ -609,7 +609,7 @@
                             <!-- Uses badge -->
                             <div class="absolute bottom-3 right-3">
                                 <span class="bg-black/60 text-white px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase">
-                                    {template.uses || 0} utilisations
+                                    {template.uses || 0} {template.uses === 1 ? 'importation' : 'importations'}
                                 </span>
                             </div>
                         </div>
@@ -1183,8 +1183,8 @@
                                 {selectedBundleForDetails.name}
                             </h3>
                             <p class="text-xs text-stone-400 font-semibold mt-0.5">
-                                Créé par @{selectedBundleForDetails.author_name} • {selectedBundleForDetails.uses || 0} utilisations
-                            </p>
+                                 Créé par @{selectedBundleForDetails.author_name} • {selectedBundleForDetails.uses || 0} {selectedBundleForDetails.uses === 1 ? 'importation' : 'importations'}
+                             </p>
                         </div>
                     </div>
                     <button
