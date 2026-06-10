@@ -4,7 +4,8 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 
 const protectedRoutes = [
     "/dashboard",
-    "/table"
+    "/table",
+    "/reset-password"
 ];
 
 export const handle: Handle = async ({ event, resolve }) => {

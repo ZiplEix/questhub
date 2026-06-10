@@ -102,12 +102,15 @@ export const authClient = {
             }
         ) {
             try {
+                // Ensure the email redirection goes through the server callback to exchange the PKCE code for a session
+                const emailRedirectTo = window.location.origin + '/auth/callback?next=' + encodeURIComponent(data.callbackURL || '/dashboard');
+
                 const { data: resData, error } = await supabase.auth.signUp({
                     email: data.email,
                     password: data.password,
                     options: {
                         data: { name: data.name },
-                        emailRedirectTo: data.callbackURL ? (window.location.origin + data.callbackURL) : undefined
+                        emailRedirectTo
                     }
                 });
 
@@ -115,7 +118,8 @@ export const authClient = {
 
                 options?.onSuccess?.({ data: resData });
 
-                if (data.callbackURL) {
+                // Only redirect immediately if the session was returned (i.e. email confirmation disabled)
+                if (resData.session && data.callbackURL) {
                     window.location.href = data.callbackURL;
                 }
                 return resData;
@@ -223,6 +227,37 @@ export const authClient = {
             error: null
         });
 
+        return data;
+    },
+
+    async updateEmail(email: string, callbackURL?: string) {
+        const emailRedirectTo = window.location.origin + '/auth/callback?next=' + encodeURIComponent(callbackURL || '/me');
+        const { data, error } = await supabase.auth.updateUser({ email }, { emailRedirectTo });
+        if (error) throw error;
+        
+        // Refresh session (although email won't be updated until confirmed)
+        const { data: { session } } = await supabase.auth.getSession();
+        sessionStore.set({
+            data: mapSession(session),
+            isPending: false,
+            error: null
+        });
+
+        return data;
+    },
+
+    async updatePassword(password: string) {
+        const { data, error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        return data;
+    },
+
+    async resetPassword(email: string, callbackURL?: string) {
+        const redirectTo = window.location.origin + '/auth/callback?next=' + encodeURIComponent(callbackURL || '/reset-password');
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo
+        });
+        if (error) throw error;
         return data;
     }
 };

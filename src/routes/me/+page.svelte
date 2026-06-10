@@ -15,6 +15,8 @@
         Camera,
         Loader2,
         Check,
+        Lock,
+        ShieldAlert,
     } from "lucide-svelte";
     import type { SessionUser } from "$lib/types/session-user";
 
@@ -38,6 +40,22 @@
     let deletingAccount = $state(false);
     let deleteError = $state("");
 
+    let editName = $state("");
+    let nameSaving = $state(false);
+    let nameError = $state("");
+    let nameSuccess = $state(false);
+
+    let editEmail = $state("");
+    let emailSaving = $state(false);
+    let emailError = $state("");
+    let emailSuccess = $state(false);
+
+    let newPassword = $state("");
+    let confirmPassword = $state("");
+    let passwordSaving = $state(false);
+    let passwordError = $state("");
+    let passwordSuccess = $state(false);
+
     const tabs = [
         { id: "general", label: "Informations", icon: User },
         { id: "stats", label: "Statistiques", icon: Activity },
@@ -60,6 +78,8 @@
                 return;
             }
             user = data.user;
+            editName = user.name || "";
+            editEmail = user.email || "";
 
             await Promise.all([fetchStats(), fetchCampaigns(), fetchCharacters(), fetchMonsters()]);
         } catch (e) {
@@ -168,6 +188,77 @@
             deletingAccount = false;
         }
     }
+
+    async function handleUpdateName(event: SubmitEvent) {
+        event.preventDefault();
+        if (!editName.trim()) {
+            nameError = "Le pseudo ne peut pas être vide.";
+            return;
+        }
+        nameSaving = true;
+        nameError = "";
+        nameSuccess = false;
+        try {
+            await authClient.updateUser({ name: editName.trim() });
+            if (user) {
+                user = { ...user, name: editName.trim() };
+            }
+            nameSuccess = true;
+            setTimeout(() => { nameSuccess = false; }, 3000);
+        } catch (e: any) {
+            console.error(e);
+            nameError = e.message || "Erreur lors de la mise à jour du pseudo.";
+        } finally {
+            nameSaving = false;
+        }
+    }
+
+    async function handleUpdateEmail(event: SubmitEvent) {
+        event.preventDefault();
+        if (!editEmail.trim()) {
+            emailError = "L'adresse email ne peut pas être vide.";
+            return;
+        }
+        emailSaving = true;
+        emailError = "";
+        emailSuccess = false;
+        try {
+            await authClient.updateEmail(editEmail.trim());
+            emailSuccess = true;
+        } catch (e: any) {
+            console.error(e);
+            emailError = e.message || "Erreur lors de la mise à jour de l'email.";
+        } finally {
+            emailSaving = false;
+        }
+    }
+
+    async function handleUpdatePassword(event: SubmitEvent) {
+        event.preventDefault();
+        if (newPassword.length < 6) {
+            passwordError = "Le mot de passe doit faire au moins 6 caractères.";
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            passwordError = "Les mots de passe ne correspondent pas.";
+            return;
+        }
+        passwordSaving = true;
+        passwordError = "";
+        passwordSuccess = false;
+        try {
+            await authClient.updatePassword(newPassword);
+            passwordSuccess = true;
+            newPassword = "";
+            confirmPassword = "";
+            setTimeout(() => { passwordSuccess = false; }, 3000);
+        } catch (e: any) {
+            console.error(e);
+            passwordError = e.message || "Erreur lors de la mise à jour du mot de passe.";
+        } finally {
+            passwordSaving = false;
+        }
+    }
 </script>
 
 <div class="min-h-screen bg-cream">
@@ -221,72 +312,241 @@
                 <!-- General Info -->
                 {#if activeTab === "general"}
                     <div
-                        class="animate-in fade-in slide-in-from-bottom-4 duration-300"
+                        class="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-8"
                     >
-                        <div class="flex items-start gap-8">
-                            <div class="relative group">
-                                <img
-                                    src={user?.image ||
-                                        `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
-                                    alt={user?.name}
-                                    class="w-32 h-32 rounded-full object-cover border-4 border-stone-100 shadow-md transition-all duration-200 {avatarUploading ? 'opacity-50' : 'group-hover:brightness-75'}"
-                                />
-                                <!-- Upload overlay -->
-                                <button
-                                    type="button"
-                                    onclick={() => fileInput?.click()}
-                                    disabled={avatarUploading}
-                                    class="absolute inset-0 flex flex-col items-center justify-center rounded-full cursor-pointer transition-all duration-200 {avatarUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}"
-                                    title="Changer la photo de profil"
-                                >
-                                    {#if avatarUploading}
-                                        <Loader2 size={28} class="text-white animate-spin" />
-                                    {:else if avatarSuccess}
-                                        <Check size={28} class="text-green-400" />
-                                    {:else}
-                                        <Camera size={28} class="text-white drop-shadow-md" />
-                                        <span class="text-white text-xs font-medium mt-1 drop-shadow-md">Modifier</span>
-                                    {/if}
-                                </button>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    class="hidden"
-                                    bind:this={fileInput}
-                                    onchange={handleAvatarUpload}
-                                />
-                                {#if avatarError}
-                                    <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-red-50 text-red-600 text-xs px-3 py-1 rounded-lg border border-red-100 shadow-sm">
-                                        {avatarError}
-                                    </div>
-                                {/if}
-                                {#if avatarSuccess}
-                                    <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-50 text-green-600 text-xs px-3 py-1 rounded-lg border border-green-100 shadow-sm">
-                                        Photo mise à jour !
-                                    </div>
-                                {/if}
-                            </div>
-                            <div class="space-y-4 flex-1">
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-dark-gray/40 mb-1"
-                                        >Nom d'utilisateur</label
-                                    >
-                                    <p class="text-xl font-bold text-dark-gray">
-                                        {user?.name}
-                                    </p>
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <!-- Left Column: Avatar & Profile Info (5 cols) -->
+                            <div class="lg:col-span-5 bg-stone-50/50 rounded-2xl border border-stone-200/60 p-6 flex flex-col items-center text-center space-y-6">
+                                <div class="w-full flex justify-between items-center pb-2 border-b border-stone-100">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-stone-400">Photo & Identité</h3>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-stone-200 text-stone-600 border border-stone-300/30">
+                                        Actif
+                                    </span>
                                 </div>
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-dark-gray/40 mb-1"
-                                        >Adresse Email</label
+                                
+                                <!-- Avatar Upload -->
+                                <div class="relative group">
+                                    <div class="absolute inset-0 bg-burnt-orange/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <img
+                                        src={user?.image ||
+                                            `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
+                                        alt={user?.name}
+                                        class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md transition-all duration-200 group-hover:scale-[1.02] {avatarUploading ? 'opacity-50' : ''}"
+                                    />
+                                    <!-- Upload overlay -->
+                                    <button
+                                        type="button"
+                                        onclick={() => fileInput?.click()}
+                                        disabled={avatarUploading}
+                                        class="absolute inset-0 flex flex-col items-center justify-center rounded-full cursor-pointer bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-200 disabled:opacity-50"
+                                        title="Changer la photo de profil"
                                     >
-                                    <div
-                                        class="flex items-center gap-2 text-dark-gray"
-                                    >
-                                        <Mail size={18} />
-                                        <span>{user?.email}</span>
+                                        {#if avatarUploading}
+                                            <Loader2 size={24} class="text-white animate-spin" />
+                                        {:else if avatarSuccess}
+                                            <Check size={24} class="text-green-400 animate-bounce" />
+                                        {:else}
+                                            <Camera size={24} class="text-white drop-shadow-md mb-1" />
+                                            <span class="text-white text-xs font-semibold drop-shadow-md">Modifier</span>
+                                        {/if}
+                                    </button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        bind:this={fileInput}
+                                        onchange={handleAvatarUpload}
+                                    />
+                                    {#if avatarError}
+                                        <div class="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-xl border border-red-100 shadow-sm z-10 animate-fade-in">
+                                            {avatarError}
+                                        </div>
+                                    {/if}
+                                    {#if avatarSuccess}
+                                        <div class="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-50 text-green-600 text-xs px-3 py-1.5 rounded-xl border border-green-100 shadow-sm z-10 animate-fade-in">
+                                            Photo mise à jour !
+                                        </div>
+                                    {/if}
+                                </div>
+
+                                <div class="w-full space-y-1">
+                                    <h4 class="font-display font-black text-xl text-dark-gray leading-tight">{user?.name}</h4>
+                                    <p class="text-xs text-stone-400 font-mono truncate max-w-full px-2" title={user?.email}>{user?.email}</p>
+                                </div>
+
+                                <!-- Pseudo Edit Form -->
+                                <form onsubmit={handleUpdateName} class="w-full space-y-3 pt-5 border-t border-stone-200/60">
+                                    <div class="text-left">
+                                        <label class="block text-[10px] font-bold text-dark-gray/60 uppercase tracking-wider mb-2 ml-1" for="username">
+                                            Modifier le pseudo
+                                        </label>
+                                        <div class="flex gap-2">
+                                            <input
+                                                id="username"
+                                                type="text"
+                                                bind:value={editName}
+                                                required
+                                                class="flex-1 px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all bg-white text-sm"
+                                                placeholder="Pseudo"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={nameSaving || editName.trim() === user?.name || !editName.trim()}
+                                                class="px-4 py-2.5 bg-burnt-orange hover:bg-opacity-95 text-white font-bold rounded-xl text-sm transition-all hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                                            >
+                                                {#if nameSaving}
+                                                    <Loader2 size={16} class="animate-spin" />
+                                                {/if}
+                                                Enregistrer
+                                            </button>
+                                        </div>
                                     </div>
+                                    
+                                    {#if nameError}
+                                        <p class="text-xs text-red-600 text-left">{nameError}</p>
+                                    {/if}
+                                    {#if nameSuccess}
+                                        <p class="text-xs text-green-600 font-medium flex items-center gap-1 text-left">
+                                            <Check size={14} /> Pseudo mis à jour !
+                                        </p>
+                                    {/if}
+                                </form>
+                            </div>
+
+                            <!-- Right Column: Settings & Security (7 cols) -->
+                            <div class="lg:col-span-7 space-y-6">
+                                <!-- Section 2: Adresse Email -->
+                                <div class="bg-stone-50/20 rounded-2xl border border-stone-200/60 p-6 space-y-4 shadow-3xs">
+                                    <div class="flex items-center gap-2 pb-2 border-b border-stone-100">
+                                        <Mail size={18} class="text-burnt-orange" />
+                                        <h3 class="font-display font-bold text-base text-dark-gray">Adresse E-mail</h3>
+                                    </div>
+                                    
+                                    <div class="bg-burnt-orange/5 border border-burnt-orange/10 rounded-xl p-3.5 text-xs text-dark-gray/70 leading-relaxed space-y-1">
+                                        <p class="font-bold text-dark-gray">ℹ️ Processus de changement d'e-mail :</p>
+                                        <p>
+                                            Par sécurité, nous exigeons la confirmation via <strong>deux e-mails distincts</strong>.
+                                            Vous devrez cliquer sur le lien de confirmation envoyé à votre <strong>ancienne adresse e-mail</strong>,
+                                            puis sur celui envoyé à votre <strong>nouvelle adresse e-mail</strong> pour finaliser la mise à jour.
+                                        </p>
+                                    </div>
+
+                                    <form onsubmit={handleUpdateEmail} class="space-y-3">
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-dark-gray/60 uppercase tracking-wider mb-2 ml-1" for="email">
+                                                Nouvelle adresse e-mail
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <div class="relative flex-1">
+                                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                                                        <Mail size={16} />
+                                                    </div>
+                                                    <input
+                                                        id="email"
+                                                        type="email"
+                                                        bind:value={editEmail}
+                                                        required
+                                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all bg-white text-sm"
+                                                        placeholder="nouveau@mail.com"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="submit"
+                                                    disabled={emailSaving || editEmail.trim() === user?.email || !editEmail.trim()}
+                                                    class="px-4 py-2.5 bg-burnt-orange hover:bg-opacity-95 text-white font-bold rounded-xl text-sm transition-all hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                                                >
+                                                    {#if emailSaving}
+                                                        <Loader2 size={16} class="animate-spin" />
+                                                    {/if}
+                                                    Enregistrer
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        {#if emailError}
+                                            <p class="text-xs text-red-600">{emailError}</p>
+                                        {/if}
+                                        {#if emailSuccess}
+                                            <div class="bg-blue-50 text-blue-700 p-3.5 rounded-xl text-xs border border-blue-100 leading-relaxed animate-fade-in space-y-2">
+                                                <p class="font-bold">Demande de changement envoyée !</p>
+                                                <ul class="list-disc pl-4 space-y-1">
+                                                    <li>Vérifiez votre <strong>ancienne boîte mail</strong> et cliquez sur le lien de validation.</li>
+                                                    <li>Vérifiez la boîte de <strong>{editEmail}</strong> et cliquez sur le lien de confirmation reçu pour valider la nouvelle adresse.</li>
+                                                </ul>
+                                            </div>
+                                        {/if}
+                                    </form>
+                                </div>
+
+                                <!-- Section 3: Sécurité & Mot de passe -->
+                                <div class="bg-stone-50/20 rounded-2xl border border-stone-200/60 p-6 space-y-4 shadow-3xs">
+                                    <div class="flex items-center gap-2 pb-2 border-b border-stone-100">
+                                        <Lock size={18} class="text-burnt-orange" />
+                                        <h3 class="font-display font-bold text-base text-dark-gray">Sécurité & Mot de passe</h3>
+                                    </div>
+                                    
+                                    <form onsubmit={handleUpdatePassword} class="space-y-4">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-dark-gray/60 uppercase tracking-wider mb-2 ml-1" for="new-password">
+                                                    Nouveau mot de passe
+                                                </label>
+                                                <div class="relative">
+                                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                                                        <Lock size={16} />
+                                                    </div>
+                                                    <input
+                                                        id="new-password"
+                                                        type="password"
+                                                        bind:value={newPassword}
+                                                        required
+                                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all bg-white text-sm"
+                                                        placeholder="Min. 6 caractères"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-dark-gray/60 uppercase tracking-wider mb-2 ml-1" for="confirm-password">
+                                                    Confirmer le mot de passe
+                                                </label>
+                                                <div class="relative">
+                                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                                                        <Lock size={16} />
+                                                    </div>
+                                                    <input
+                                                        id="confirm-password"
+                                                        type="password"
+                                                        bind:value={confirmPassword}
+                                                        required
+                                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all bg-white text-sm"
+                                                        placeholder="Confirmez"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex justify-end pt-2">
+                                            <button
+                                                type="submit"
+                                                disabled={passwordSaving || !newPassword || !confirmPassword}
+                                                class="px-5 py-2.5 bg-burnt-orange hover:bg-opacity-95 text-white font-bold rounded-xl text-sm transition-all hover:shadow-md cursor-pointer disabled:bg-stone-200 disabled:text-stone-400 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-1.5"
+                                            >
+                                                {#if passwordSaving}
+                                                    <Loader2 size={16} class="animate-spin" />
+                                                {/if}
+                                                Mettre à jour le mot de passe
+                                            </button>
+                                        </div>
+                                        
+                                        {#if passwordError}
+                                            <p class="text-xs text-red-600">{passwordError}</p>
+                                        {/if}
+                                        {#if passwordSuccess}
+                                            <p class="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                <Check size={14} /> Mot de passe modifié !
+                                            </p>
+                                        {/if}
+                                    </form>
                                 </div>
                             </div>
                         </div>

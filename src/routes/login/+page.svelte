@@ -71,11 +71,19 @@
                 </div>
 
                 <div>
-                    <label
-                        class="block text-sm font-medium text-dark-gray mb-2 ml-1"
-                        for="password">Mot de passe</label
-                    >
+                    <div class="flex justify-between items-center mb-2 ml-1">
+                        <label
+                            class="text-sm font-medium text-dark-gray"
+                            for="password">Mot de passe</label
+                        >
+                        <a
+                            href="/forgot-password"
+                            class="text-xs text-burnt-orange font-medium hover:underline"
+                            >Mot de passe oublié ?</a
+                        >
+                    </div>
                     <input
+                        id="password"
                         type="password"
                         bind:value={password}
                         required

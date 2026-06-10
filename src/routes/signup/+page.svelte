@@ -1,6 +1,7 @@
 <script lang="ts">
     import { authClient } from "$lib/auth-client";
     import GoogleButton from "$lib/components/GoogleButton.svelte";
+    import { goto } from "$app/navigation";
 
     let name = $state("");
     let email = $state("");
@@ -43,8 +44,11 @@
                     onResponse: () => {
                         loading = false;
                     },
-                    onSuccess: () => {
-                        // si pas de callbackURL, tu peux rediriger ici
+                    onSuccess: (ctx) => {
+                        // If no session is returned, email confirmation is active, redirect to notification page
+                        if (!ctx.data?.session) {
+                            goto(`/signup/check-email?email=${encodeURIComponent(email)}`);
+                        }
                     },
                 },
             );
