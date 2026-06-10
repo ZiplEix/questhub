@@ -21,7 +21,8 @@
         Users,
         BookOpen,
         Sword,
-        X
+        X,
+        ChevronDown
     } from "lucide-svelte";
     import { 
         fetchMarketplaceTemplates, 
@@ -524,8 +525,8 @@
         </div>
 
         <!-- Search & Actions Bar -->
-        <div class="mb-12 flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-stone-200/60 shadow-xs">
-            <div class="relative w-full max-w-md">
+        <div class="mb-12 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-stone-200/60 shadow-xs">
+            <div class="relative w-full md:max-w-md">
                 <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
                 <input
                     type="text"
@@ -536,27 +537,27 @@
                 />
             </div>
 
-            <!-- Tabs Filters -->
-            <div class="flex flex-wrap gap-2">
-                {#each types as type}
-                    <button
-                        onclick={() => (selectedType = type.id)}
-                        class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer
-                        {selectedType === type.id
-                            ? 'bg-dark-gray text-white border-dark-gray shadow-md'
-                            : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-burnt-orange hover:text-burnt-orange'}"
-                    >
-                        {type.label}
-                    </button>
-                {/each}
+            <!-- Category Select Filter -->
+            <div class="relative w-full md:w-48 shrink-0">
+                <select
+                    bind:value={selectedType}
+                    class="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:border-burnt-orange focus:ring-2 focus:ring-burnt-orange/20 transition-all font-bold text-stone-600 appearance-none cursor-pointer pr-10"
+                >
+                    {#each types as type}
+                        <option value={type.id}>{type.label}</option>
+                    {/each}
+                </select>
+                <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
+                    <ChevronDown size={16} />
+                </div>
             </div>
 
             <!-- Action buttons -->
             {#if user}
-                <div class="flex items-center gap-3 shrink-0">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
                     <button
                         onclick={() => (showOnlyMyPublications = !showOnlyMyPublications)}
-                        class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer flex items-center gap-2
+                        class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer flex items-center justify-center gap-2
                         {showOnlyMyPublications
                             ? 'bg-burnt-orange/10 text-burnt-orange border-burnt-orange/30'
                             : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-400'}"
@@ -566,7 +567,7 @@
                     
                     <button
                         onclick={() => (isCreateBundleModalOpen = true)}
-                        class="px-4 py-2.5 bg-burnt-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-opacity-95 shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                        class="px-4 py-2.5 bg-burnt-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-opacity-95 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                         <FolderPlus size={16} />
                         Créer un pack
@@ -1336,192 +1337,196 @@
         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
     >
         <div
-            class="bg-white rounded-3xl shadow-xl w-full max-w-5xl max-h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-200"
+            class="bg-white rounded-3xl shadow-xl w-full max-w-5xl max-h-[90vh] flex overflow-hidden animate-in zoom-in-95 duration-200 relative"
         >
-            <!-- Left Sidebar - Image -->
-            <div class="relative w-80 shrink-0 bg-gradient-to-br from-burnt-orange/10 via-stone-50 to-stone-100 border-r border-stone-200/50 flex flex-col items-center justify-center p-4">
-                <!-- Close button -->
-                <button
-                    onclick={() => (isCharacterDetailsModalOpen = false)}
-                    class="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-all z-10"
-                >
-                    <X size={20} />
-                </button>
+            <!-- Close button (absolute top right of the whole modal) -->
+            <button
+                onclick={() => (isCharacterDetailsModalOpen = false)}
+                class="absolute top-6 right-6 p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-all z-50 cursor-pointer"
+                aria-label="Fermer"
+            >
+                <X size={20} />
+            </button>
 
+            <!-- Left Sidebar - Image & Badge -->
+            <div class="relative w-80 shrink-0 bg-gradient-to-br from-burnt-orange/10 via-cream/40 to-cream/80 border-r border-stone-200/40 flex flex-col items-center justify-center p-6 gap-4">
                 <!-- Image -->
-                <div class="w-full aspect-square rounded-2xl overflow-hidden border-2 border-stone-200/60 shadow-lg flex-shrink-0">
+                <div class="w-full aspect-square rounded-2xl overflow-hidden border-2 border-white shadow-md flex-shrink-0 bg-white">
                     <img
-                        src={selectedCharacterForDetails.data?.avatar_url || `https://api.dicebear.com/9.x/avataaars/svg?seed=${selectedCharacterForDetails.name}`}
+                        src={selectedCharacterForDetails.data?.avatar_url || (selectedCharacterForDetails.type === 'MONSTRE' ? `https://api.dicebear.com/9.x/bottts/svg?seed=${selectedCharacterForDetails.name}` : `https://api.dicebear.com/9.x/avataaars/svg?seed=${selectedCharacterForDetails.name}`)}
                         alt={selectedCharacterForDetails.name}
                         class="w-full h-full object-cover"
                     />
                 </div>
 
                 <!-- Type badge at bottom -->
-                <div class="mt-4 w-full text-center">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-burnt-orange/10 text-burnt-orange border border-burnt-orange/30 shadow-xs">
+                <div class="w-full text-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-burnt-orange/10 text-burnt-orange border border-burnt-orange/30 shadow-3xs">
                         <Sparkles size={12} />
-                        {selectedCharacterForDetails.type}
+                        {selectedCharacterForDetails.type === 'MONSTRE' ? 'Monstre' : 'Personnage'}
                     </span>
                 </div>
 
                 <!-- Meta info -->
-                <p class="text-xs text-stone-500 font-semibold mt-4 text-center px-2">
+                <p class="text-xs text-stone-400 font-semibold text-center px-2">
                     Créé par @{selectedCharacterForDetails.author_name}
                 </p>
             </div>
 
             <!-- Right Content Area -->
-            <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 flex flex-col overflow-hidden bg-white">
                 <!-- Header with Title -->
-                <div class="px-6 pt-6 pb-4 border-b border-stone-100 bg-gradient-to-b from-white/80 to-white shrink-0">
-                    <h2 class="text-3xl font-bold text-dark-gray leading-tight mb-2">
+                <div class="px-8 pt-8 pb-4 border-b border-stone-100 bg-white shrink-0">
+                    <h2 class="text-3xl font-display font-black text-dark-gray leading-tight">
                         {selectedCharacterForDetails.name}
                     </h2>
                 </div>
 
                 <!-- Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div class="flex-1 overflow-y-auto p-8 space-y-6">
                     <!-- Description -->
                     {#if selectedCharacterForDetails.description}
                         <div class="space-y-2">
-                            <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider">
                                 <BookOpen size={14} class="text-burnt-orange" />
                                 Description
                             </h4>
-                            <p class="text-sm text-stone-600 leading-relaxed bg-gradient-to-br from-stone-50 to-stone-50/50 p-4 rounded-2xl border border-stone-200/60 whitespace-pre-wrap shadow-xs">
+                            <p class="text-sm text-stone-600 leading-relaxed bg-stone-50/50 p-4 rounded-2xl border border-stone-200/60 whitespace-pre-wrap shadow-3xs">
                                 {selectedCharacterForDetails.description}
                             </p>
                         </div>
                     {/if}
 
-                <!-- Stats Grid -->
-                <div class="space-y-3">
-                    <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
-                        <Sword size={14} class="text-burnt-orange" />
-                        Caractéristiques Principales
-                    </h4>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <!-- HP -->
-                        <div class="bg-gradient-to-br from-red-50 to-red-50/50 p-4 rounded-2xl border border-red-200/60 shadow-xs hover:shadow-md transition-all">
-                            <div class="flex items-center gap-2 mb-2">
-                                <Heart size={14} class="text-red-500" />
-                                <span class="text-xs text-red-600 font-bold uppercase tracking-wider">PV</span>
-                            </div>
-                            <span class="text-2xl font-bold text-red-700">
-                                {selectedCharacterForDetails.data?.max_hp || selectedCharacterForDetails.data?.hp || '-'}
-                            </span>
-                        </div>
-
-                        <!-- AC -->
-                        <div class="bg-gradient-to-br from-blue-50 to-blue-50/50 p-4 rounded-2xl border border-blue-200/60 shadow-xs hover:shadow-md transition-all">
-                            <div class="flex items-center gap-2 mb-2">
-                                <Shield size={14} class="text-blue-500" />
-                                <span class="text-xs text-blue-600 font-bold uppercase tracking-wider">CA</span>
-                            </div>
-                            <span class="text-2xl font-bold text-blue-700">
-                                {selectedCharacterForDetails.data?.armor_class || selectedCharacterForDetails.data?.ac || '-'}
-                            </span>
-                        </div>
-
-                        <!-- Speed -->
-                        {#if selectedCharacterForDetails.data?.speed}
-                            <div class="bg-gradient-to-br from-green-50 to-green-50/50 p-4 rounded-2xl border border-green-200/60 shadow-xs hover:shadow-md transition-all">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <Zap size={14} class="text-green-500" />
-                                    <span class="text-xs text-green-600 font-bold uppercase tracking-wider">Vitesse</span>
-                                </div>
-                                <span class="text-2xl font-bold text-green-700">
-                                    {selectedCharacterForDetails.data.speed}
-                                </span>
-                            </div>
-                        {/if}
-
-                        <!-- Race -->
-                        {#if selectedCharacterForDetails.data?.race}
-                            <div class="bg-gradient-to-br from-purple-50 to-purple-50/50 p-4 rounded-2xl border border-purple-200/60 shadow-xs hover:shadow-md transition-all">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <Users size={14} class="text-purple-500" />
-                                    <span class="text-xs text-purple-600 font-bold uppercase tracking-wider">Race</span>
-                                </div>
-                                <span class="text-lg font-bold text-purple-700">
-                                    {selectedCharacterForDetails.data.race}
-                                </span>
-                            </div>
-                        {/if}
-
-                        <!-- Class/Type -->
-                        {#if selectedCharacterForDetails.data?.class}
-                            <div class="bg-gradient-to-br from-amber-50 to-amber-50/50 p-4 rounded-2xl border border-amber-200/60 shadow-xs hover:shadow-md transition-all">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <Scroll size={14} class="text-amber-500" />
-                                    <span class="text-xs text-amber-600 font-bold uppercase tracking-wider">Classe</span>
-                                </div>
-                                <span class="text-lg font-bold text-amber-700">
-                                    {selectedCharacterForDetails.data.class}
-                                </span>
-                            </div>
-                        {/if}
-
-                        <!-- Level -->
-                        {#if selectedCharacterForDetails.data?.level}
-                            <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                                <span class="text-xs text-yellow-600 font-bold uppercase tracking-wider block mb-1">Niveau</span>
-                                <span class="text-2xl font-bold text-yellow-700">
-                                    {selectedCharacterForDetails.data.level}
-                                </span>
-                            </div>
-                        {/if}
-                    </div>
-                </div>
-
-                <!-- Attributes Section -->
-                {#if selectedCharacterForDetails.data?.attributes || selectedCharacterForDetails.data?.strength || selectedCharacterForDetails.data?.dexterity}
+                    <!-- Stats Grid -->
                     <div class="space-y-3">
-                        <h4 class="flex items-center gap-2 text-xs font-bold text-stone-500 uppercase tracking-wider">
-                            <Wand2 size={14} class="text-burnt-orange" />
-                            Attributs
+                        <h4 class="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider">
+                            <Sword size={14} class="text-burnt-orange" />
+                            Caractéristiques Principales
                         </h4>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {#if selectedCharacterForDetails.data?.strength}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Force</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.strength}</span>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- HP -->
+                            <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <Heart size={14} class="text-burnt-orange" />
+                                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">PV (Points de Vie)</span>
+                                </div>
+                                <span class="text-2xl font-display font-black text-dark-gray">
+                                    {selectedCharacterForDetails.data?.max_hp || selectedCharacterForDetails.data?.hp || '-'}
+                                </span>
+                            </div>
+
+                            <!-- AC -->
+                            <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <Shield size={14} class="text-burnt-orange" />
+                                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">CA (Classe d'Armure)</span>
+                                </div>
+                                <span class="text-2xl font-display font-black text-dark-gray">
+                                    {selectedCharacterForDetails.data?.armor_class || selectedCharacterForDetails.data?.ac || '-'}
+                                </span>
+                            </div>
+
+                            <!-- Speed -->
+                            {#if selectedCharacterForDetails.data?.speed}
+                                <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <Zap size={14} class="text-burnt-orange" />
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Vitesse</span>
+                                    </div>
+                                    <span class="text-2xl font-display font-black text-dark-gray">
+                                        {selectedCharacterForDetails.data.speed}
+                                    </span>
                                 </div>
                             {/if}
-                            {#if selectedCharacterForDetails.data?.dexterity}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Dext.</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.dexterity}</span>
+
+                            <!-- Race -->
+                            {#if selectedCharacterForDetails.data?.race}
+                                <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <Users size={14} class="text-burnt-orange" />
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Race</span>
+                                    </div>
+                                    <span class="text-xl font-display font-black text-dark-gray truncate block">
+                                        {selectedCharacterForDetails.data.race}
+                                    </span>
                                 </div>
                             {/if}
-                            {#if selectedCharacterForDetails.data?.constitution}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Const.</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.constitution}</span>
+
+                            <!-- Class/Type -->
+                            {#if selectedCharacterForDetails.data?.class}
+                                <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <Scroll size={14} class="text-burnt-orange" />
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Classe</span>
+                                    </div>
+                                    <span class="text-xl font-display font-black text-dark-gray truncate block">
+                                        {selectedCharacterForDetails.data.class}
+                                    </span>
                                 </div>
                             {/if}
-                            {#if selectedCharacterForDetails.data?.intelligence}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Int.</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.intelligence}</span>
-                                </div>
-                            {/if}
-                            {#if selectedCharacterForDetails.data?.wisdom}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Sag.</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.wisdom}</span>
-                                </div>
-                            {/if}
-                            {#if selectedCharacterForDetails.data?.charisma}
-                                <div class="bg-gradient-to-br from-stone-50 to-stone-50/50 p-3 rounded-2xl border border-stone-200/60 shadow-xs hover:shadow-md transition-all">
-                                    <span class="text-[10px] text-stone-500 font-bold uppercase block mb-1">Cha.</span>
-                                    <span class="text-xl font-bold text-stone-800">{selectedCharacterForDetails.data.charisma}</span>
+
+                            <!-- Level -->
+                            {#if selectedCharacterForDetails.data?.level}
+                                <div class="bg-stone-50/40 p-4 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/20 hover:bg-stone-50/70 transition-all shadow-3xs">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <Sparkles size={14} class="text-burnt-orange" />
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Niveau</span>
+                                    </div>
+                                    <span class="text-2xl font-display font-black text-dark-gray">
+                                        {selectedCharacterForDetails.data.level}
+                                    </span>
                                 </div>
                             {/if}
                         </div>
                     </div>
-                {/if}
+
+                    <!-- Attributes Section -->
+                    {#if selectedCharacterForDetails.data?.attributes || selectedCharacterForDetails.data?.strength || selectedCharacterForDetails.data?.dexterity}
+                        <div class="space-y-3">
+                            <h4 class="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider">
+                                <Wand2 size={14} class="text-burnt-orange" />
+                                Caractéristiques Sec.
+                            </h4>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {#if selectedCharacterForDetails.data?.strength}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Force</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.strength}</span>
+                                    </div>
+                                {/if}
+                                {#if selectedCharacterForDetails.data?.dexterity}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Dextérité</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.dexterity}</span>
+                                    </div>
+                                {/if}
+                                {#if selectedCharacterForDetails.data?.constitution}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Constitution</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.constitution}</span>
+                                    </div>
+                                {/if}
+                                {#if selectedCharacterForDetails.data?.intelligence}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Intelligence</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.intelligence}</span>
+                                    </div>
+                                {/if}
+                                {#if selectedCharacterForDetails.data?.wisdom}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Sagesse</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.wisdom}</span>
+                                    </div>
+                                {/if}
+                                {#if selectedCharacterForDetails.data?.charisma}
+                                    <div class="bg-stone-50/30 p-3 rounded-2xl border border-stone-200/60 hover:border-burnt-orange/25 transition-all shadow-3xs bg-stone-50">
+                                        <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block mb-1">Charisme</span>
+                                        <span class="text-xl font-display font-black text-dark-gray">{selectedCharacterForDetails.data.charisma}</span>
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                    {/if}
 
                 <!-- Additional Info -->
                 {#if selectedCharacterForDetails.data?.abilities || selectedCharacterForDetails.data?.skills}
