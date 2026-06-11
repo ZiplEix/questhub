@@ -400,9 +400,9 @@
             alert("Importation réussie dans votre partie ! Retrouvez la création dans la liste de configuration correspondante.");
             isImportModalOpen = false;
             selectedTemplateForImport = null;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to import template:", error);
-            alert("Erreur lors de l'importation.");
+            alert("Erreur lors de l'importation: " + (error?.message || error));
         } finally {
             isImporting = false;
         }

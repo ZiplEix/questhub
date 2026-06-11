@@ -190,9 +190,9 @@
             alert("Création importée avec succès dans le bestiaire !");
             fetchMonsters();
             isImportMarketModalOpen = false;
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to import template:", e);
-            alert("Erreur lors de l'importation.");
+            alert("Erreur lors de l'importation: " + (e?.message || e));
         } finally {
             importingTemplateId = null;
         }

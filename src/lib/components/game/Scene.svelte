@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeBoardStore, sendPing, onPingReceived, onTokenDragged, sendTokenDrag } from "$lib/websocket";
     import { Compass, Minus, Plus, Trash2, Swords, Eye, EyeOff, Activity } from "lucide-svelte";
-    import { onMount, untrack } from "svelte";
+    import { onMount, untrack, getContext } from "svelte";
     import { page } from "$app/state";
     import { fetchPlayers, fetchGame } from "$lib/api";
     import {
@@ -21,6 +21,9 @@
     } = $props<{
         isGM?: boolean;
     }>();
+
+    const tableCtx = getContext<{ isReadOnly: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
 
     // Derived active map url from store
     let activeMapUrl = $derived($activeBoardStore?.image_url || "");
@@ -465,7 +468,7 @@
 
                 if (clickedToken) {
                     // Check permissions: GM can move all, Player can move own character
-                    const canMove = isGM || (clickedToken.character?.user_id === currentUserId && !clickedToken.character?.is_npc);
+                    const canMove = !isReadOnly && (isGM || (clickedToken.character?.user_id === currentUserId && !clickedToken.character?.is_npc));
                     if (canMove) {
                         draggedTokenId = clickedToken.id;
                         dragOffset.x = tx - (clickedToken.x * naturalWidth);
@@ -580,6 +583,7 @@
     }
 
     function handleSceneClick(e: MouseEvent) {
+        if (isReadOnly) return;
         if (!activeMapUrl || !imgLoaded || isPanning || !width || !height) return;
 
         const halfW = naturalWidth / 2;
@@ -901,6 +905,7 @@
     }
 
     function handleContextMenu(e: MouseEvent) {
+        if (isReadOnly) return;
         if (!activeMapUrl || !imgLoaded || !width || !height) return;
 
         if (containerEl) {

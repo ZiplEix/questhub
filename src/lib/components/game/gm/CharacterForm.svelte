@@ -8,6 +8,7 @@
         ArrowLeft,
         Camera,
         Check,
+        ShieldAlert,
     } from "lucide-svelte";
     import IconPicker from "$lib/components/IconPicker.svelte";
     import { createCharacter, updateCharacter, uploadImage, validateImage } from "$lib/api";
@@ -580,6 +581,14 @@
                         >
                             <Camera size={16} /> Médiathèque
                         </button>
+                    </div>
+
+                    <!-- Stockage Info / Alert -->
+                    <div class="bg-amber-50/50 border border-amber-200/40 rounded-xl p-3 text-[11px] text-amber-800 flex items-start gap-2">
+                        <ShieldAlert size={14} class="shrink-0 mt-0.5" />
+                        <div>
+                            <strong>Le stockage par compte est limité à 50 Mo.</strong> Pour préserver votre espace, nous vous recommandons de <strong>privilégier l'usage de liens URL</strong> pour vos images externes.
+                        </div>
                     </div>
 
                     {#if avatarType === "upload"}
@@ -1254,6 +1263,9 @@
                             ></textarea>
 
                             <!-- Inventory Item Image -->
+                            <div class="space-y-1">
+                                <div class="text-[10px] text-amber-700 bg-amber-50/40 rounded px-2 py-0.5 border border-amber-200/20 inline-block">Privilégiez les liens URL ou Icônes (stockage limité à 50 Mo par compte).</div>
+                            </div>
                             <div class="flex items-center gap-3">
                                 <div class="flex gap-2">
                                     <button

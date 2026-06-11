@@ -1,11 +1,16 @@
 <script lang="ts">
     import { fetchNotes as fetchNotesApi, updateNotes } from "$lib/api";
     import { Loader2, CheckCircle, AlertCircle } from "lucide-svelte";
+    import { getContext } from "svelte";
 
     let { characterId, gameId } = $props<{
         characterId: string;
         gameId: string;
     }>();
+
+    const tableCtx = getContext<{ isReadOnly: boolean; isPaused?: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
+    const isPaused = $derived(tableCtx?.isPaused || false);
 
     let notes = $state("");
     let saveStatus = $state<"saved" | "saving" | "error">("saved");
@@ -29,13 +34,14 @@
     });
 
     function handleInput() {
+        if (isReadOnly) return;
         saveStatus = "saving";
         clearTimeout(timeout);
         timeout = setTimeout(saveNotes, 1000);
     }
 
     async function saveNotes() {
-        if (!characterId) return;
+        if (!characterId || isReadOnly) return;
         try {
             await updateNotes(gameId, characterId, notes);
             saveStatus = "saved";
@@ -49,7 +55,9 @@
 <div class="p-4 h-full flex flex-col gap-2">
     <div class="flex justify-between items-center">
         <h3 class="font-bold text-dark-gray">Notes</h3>
-        {#if saveStatus === "saving"}
+        {#if isReadOnly}
+            <span class="text-stone-400 flex items-center gap-1 text-xs">Lecture seule</span>
+        {:else if saveStatus === "saving"}
             <span class="text-stone-400 flex items-center gap-1 text-xs"
                 ><Loader2 size={14} class="animate-spin" /> Sauvegarde...</span
             >
@@ -66,7 +74,8 @@
     <textarea
         bind:value={notes}
         oninput={handleInput}
-        class="w-full flex-1 p-3 rounded-lg border border-stone-200 resize-none focus:outline-none focus:border-burnt-orange bg-white text-dark-gray"
-        placeholder="Prenez des notes ici..."
+        disabled={isReadOnly}
+        class="w-full flex-1 p-3 rounded-lg border border-stone-200 resize-none focus:outline-none focus:border-burnt-orange bg-white text-dark-gray disabled:bg-stone-50 disabled:text-stone-400"
+        placeholder={isReadOnly ? (isPaused ? "Cette partie est en pause. Les notes sont en lecture seule." : "Cette partie est archivée. Les notes sont en lecture seule.") : "Prenez des notes ici..."}
     ></textarea>
 </div>

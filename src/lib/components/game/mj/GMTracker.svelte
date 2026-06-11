@@ -31,6 +31,10 @@
         Ghost,
         X
     } from "lucide-svelte";
+    import { getContext } from "svelte";
+
+    const tableCtx = getContext<{ isReadOnly: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
 
     const gameId = page.params.id || "";
 
@@ -157,6 +161,7 @@
 
     // Toggle participant status in combat
     async function toggleCombatant(token: BoardToken) {
+        if (isReadOnly) return;
         try {
             const newInCombat = !token.in_combat;
             let initVal = token.initiative;
@@ -178,6 +183,7 @@
 
     // Toggle visibility of a token
     async function toggleVisibility(token: BoardToken) {
+        if (isReadOnly) return;
         try {
             await updateTokenCombatState(token.id, {
                 is_hidden: !token.is_hidden
@@ -189,6 +195,7 @@
 
     // Update initiative score
     async function changeInitiative(tokenId: string, score: number) {
+        if (isReadOnly) return;
         try {
             await updateTokenCombatState(tokenId, { initiative: score });
         } catch (e) {
@@ -198,6 +205,7 @@
 
     // Cycle faction: ally -> enemy -> neutral -> ally
     async function cycleFaction(token: BoardToken) {
+        if (isReadOnly) return;
         const factions: ('ally' | 'enemy' | 'neutral')[] = ['ally', 'enemy', 'neutral'];
         const nextIdx = (factions.indexOf(token.faction) + 1) % factions.length;
         const newFaction = factions[nextIdx];
@@ -210,6 +218,7 @@
 
     // Smart HP Modifier function
     async function handleHpSubmit(token: BoardToken, event: KeyboardEvent) {
+        if (isReadOnly) return;
         if (event.key !== "Enter") return;
 
         const inputStr = hpInputs[token.id];
@@ -260,6 +269,7 @@
 
     // Add / Remove conditions
     async function toggleCondition(token: BoardToken, conditionId: string) {
+        if (isReadOnly) return;
         if (!token.character) return;
         const activeConditions = parseConditions(token.character.conditions);
         let newConditions = [];
@@ -278,6 +288,7 @@
     }
 
     async function addCustomCondition(token: BoardToken) {
+        if (isReadOnly) return;
         if (!token.character) return;
         const trimmed = customConditionText.trim();
         if (!trimmed) {
@@ -299,6 +310,7 @@
 
     // Start combat session
     async function startCombat() {
+        if (isReadOnly) return;
         if (combatants.length === 0) return;
         try {
             const firstTokenId = combatants[0].id;
@@ -321,6 +333,7 @@
 
     // Next turn
     async function nextTurn() {
+        if (isReadOnly) return;
         if (combatants.length === 0) return;
         const currentIndex = combatants.findIndex(c => c.id === activeTokenId);
         let nextIndex = currentIndex + 1;
@@ -351,6 +364,7 @@
 
     // Previous turn
     async function previousTurn() {
+        if (isReadOnly) return;
         if (combatants.length === 0) return;
         const currentIndex = combatants.findIndex(c => c.id === activeTokenId);
         let prevIndex = currentIndex - 1;
@@ -374,6 +388,7 @@
 
     // Stop combat session
     async function stopCombat() {
+        if (isReadOnly) return;
         try {
             await updateBoardCombatState(activeBoardId, {
                 combat_active: false,
@@ -395,6 +410,7 @@
 
     // Toggle monster stats visibility option
     async function toggleHideMonsterStats() {
+        if (isReadOnly) return;
         try {
             await updateBoardCombatState(activeBoardId, {
                 hide_monster_stats: !activeBoard.hide_monster_stats
@@ -405,7 +421,12 @@
     }
 </script>
 
-<div class="h-full flex flex-col bg-stone-900 text-stone-200 border-r border-stone-800 font-sans">
+<div class="h-full flex flex-col bg-stone-900 text-stone-200 border-r border-stone-800 font-sans {isReadOnly ? 'readonly-tracker' : ''}">
+    {#if isReadOnly}
+        <div class="bg-red-950/40 border-b border-red-900/40 text-red-200 px-4 py-2.5 text-[11px] font-bold flex items-center gap-2 select-none shrink-0">
+            <span>⚠️</span> Cette partie est archivée. Le combat tracker est en lecture seule.
+        </div>
+    {/if}
     <!-- Header -->
     <div class="p-4 border-b border-stone-800 flex items-center justify-between bg-stone-950">
         <div class="flex items-center gap-2">
@@ -843,3 +864,11 @@
         </div>
     {/if}
 </div>
+
+<style>
+    :global(.readonly-tracker button, .readonly-tracker input, .readonly-tracker select) {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+</style>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchMediaLibrary, uploadToMediaLibrary, type MediaAsset } from "$lib/api";
-    import { X, Loader2, Camera, RefreshCw } from "lucide-svelte";
+    import { fetchMediaLibrary, uploadToMediaLibrary, getUserStorageUsage, type MediaAsset } from "$lib/api";
+    import { X, Loader2, Camera, RefreshCw, ShieldAlert } from "lucide-svelte";
 
     let { 
         isOpen = false, 
@@ -18,6 +18,7 @@
     let uploading = $state(false);
     let error = $state("");
     let fileInput = $state<HTMLInputElement | null>(null);
+    let storageUsage = $state(0);
 
     onMount(async () => {
         if (isOpen) {
@@ -36,7 +37,12 @@
         try {
             loading = true;
             error = "";
-            mediaAssets = await fetchMediaLibrary();
+            const [assets, usage] = await Promise.all([
+                fetchMediaLibrary(),
+                getUserStorageUsage()
+            ]);
+            mediaAssets = assets;
+            storageUsage = usage;
         } catch (e: any) {
             console.error("Failed to load media assets", e);
             error = "Erreur lors du chargement de la médiathèque.";
@@ -65,6 +71,7 @@
 
         try {
             const asset = await uploadToMediaLibrary(file);
+            storageUsage = await getUserStorageUsage();
             onSelect(asset.url);
         } catch (e: any) {
             console.error("Failed to upload image", e);
@@ -91,6 +98,20 @@
                 >
                     <X size={18} />
                 </button>
+            </div>
+
+            <!-- Stockage Info / Progress Bar -->
+            <div class="py-3 px-4 bg-stone-50 rounded-2xl border border-stone-100/80 space-y-2 mt-4 shrink-0">
+                <div class="flex justify-between items-center text-xs font-bold text-stone-600">
+                    <span class="flex items-center gap-1.5"><ShieldAlert size={14} class="text-amber-600" /> Stockage : {(storageUsage / (1024 * 1024)).toFixed(2)} Mo / 50 Mo utilisés</span>
+                    <span class="text-amber-800 text-[10px]">Privilégiez les liens d'images externes</span>
+                </div>
+                <div class="w-full bg-stone-200/80 rounded-full h-2 overflow-hidden">
+                    <div 
+                        class="h-full rounded-full transition-all duration-500 {((storageUsage / (50 * 1024 * 1024)) * 100) > 85 ? 'bg-red-500' : 'bg-burnt-orange'}" 
+                        style="width: {Math.min(100, (storageUsage / (50 * 1024 * 1024)) * 100)}%"
+                    ></div>
+                </div>
             </div>
 
             <!-- Content Area (Scrollable) -->
@@ -125,16 +146,24 @@
                         {#each mediaAssets as asset}
                             <button
                                 onclick={() => onSelect(asset.url)}
-                                class="bg-white rounded-2xl border border-stone-150 overflow-hidden shadow-3xs hover:shadow-md hover:border-burnt-orange/50 transition-all flex flex-col justify-between aspect-square text-left cursor-pointer group relative"
+                                class="group relative bg-white/70 backdrop-blur-md rounded-2xl border border-stone-200/50 overflow-hidden shadow-xs hover:-translate-y-1 hover:shadow-lg hover:border-burnt-orange/30 transition-all duration-300 flex flex-col justify-between aspect-square text-left cursor-pointer"
                             >
                                 <img
                                     src={asset.url}
                                     alt={asset.name}
-                                    class="w-full h-full object-cover group-hover:scale-102 transition-all duration-300"
+                                    class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                                 />
-                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <!-- Premium Overlay on Hover -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 flex flex-col justify-end text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <p class="text-[10px] font-bold truncate">{asset.name}</p>
-                                    <p class="text-[8px] text-stone-300 font-mono mt-0.5">{Math.round(asset.size / 1024)} Ko</p>
+                                    <div class="flex items-center justify-between gap-1.5 mt-1">
+                                        <span class="text-[8px] font-mono text-stone-300 bg-white/10 px-1.5 py-0.5 rounded">
+                                            {Math.round(asset.size / 1024)} Ko
+                                        </span>
+                                        <span class="text-[8px] font-black uppercase tracking-wider text-burnt-orange bg-white px-1.5 py-0.5 rounded">
+                                            {asset.mime_type.split('/')[1] || 'IMG'}
+                                        </span>
+                                    </div>
                                 </div>
                             </button>
                         {/each}

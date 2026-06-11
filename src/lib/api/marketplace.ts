@@ -122,13 +122,65 @@ async function cloneCharacterToGame(charData: any, type: 'PERSONNAGE' | 'PNJ' | 
         isNpc = true;
     }
     
+    const { data: { user } } = await supabase.auth.getUser();
+    let avatarUrl = charData.avatar_url || null;
+
+    if (user && avatarUrl && avatarUrl.includes('/storage/v1/object/public/images/')) {
+        try {
+            const marker = '/storage/v1/object/public/images/';
+            const index = avatarUrl.indexOf(marker);
+            if (index !== -1) {
+                const sourcePath = decodeURIComponent(avatarUrl.substring(index + marker.length));
+                const fileName = sourcePath.split('/').pop() || `avatar_${Date.now()}.png`;
+                const destPath = `media/${user.id}/${Date.now()}_${fileName}`;
+                
+                // Copy the file in supabase storage
+                const { error: copyError } = await supabase.storage
+                    .from('images')
+                    .copy(sourcePath, destPath);
+                
+                if (copyError) {
+                    throw copyError;
+                }
+
+                // Get public URL of the copied avatar
+                const { data: { publicUrl } } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(destPath);
+                
+                avatarUrl = publicUrl;
+                
+                // Get size of the copied file
+                const { data: files } = await supabase.storage
+                    .from('images')
+                    .list(`media/${user.id}`);
+                const fileNameOnly = destPath.split('/').pop()!;
+                const fileObj = files?.find(f => f.name === fileNameOnly);
+                const fileSize = fileObj?.metadata?.size || 0;
+                
+                // Register in media_library
+                await supabase
+                    .from('media_library')
+                    .insert({
+                        name: fileName,
+                        url: publicUrl,
+                        size: fileSize,
+                        mime_type: 'image/png'
+                    });
+            }
+        } catch (copyErr: any) {
+            console.error("Error during avatar cloning:", copyErr);
+            throw new Error(`Erreur lors de la copie de l'avatar: ${copyErr.message || copyErr}`);
+        }
+    }
+
     const payload = {
         name: charData.name,
         race: charData.race || '',
         sub_race: charData.sub_race || null,
         max_hp: charData.max_hp || 10,
         is_npc: isNpc,
-        avatar_url: charData.avatar_url || null,
+        avatar_url: avatarUrl,
         stats: charData.stats || {},
         inventory: charData.inventory || [],
         money: charData.money || 0,

@@ -18,11 +18,31 @@ export function validateImage(file: File, maxMb: number = 2): { valid: boolean; 
     return { valid: true };
 }
 
+export async function getUserStorageUsage(): Promise<number> {
+    const { data, error } = await supabase.rpc('get_user_storage_usage');
+    if (error) {
+        console.error('Error fetching storage usage:', error);
+        return 0;
+    }
+    return data || 0;
+}
+
+export const STORAGE_LIMIT = 50 * 1024 * 1024; // 50 MB in bytes
+
+export async function checkStorageLimit(newFileSize: number): Promise<void> {
+    const currentUsage = await getUserStorageUsage();
+    if (currentUsage + newFileSize > STORAGE_LIMIT) {
+        throw new Error("Limite de stockage de 50 Mo dépassée. Veuillez utiliser des liens ou supprimer d'autres médias.");
+    }
+}
+
 export async function uploadImage(file: File, maxMb: number = 2): Promise<string> {
     const validation = validateImage(file, maxMb);
     if (!validation.valid) {
         throw new Error(validation.error);
     }
+
+    await checkStorageLimit(file.size);
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
@@ -47,6 +67,8 @@ export async function uploadStoryAsset(gameId: string, file: File): Promise<stri
     if (!validation.valid) {
         throw new Error(validation.error);
     }
+
+    await checkStorageLimit(file.size);
 
     // Clean filename to be URL-safe (keep alphanumeric, dots, dashes, underscores)
     const cleanedName = file.name

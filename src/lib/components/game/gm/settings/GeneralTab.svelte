@@ -1,7 +1,8 @@
 <script lang="ts">
     import { page } from "$app/state";
     import { updateGame, regenerateInviteCode as regenerateInviteCodeApi } from "$lib/api";
-    import { Save, Copy, RefreshCw, Check, Play, Pause } from "lucide-svelte";
+    import { Save, Copy, RefreshCw, Check, Play, Pause, Archive, ArchiveRestore } from "lucide-svelte";
+    import { goto } from "$app/navigation";
 
     let { game = $bindable() } = $props();
 
@@ -62,6 +63,43 @@
         } catch (error) {
             console.error("Failed to update game name:", error);
             alert("Erreur lors de la mise à jour du nom");
+        }
+    }
+
+    async function toggleArchiveGame() {
+        const gameId = page.params.id;
+        if (!gameId) return;
+
+        const newActiveState = !game.is_active;
+        const actionText = newActiveState ? "désarchiver" : "archiver";
+
+        if (
+            !confirm(
+                `Êtes-vous sûr de vouloir ${actionText} cette partie ? ${
+                    newActiveState
+                        ? "Elle redeviendra active et modifiable par les joueurs et vous."
+                        : "Elle sera verrouillée en lecture seule pour tous."
+                }`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            await updateGame(gameId, { is_active: newActiveState });
+            game.is_active = newActiveState;
+            alert(
+                `La partie a bien été ${
+                    newActiveState ? "désarchivée" : "archivée"
+                }.`,
+            );
+            if (!newActiveState) {
+                // Redirect to dashboard after archiving
+                goto("/dashboard");
+            }
+        } catch (error) {
+            console.error(`Failed to ${actionText} game:`, error);
+            alert(`Erreur lors de la mise à jour du statut d'archivage.`);
         }
     }
 </script>
@@ -145,6 +183,33 @@
             Mettre la partie en pause empêche les joueurs d'envoyer des messages
             ou d'interagir avec la table.
         </p>
+    </div>
+
+    <div class="space-y-2 pt-4 border-t border-stone-100">
+        <label class="text-sm font-bold text-dark-gray block" for="archiveGame"
+            >Archivage de la partie</label
+        >
+        <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <p class="text-xs text-stone-500 max-w-xl">
+                Archiver la partie la rendra complètement en lecture seule pour vous et tous vos joueurs. Vous pourrez toujours consulter les données (chat, notes, plateaux) depuis le tableau de bord, mais aucune nouvelle action ne pourra être effectuée.
+            </p>
+            <button
+                id="archiveGame"
+                onclick={toggleArchiveGame}
+                class="flex items-center gap-2 px-5 py-3 rounded-xl border font-semibold transition-all hover:cursor-pointer shadow-sm shrink-0
+                {game.is_active
+                    ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300'}"
+            >
+                {#if game.is_active}
+                    <Archive size={18} />
+                    <span>Archiver la partie</span>
+                {:else}
+                    <ArchiveRestore size={18} />
+                    <span>Désarchiver la partie</span>
+                {/if}
+            </button>
+        </div>
     </div>
 
     <div class="pt-4 border-t border-stone-100 flex justify-end">

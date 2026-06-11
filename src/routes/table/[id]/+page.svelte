@@ -10,7 +10,7 @@
         User,
         Pause,
     } from "lucide-svelte";
-    import { onMount, untrack } from "svelte";
+    import { onMount, untrack, setContext } from "svelte";
     import { page } from "$app/state";
     import { fetchGame, fetchCharacter, fetchCharacters } from "$lib/api";
     import { authClient } from "$lib/auth-client";
@@ -25,6 +25,41 @@
     let players = $state<any[]>([]);
     let error = $state<string | null>(null);
     let currentUserId = $state("");
+
+    setContext("tableContext", {
+        get isReadOnly() {
+            return game ? (!game.is_active || game.state === "paused") : false;
+        },
+        get isPaused() {
+            return game ? game.state === "paused" : false;
+        }
+    });
+
+    let gameChannel: any = null;
+    $effect(() => {
+        const gameId = page.params.id;
+        if (gameId) {
+            if (gameChannel) supabase.removeChannel(gameChannel);
+            gameChannel = supabase.channel(`game_realtime_player:${gameId}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+                    (payload) => {
+                        console.log("Realtime game update received in player view:", payload.new);
+                        game = {
+                            ...game,
+                            ...payload.new
+                        };
+                    }
+                )
+                .subscribe();
+        }
+        return () => {
+            if (gameChannel) {
+                supabase.removeChannel(gameChannel);
+            }
+        };
+    });
 
     let dashboardWidth = $state(400);
     let isDraggingDashboard = $state(false);
@@ -167,7 +202,19 @@
 {:else if game}
     {#if game.is_gm || game.current_character_id}
         <PlayerLayout>
-            {#if game.state === "paused"}
+            {#if !game.is_active}
+                <div
+                    class="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-stone-900/95 backdrop-blur-md border border-stone-850 text-stone-200 px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none select-none"
+                >
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span class="font-bold text-sm tracking-wide uppercase"
+                        >Partie Archivée (Lecture Seule)</span
+                    >
+                </div>
+            {:else if game.state === "paused"}
                 <div
                     class="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-amber-100/90 backdrop-blur-sm border border-amber-200 text-amber-800 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none select-none"
                 >

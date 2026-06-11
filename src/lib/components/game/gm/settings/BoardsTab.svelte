@@ -6,9 +6,10 @@
     import { 
         Plus, Trash2, Check, Image as ImageIcon, 
         Link as LinkIcon, Upload, Loader2, Layers,
-        ChevronRight, Edit
+        ChevronRight, Edit, ShieldAlert
     } from "lucide-svelte";
     import MediaSelectorModal from "$lib/components/MediaSelectorModal.svelte";
+    import { getContext } from "svelte";
 
     // Props
     let {
@@ -16,6 +17,9 @@
     } = $props<{
         mode?: "sidebar" | "settings";
     }>();
+
+    const tableCtx = getContext<{ isReadOnly: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
 
     let newBoardName = $state("");
     let newBoardUrl = $state("");
@@ -33,6 +37,7 @@
     // --- Board Actions ---
 
     async function handleFileUpload(file: File) {
+        if (isReadOnly) return;
         if (isUploadingFile) return;
 
         const validation = validateImage(file, 10); // 10MB limit for maps/boards
@@ -80,6 +85,7 @@
 
     async function handleCreateBoard(e: Event) {
         e.preventDefault();
+        if (isReadOnly) return;
         if (!newBoardName.trim() || !newBoardUrl.trim() || isCreatingBoard) return;
 
         try {
@@ -97,6 +103,7 @@
     }
 
     async function handleActivateBoard(boardId: string) {
+        if (isReadOnly) return;
         try {
             await activateBoard(gameId, boardId);
         } catch (err) {
@@ -105,6 +112,7 @@
     }
 
     async function handleDeleteBoard(boardId: string) {
+        if (isReadOnly) return;
         if (!confirm("Voulez-vous vraiment supprimer ce plateau et sa carte associée ?")) return;
         try {
             await deleteBoard(boardId);
@@ -114,7 +122,7 @@
     }
 </script>
 
-<div class="{mode === 'settings' ? 'space-y-8 animate-in fade-in duration-300' : 'h-full flex flex-col bg-stone-50 overflow-y-auto p-4 space-y-6'}">
+<div class="{mode === 'settings' ? 'space-y-8 animate-in fade-in duration-300' : 'h-full flex flex-col bg-stone-50 overflow-y-auto p-4 space-y-6'} {isReadOnly ? 'readonly-boards' : ''}">
     <!-- --- FORMULAIRE DE CRÉATION DE PLATEAU --- -->
     {#if mode === 'settings'}
         <div class="p-6 bg-stone-50 rounded-2xl border border-stone-200/80 shrink-0">
@@ -169,6 +177,14 @@
                                 Médiathèque
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Stockage Info / Alert -->
+                <div class="bg-amber-50/50 border border-amber-200/40 rounded-xl p-3 text-[11px] text-amber-800 flex items-start gap-2">
+                    <ShieldAlert size={14} class="shrink-0 mt-0.5" />
+                    <div>
+                        <strong>Le stockage total par compte est limité à 50 Mo.</strong> Pour les grandes cartes ou images lourdes, nous vous conseillons de <strong>privilégier l'option "Lien externe URL"</strong> afin de ne pas saturer votre quota.
                     </div>
                 </div>
 
@@ -404,3 +420,11 @@
         }}
     />
 </div>
+
+<style>
+    :global(.readonly-boards button, .readonly-boards input, .readonly-boards select) {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+</style>

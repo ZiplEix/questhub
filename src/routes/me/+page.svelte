@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters, deleteUserAccount, fetchMediaLibrary, uploadToMediaLibrary, deleteFromMediaLibrary, type MediaAsset } from "$lib/api";
+    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters, deleteUserAccount, fetchMediaLibrary, uploadToMediaLibrary, deleteFromMediaLibrary, getUserStorageUsage, STORAGE_LIMIT, type MediaAsset } from "$lib/api";
     import { uploadImage, validateImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
@@ -19,7 +19,8 @@
         ShieldAlert,
         Trash2,
         Link,
-        RefreshCw
+        RefreshCw,
+        X
     } from "lucide-svelte";
     import type { SessionUser } from "$lib/types/session-user";
 
@@ -64,6 +65,17 @@
     let mediaUploading = $state(false);
     let mediaError = $state("");
     let mediaFileInput = $state<HTMLInputElement | null>(null);
+    let storageUsage = $state(0);
+    let previewImage = $state<string | null>(null);
+    let previewImageName = $state("");
+
+    async function loadStorageUsage() {
+        try {
+            storageUsage = await getUserStorageUsage();
+        } catch (e) {
+            console.error("Failed to load storage usage", e);
+        }
+    }
 
     const tabs = [
         { id: "general", label: "Informations", icon: User },
@@ -96,7 +108,8 @@
                 fetchCampaigns(), 
                 fetchCharacters(), 
                 fetchMonsters(),
-                fetchMedia()
+                fetchMedia(),
+                loadStorageUsage()
             ]);
         } catch (e) {
             console.error(e);
@@ -161,6 +174,7 @@
                 user = { ...user, image: publicUrl };
             }
             avatarSuccess = true;
+            await loadStorageUsage();
             setTimeout(() => { avatarSuccess = false; }, 2500);
         } catch (e: any) {
             console.error("Failed to upload avatar", e);
@@ -201,6 +215,7 @@
                 await uploadToMediaLibrary(file);
             }
             await fetchMedia();
+            await loadStorageUsage();
         } catch (e: any) {
             console.error("Failed to upload to media library", e);
             mediaError = e.message || "Erreur lors du téléversement.";
@@ -216,6 +231,7 @@
         try {
             await deleteFromMediaLibrary(id, url);
             await fetchMedia();
+            await loadStorageUsage();
         } catch (e: any) {
             console.error("Failed to delete media asset", e);
             alert("Erreur lors de la suppression de l'image : " + (e.message || "Erreur inconnue"));
@@ -975,6 +991,35 @@
                             </div>
                         </div>
 
+                        <!-- Stockage Quota Box -->
+                        <div class="bg-white p-6 rounded-2xl border border-stone-200/60 shadow-2xs space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div>
+                                    <h4 class="font-bold text-stone-850 text-sm">Utilisation du stockage</h4>
+                                    <p class="text-xs text-stone-400">Quota total alloué par compte : 50 Mo</p>
+                                </div>
+                                <span class="text-xs font-bold font-mono text-stone-600">
+                                    {(storageUsage / (1024 * 1024)).toFixed(2)} Mo / 50 Mo ({((storageUsage / (50 * 1024 * 1024)) * 100).toFixed(1)}%)
+                                </span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
+                                <div 
+                                    class="h-full rounded-full transition-all duration-500 {((storageUsage / (50 * 1024 * 1024)) * 100) > 85 ? 'bg-red-500' : (((storageUsage / (50 * 1024 * 1024)) * 100) > 50 ? 'bg-amber-500' : 'bg-burnt-orange')}" 
+                                    style="width: {Math.min(100, (storageUsage / (50 * 1024 * 1024)) * 100)}%"
+                                ></div>
+                            </div>
+
+                            <div class="flex items-start gap-2 bg-amber-50/50 border border-amber-200/40 rounded-xl p-3 text-amber-800 text-xs">
+                                <ShieldAlert size={14} class="shrink-0 mt-0.5" />
+                                <div class="space-y-1">
+                                    <p class="font-bold">Conseil de stockage</p>
+                                    <p>Le stockage direct étant limité, nous vous conseillons de <strong>privilégier l'utilisation de liens URL d'images externes</strong> (par ex. Imgur, Discord, etc.) dans vos configurations de personnages, cartes ou jetons plutôt que de téléverser des fichiers.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {#if mediaError}
                             <div class="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm border border-red-100">
                                 {mediaError}
@@ -988,40 +1033,61 @@
                         {:else if mediaAssets.length > 0}
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {#each mediaAssets as asset}
-                                    <div class="bg-white rounded-2xl border border-stone-150 overflow-hidden shadow-3xs hover:shadow-md transition-all group flex flex-col justify-between">
-                                        <div class="relative aspect-square bg-stone-50 flex items-center justify-center border-b border-stone-100 overflow-hidden">
+                                    <div class="group relative bg-white/70 backdrop-blur-md rounded-2xl border border-stone-200/50 overflow-hidden shadow-xs hover:-translate-y-1 hover:shadow-lg hover:border-burnt-orange/30 transition-all duration-300 flex flex-col justify-between">
+                                        <!-- Image Container -->
+                                        <div 
+                                            onclick={() => { previewImage = asset.url; previewImageName = asset.name; }}
+                                            class="relative aspect-square bg-stone-50 overflow-hidden flex items-center justify-center cursor-zoom-in"
+                                            role="button"
+                                            tabindex="0"
+                                            onkeydown={(e) => e.key === 'Enter' && (previewImage = asset.url, previewImageName = asset.name)}
+                                        >
                                             <img
                                                 src={asset.url}
                                                 alt={asset.name}
-                                                class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                                                class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                                             />
-                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <!-- Blur Overlay on Hover -->
+                                            <div class="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
                                                 <button
-                                                    onclick={() => {
+                                                    onclick={(e) => {
+                                                        e.stopPropagation();
                                                         navigator.clipboard.writeText(asset.url);
                                                         alert("URL copiée dans le presse-papiers !");
                                                     }}
-                                                    class="p-2 bg-white rounded-lg text-dark-gray hover:text-burnt-orange shadow-sm hover:scale-110 transition-all cursor-pointer"
+                                                    class="p-2.5 bg-white text-stone-750 hover:bg-burnt-orange hover:text-white rounded-xl shadow-md scale-90 group-hover:scale-100 transition-all duration-350 ease-out cursor-pointer hover:rotate-6"
                                                     title="Copier le lien de l'image"
                                                 >
                                                     <Link size={16} />
                                                 </button>
                                                 <button
-                                                    onclick={() => handleDeleteMedia(asset.id, asset.url)}
-                                                    class="p-2 bg-white rounded-lg text-red-500 hover:text-red-700 shadow-sm hover:scale-110 transition-all cursor-pointer"
+                                                    onclick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteMedia(asset.id, asset.url);
+                                                    }}
+                                                    class="p-2.5 bg-white text-stone-750 hover:bg-red-500 hover:text-white rounded-xl shadow-md scale-90 group-hover:scale-100 transition-all duration-350 ease-out cursor-pointer hover:-rotate-6"
                                                     title="Supprimer l'image"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </div>
-                                        <div class="p-3 space-y-1">
-                                            <p class="text-xs font-bold text-dark-gray truncate" title={asset.name}>
+                                        
+                                        <!-- Info Details -->
+                                        <div class="p-3.5 space-y-2.5 bg-gradient-to-b from-transparent to-stone-50/30">
+                                            <p class="text-xs font-bold text-dark-gray truncate leading-tight group-hover:text-burnt-orange transition-colors" title={asset.name}>
                                                 {asset.name}
                                             </p>
-                                            <p class="text-[10px] text-stone-400 font-mono">
-                                                {Math.round(asset.size / 1024)} Ko • {asset.mime_type.split('/')[1].toUpperCase()}
-                                            </p>
+                                            <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                                                <!-- Size Pill -->
+                                                <span class="inline-flex items-center text-[9px] font-bold font-sans text-stone-550 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200/30">
+                                                    {Math.round(asset.size / 1024)} Ko
+                                                </span>
+                                                <!-- Format Pill -->
+                                                <span class="inline-flex items-center text-[9px] font-black font-sans uppercase tracking-wide text-burnt-orange bg-burnt-orange/10 px-2 py-0.5 rounded-md border border-burnt-orange/15">
+                                                    {asset.mime_type.split('/')[1] || 'IMAGE'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 {/each}
@@ -1137,6 +1203,65 @@
                 {#if deleteError}
                     <p class="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100">{deleteError}</p>
                 {/if}
+            </div>
+        </div>
+    {/if}
+
+    <!-- Fullscreen Image Preview Lightbox -->
+    {#if previewImage}
+        <div 
+            class="fixed inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center z-[9999] p-4 animate-in fade-in duration-200"
+            onclick={() => { previewImage = null; }}
+            role="button"
+            tabindex="0"
+            onkeydown={(e) => e.key === 'Escape' && (previewImage = null)}
+        >
+            <!-- Close Button -->
+            <button 
+                onclick={() => { previewImage = null; }}
+                class="absolute top-6 right-6 p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all cursor-pointer border border-white/10"
+                aria-label="Fermer l'aperçu"
+            >
+                <X size={24} />
+            </button>
+
+            <!-- Image Wrapper -->
+            <div 
+                class="relative max-w-5xl max-h-[80vh] flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 shadow-2xl animate-in zoom-in-95 duration-250"
+                onclick={(e) => e.stopPropagation()}
+            >
+                <img 
+                    src={previewImage} 
+                    alt={previewImageName} 
+                    class="max-w-full max-h-[80vh] object-contain select-none"
+                />
+            </div>
+
+            <!-- Image Info Footer -->
+            <div 
+                class="mt-6 text-center space-y-2.5 animate-in slide-in-from-bottom-4 duration-300"
+                onclick={(e) => e.stopPropagation()}
+            >
+                <h4 class="text-white font-bold text-lg">{previewImageName}</h4>
+                <div class="flex items-center gap-3 justify-center">
+                    <button
+                        onclick={() => {
+                            navigator.clipboard.writeText(previewImage || '');
+                            alert("URL copiée dans le presse-papiers !");
+                        }}
+                        class="px-4 py-2 bg-white hover:bg-stone-100 text-stone-900 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                        <Link size={14} /> Copier le lien
+                    </button>
+                    <a
+                        href={previewImage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/15 cursor-pointer"
+                    >
+                        Ouvrir dans un nouvel onglet
+                    </a>
+                </div>
             </div>
         </div>
     {/if}

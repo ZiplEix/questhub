@@ -5,16 +5,50 @@
     import GMOmniTool from "$lib/components/game/mj/GMOmniTool.svelte";
 
     import { ChevronLeft, ChevronRight } from "lucide-svelte";
-    import { onMount } from "svelte";
+    import { onMount, setContext } from "svelte";
     import { page } from "$app/state";
     import { authClient } from "$lib/auth-client";
     import { fetchHistory } from "$lib/websocket";
     import { fetchGame } from "$lib/api";
+    import { supabase } from "$lib/supabaseClient";
 
+    let game = $state<any>(null);
     let isLeftPanelOpen = $state(true);
     let isRightPanelOpen = $state(true);
     let currentUserId = $state("");
     let gmCharacterId = $state("");
+
+    setContext("tableContext", {
+        get isReadOnly() {
+            return game ? !game.is_active : false;
+        }
+    });
+
+    let gameChannel: any = null;
+    $effect(() => {
+        const gameId = page.params.id;
+        if (gameId) {
+            if (gameChannel) supabase.removeChannel(gameChannel);
+            gameChannel = supabase.channel(`game_realtime_gm:${gameId}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+                    (payload) => {
+                        console.log("Realtime game update received in GM view:", payload.new);
+                        game = {
+                            ...game,
+                            ...payload.new
+                        };
+                    }
+                )
+                .subscribe();
+        }
+        return () => {
+            if (gameChannel) {
+                supabase.removeChannel(gameChannel);
+            }
+        };
+    });
 
     let leftPanelWidth = $state(380);
     let isDraggingLeft = $state(false);
@@ -59,6 +93,7 @@
 
                 // Fetch table data to get GM character ID
                 const gameData = await fetchGame(gameId);
+                game = gameData;
                 console.log("GM Page: Table Response", gameData);
                 if (gameData.current_character_id) {
                     gmCharacterId = gameData.current_character_id;
@@ -109,6 +144,19 @@
 
     <!-- CENTER ZONE: Game Table (Flexible) -->
     <main class="flex-1 relative z-0 bg-stone-900 flex flex-col">
+        {#if game && !game.is_active}
+            <div
+                class="absolute top-6 left-1/2 -translate-x-1/2 z-[60] bg-stone-900/95 backdrop-blur-md border border-stone-850 text-stone-200 px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none select-none"
+            >
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+                <span class="font-bold text-sm tracking-wide uppercase"
+                    >Partie Archivée (Lecture Seule)</span
+                >
+            </div>
+        {/if}
         <!-- Left Toggle Button -->
         <button
             onclick={() => (isLeftPanelOpen = !isLeftPanelOpen)}

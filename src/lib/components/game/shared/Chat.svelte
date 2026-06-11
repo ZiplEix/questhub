@@ -3,7 +3,7 @@
     import { websocketStore } from "$lib/websocket";
     import { sendMessage } from "$lib/chat";
     import { page } from "$app/state";
-    import { untrack } from "svelte";
+    import { untrack, getContext } from "svelte";
     import { parseDiceAndMath } from "$lib/utils/diceParser";
     import { supabase } from "$lib/supabaseClient";
 
@@ -18,6 +18,10 @@
         currentUserId?: string;
         senderName?: string;
     }>();
+
+    const tableCtx = getContext<{ isReadOnly: boolean; isPaused?: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
+    const isPaused = $derived(tableCtx?.isPaused || false);
 
     let newMessage = $state("");
     let isSecretRoll = $state(false);
@@ -103,6 +107,7 @@
     }
 
     function handleKeyDown(e: KeyboardEvent) {
+        if (isReadOnly) return;
         if (autocompleteList.length > 0 && !hideAutocomplete) {
             if (e.key === "ArrowDown") {
                 e.preventDefault();
@@ -296,6 +301,7 @@
     }
 
     function handleSendMessage() {
+        if (isReadOnly) return;
         const rawText = newMessage.trim();
         if (!rawText) return;
 
@@ -479,8 +485,10 @@
                     class="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors border
                     {isSecretRoll
                         ? 'bg-stone-800 text-white border-stone-800'
-                        : 'bg-stone-100 text-stone-500 border-stone-200 hover:bg-stone-200'}"
+                        : 'bg-stone-100 text-stone-500 border-stone-200 hover:bg-stone-200'}
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                     onclick={() => (isSecretRoll = !isSecretRoll)}
+                    disabled={isReadOnly}
                     title="Message secret (visible uniquement par vous)"
                 >
                     <EyeOff size={12} />
@@ -489,7 +497,8 @@
             {/if}
             <select
                 bind:value={whisperTarget}
-                class="px-2 py-1 rounded text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200 outline-none focus:border-burnt-orange"
+                disabled={isReadOnly}
+                class="px-2 py-1 rounded text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200 outline-none focus:border-burnt-orange disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <option value="">À tous</option>
                 {#each players as player}
@@ -499,7 +508,7 @@
         </div>
 
         <div class="relative">
-            {#if autocompleteList.length > 0 && !hideAutocomplete}
+            {#if autocompleteList.length > 0 && !hideAutocomplete && !isReadOnly}
                 <div
                     class="absolute bottom-full left-0 right-0 mb-2 bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl rounded-xl overflow-hidden z-50 flex flex-col divide-y divide-stone-100 max-h-60 overflow-y-auto"
                     onmousedown={(e) => e.preventDefault()}
@@ -521,7 +530,7 @@
                                 <span class="font-mono text-xs">{item.label}</span>
                                 {#if item.desc}
                                     <span class="text-xs opacity-60 font-sans">{item.desc}</span>
-                                {/if}
+                                  {/if}
                             </div>
                             {#if index === autocompleteIndex}
                                 <span class="text-[10px] uppercase tracking-wider font-bold opacity-80">Entrée</span>
@@ -536,12 +545,14 @@
                 bind:value={newMessage}
                 onkeydown={handleKeyDown}
                 onblur={() => hideAutocomplete = true}
-                placeholder={isSecretRoll ? "Message secret..." : "Message..."}
-                class="w-full pl-4 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
+                placeholder={isReadOnly ? (isPaused ? "Cette partie est en pause (lecture seule)" : "Cette partie est archivée (lecture seule)") : isSecretRoll ? "Message secret..." : "Message..."}
+                disabled={isReadOnly}
+                class="w-full pl-4 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed"
             />
             <button
                 onclick={handleSendMessage}
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-burnt-orange hover:bg-burnt-orange/10 rounded-lg transition-colors"
+                disabled={isReadOnly}
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-burnt-orange hover:bg-burnt-orange/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <Send size={16} />
             </button>

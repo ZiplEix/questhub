@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import { validateImage } from './storage';
+import { validateImage, checkStorageLimit } from './storage';
 
 export interface MediaAsset {
     id: string;
@@ -29,6 +29,8 @@ export async function uploadToMediaLibrary(file: File): Promise<MediaAsset> {
     if (!validation.valid) {
         throw new Error(validation.error);
     }
+
+    await checkStorageLimit(file.size);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Unauthorized');

@@ -10,6 +10,9 @@
 
     const { showToast } = getContext<any>("toast");
 
+    const tableCtx = getContext<{ isReadOnly: boolean }>("tableContext");
+    const isReadOnly = $derived(tableCtx?.isReadOnly || false);
+
     let { isGM = false } = $props<{ isGM?: boolean }>();
     let isSecret = $state(false);
     let showCustomInput = $state(false);
@@ -24,6 +27,7 @@
     ];
 
     async function roll(sides: number) {
+        if (isReadOnly) return;
         const gameId = page.params.id;
         if (!gameId) return;
         try {
@@ -40,6 +44,7 @@
     }
 
     async function handleCustomRoll() {
+        if (isReadOnly) return;
         const gameId = page.params.id;
         if (!gameId) return;
 
@@ -96,10 +101,12 @@
         {#if isGM}
             <button
                 onclick={() => (isSecret = !isSecret)}
+                disabled={isReadOnly}
                 class="p-2 rounded-lg border transition-all mr-1
                 {isSecret
                     ? 'bg-stone-800 text-white border-stone-800'
-                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'}"
+                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'}
+                disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Lancé secret"
             >
                 {#if isSecret}
@@ -113,7 +120,8 @@
         {#each dice as die}
             <button
                 onclick={() => roll(die.val)}
-                class="flex-1 bg-stone-50 border border-stone-200 text-stone-600 font-display font-bold py-2 rounded-lg hover:bg-burnt-orange hover:text-white hover:border-burnt-orange transition-all text-xs active:scale-95"
+                disabled={isReadOnly}
+                class="flex-1 bg-stone-50 border border-stone-200 text-stone-600 font-display font-bold py-2 rounded-lg hover:bg-burnt-orange hover:text-white hover:border-burnt-orange transition-all text-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {die.label}
             </button>
@@ -122,7 +130,8 @@
         <!-- Custom button -->
         <button
             onclick={() => showCustomInput = !showCustomInput}
-            class="flex-1 border text-stone-600 font-display font-bold py-2 rounded-lg hover:bg-burnt-orange hover:text-white hover:border-burnt-orange transition-all text-[10px] uppercase active:scale-95
+            disabled={isReadOnly}
+            class="flex-1 border text-stone-600 font-display font-bold py-2 rounded-lg hover:bg-burnt-orange hover:text-white hover:border-burnt-orange transition-all text-[10px] uppercase active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
             {showCustomInput
                 ? 'bg-burnt-orange text-white border-burnt-orange'
                 : 'bg-stone-50 border-stone-200'}"
@@ -132,13 +141,14 @@
         </button>
     </div>
 
-    {#if showCustomInput}
+    {#if showCustomInput && !isReadOnly}
         <div class="flex gap-1.5 items-center pt-1" transition:slide|local>
             <input
                 type="text"
                 bind:value={customFormula}
+                disabled={isReadOnly}
                 placeholder="Ex: 2d6+4, d100, 3d10-2..."
-                class="flex-1 px-3 py-1.5 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-burnt-orange bg-white font-mono"
+                class="flex-1 px-3 py-1.5 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-burnt-orange bg-white font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                 onkeydown={(e) => {
                     if (e.key === "Enter") handleCustomRoll();
                     if (e.key === "Escape") {
@@ -150,7 +160,8 @@
             />
             <button
                 onclick={handleCustomRoll}
-                class="py-1.5 px-3 bg-burnt-orange hover:bg-burnt-orange-dark text-white font-bold text-xs rounded-lg active:scale-95 transition-all"
+                disabled={isReadOnly}
+                class="py-1.5 px-3 bg-burnt-orange hover:bg-burnt-orange-dark text-white font-bold text-xs rounded-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 Lancer
             </button>
