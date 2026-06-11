@@ -8,7 +8,7 @@
     } from "lucide-svelte";
     import GameCard from "$lib/components/GameCard.svelte";
     import Header from "$lib/components/Header.svelte";
-    import { fetchGames, createGame, deleteGame, uploadImage, validateImage } from "$lib/api";
+    import { fetchGames, createGame, deleteGame, uploadImage, validateImage, fetchCurrentUserRole } from "$lib/api";
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { authClient } from "$lib/auth-client";
@@ -18,6 +18,17 @@
     let games = $state<any[]>([]);
     let loading = $state(true);
     let user = $state<SessionUser | null>(null);
+    let userRole = $state<'admin' | 'moderator' | null>(null);
+
+    let userOwnedGamesCount = $derived(
+        games.filter((g) => g.gm_id === user?.id).length
+    );
+    let isExemptFromLimit = $derived(
+        userRole === "admin" || userRole === "moderator"
+    );
+    let isLimitReached = $derived(
+        !isExemptFromLimit && userOwnedGamesCount >= 2
+    );
 
     onMount(async () => {
         try {
@@ -43,6 +54,10 @@
                 return;
             }
             user = data.user;
+
+            // Fetch current user's role to apply limits correctly
+            const roleData = await fetchCurrentUserRole();
+            userRole = roleData.role;
         } catch (error) {
             console.error(error);
             goto("/login");
@@ -95,6 +110,10 @@
     );
 
     function openDialog() {
+        if (isLimitReached) {
+            alert("Vous avez atteint la limite de 2 parties créées en mode bêta.");
+            return;
+        }
         dialog.showModal();
     }
 
@@ -115,6 +134,7 @@
             goto(`/table/${game.id}/gm/settings`);
         } catch (e: any) {
             console.error(e);
+            alert(e.message || "Erreur lors de la création de la partie. Vous avez peut-être atteint la limite autorisée.");
         } finally {
             creating = false;
         }
@@ -188,13 +208,24 @@
                     {/if}
                 </button>
 
-                <button
-                    class="bg-burnt-orange text-white px-6 py-3 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 flex items-center gap-2 hover:cursor-pointer"
-                    onclick={openDialog}
-                >
-                    <Dice5 size={20} />
-                    Nouvelle Partie
-                </button>
+                {#if isLimitReached}
+                    <button
+                        class="bg-stone-300 text-stone-500 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 cursor-not-allowed opacity-80"
+                        title="Limite de 2 parties créées en bêta atteinte"
+                        disabled
+                    >
+                        <Dice5 size={20} />
+                        Nouvelle Partie (2/2)
+                    </button>
+                {:else}
+                    <button
+                        class="bg-burnt-orange text-white px-6 py-3 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 flex items-center gap-2 hover:cursor-pointer"
+                        onclick={openDialog}
+                    >
+                        <Dice5 size={20} />
+                        Nouvelle Partie {#if !isExemptFromLimit}({userOwnedGamesCount}/2){/if}
+                    </button>
+                {/if}
             </div>
         </div>
 
@@ -238,12 +269,21 @@
                         : "Vous n'avez pas encore de partie active. Créez-en une pour commencer l'aventure !"}
                 </p>
                 {#if !showArchived}
-                    <button
-                        class="bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-lg hover:cursor-pointer"
-                        onclick={openDialog}
-                    >
-                        Créer une table
-                    </button>
+                    {#if isLimitReached}
+                        <button
+                            class="bg-stone-300 text-stone-500 px-8 py-4 rounded-2xl font-bold text-lg cursor-not-allowed opacity-80"
+                            disabled
+                        >
+                            Créer une table (Limite 2/2)
+                        </button>
+                    {:else}
+                        <button
+                            class="bg-burnt-orange text-white px-8 py-4 rounded-2xl font-bold shadow-md hover:bg-opacity-90 transition-all hover:-translate-y-0.5 text-lg hover:cursor-pointer"
+                            onclick={openDialog}
+                        >
+                            Créer une table {#if !isExemptFromLimit}({userOwnedGamesCount}/2){/if}
+                        </button>
+                    {/if}
                 {/if}
             </div>
         {/if}
