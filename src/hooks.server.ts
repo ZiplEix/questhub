@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
-import { type Handle, redirect } from '@sveltejs/kit';
+import { type Handle, redirect, isRedirect } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
 const protectedRoutes = [
@@ -28,18 +28,39 @@ export const handle: Handle = async ({ event, resolve }) => {
     );
 
     // 2. Fetch authenticated user (securely validates JWT against Supabase server)
-    const { data: { user } } = await event.locals.supabase.auth.getUser();
+    let user = null;
+    try {
+        const { data } = await event.locals.supabase.auth.getUser();
+        user = data?.user || null;
+    } catch (err) {
+        console.error('Error fetching user in hooks:', err);
+    }
     
     if (user) {
-        // Check if user is banned
-        const { data: roleData } = await event.locals.supabase
-            .from('user_roles')
-            .select('is_banned')
-            .eq('user_id', user.id)
-            .maybeSingle();
+        let isBanned = false;
+        try {
+            // Check if user is banned
+            const { data: roleData, error } = await event.locals.supabase
+                .from('user_roles')
+                .select('is_banned')
+                .eq('user_id', user.id)
+                .maybeSingle();
 
-        if (roleData?.is_banned) {
-            await event.locals.supabase.auth.signOut();
+            if (error) {
+                console.error('Error checking ban status:', error);
+            } else {
+                isBanned = !!roleData?.is_banned;
+            }
+        } catch (err) {
+            console.error('Failed to query user_roles table:', err);
+        }
+
+        if (isBanned) {
+            try {
+                await event.locals.supabase.auth.signOut();
+            } catch (err) {
+                console.error('Failed to sign out banned user:', err);
+            }
             throw redirect(302, "/login?error=banned");
         }
 
@@ -49,9 +70,15 @@ export const handle: Handle = async ({ event, resolve }) => {
             name: user.user_metadata?.name || user.email?.split('@')[0] || 'Joueur',
             image: user.user_metadata?.avatar_url || null
         };
-        // Fetch session
-        const { data: { session } } = await event.locals.supabase.auth.getSession();
-        event.locals.session = session;
+
+        try {
+            // Fetch session
+            const { data: { session } } = await event.locals.supabase.auth.getSession();
+            event.locals.session = session;
+        } catch (err) {
+            console.error('Error fetching session in hooks:', err);
+            event.locals.session = null;
+        }
     } else {
         event.locals.user = null;
         event.locals.session = null;

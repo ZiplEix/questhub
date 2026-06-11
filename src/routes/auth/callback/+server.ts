@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, isRedirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
@@ -6,9 +6,17 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
     const next = url.searchParams.get('next') ?? '/dashboard';
 
     if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) {
-            throw redirect(303, next);
+        try {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error) {
+                throw redirect(303, next);
+            }
+            console.error('OAuth callback exchange error:', error);
+        } catch (err) {
+            if (isRedirect(err)) {
+                throw err;
+            }
+            console.error('Unhandled exception during OAuth code exchange:', err);
         }
     }
 
