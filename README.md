@@ -1,116 +1,94 @@
 # QuestHub
 
-![QuestHub Banner](https://via.placeholder.com/1200x400?text=QuestHub+Preview)
+<p align="center">
+  <img src="static/logo.png" alt="QuestHub Logo" width="120" />
+</p>
 
-> **A modern, powerful platform for managing tabletop RPG campaigns with real-time capabilities, powered by SvelteKit and Supabase.**
+QuestHub est une plateforme de jeu de rôle sur table virtuelle (Virtual Tabletop ou VTT) et un compagnon de campagne moderne, gratuit et open-source.
 
-![SvelteKit](https://img.shields.io/badge/SvelteKit-2.0-FF3E00?style=for-the-badge&logo=svelte)
-![Supabase](https://img.shields.io/badge/Supabase-Enabled-3ECF8E?style=for-the-badge&logo=supabase)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+👉 **Découvrez le site en direct : [questhub.fr](https://questhub.fr)**
 
-## 📖 Overview
-
-**QuestHub** is a comprehensive Virtual Tabletop (VTT) and campaign management companion designed to streamline the TTRPG experience for Game Masters and Players alike. Built with performance and real-time interaction in mind, it provides a seamless campaign organizer and real-time gaming environment.
+Conçu pour être simple, fluide et immersif, QuestHub vous permet d'organiser vos parties de jeu de rôle, que vous jouiez **à distance sur internet** ou **en local autour d'une table physique** (en projetant la carte sur une télé ou un mur).
 
 ---
 
-## 🛠 Tech Stack
+## 🌟 Fonctionnalités Principales
 
-### Frontend
--   **Framework**: [SvelteKit](https://kit.svelte.dev/) - Svelte 5, full-stack Svelte framework.
--   **Styling**: [TailwindCSS v4](https://tailwindcss.com/) - Utility-first CSS.
--   **Type Safety**: TypeScript.
-
-### Backend (Serverless / Managed)
--   **Database**: [PostgreSQL](https://www.postgresql.org/) hosted on Supabase.
--   **Authentication**: Supabase Auth (Email + Google Social login).
--   **Real-time**: Supabase Realtime Channels (heartbeats, Broadcast, and Change Data Capture).
--   **Storage**: Supabase Storage (for campaign assets and avatars).
--   **Access Control**: Row Level Security (RLS) policies defined in database schema.
+*   🗺️ **Plateau de jeu en temps réel (VTT)** : Téléversez vos cartes, placez-y la grille de combat et déplacez vos jetons de personnages et de monstres. Les mouvements et les pings s'affichent instantanément sur les écrans de tous les joueurs.
+*   🖥️ **Mode Présentation (Idéal pour le jeu en local / IRL)** : Vous jouez tous dans la même pièce ? Lancez le mode Présentation dans un nouvel onglet, déplacez-le sur votre téléviseur ou projecteur, et affichez uniquement la carte et les jetons visibles par vos joueurs.
+*   ⚔️ **Mode Combat & Initiative** : D'un clic, passez en mode combat. Un halo rouge enveloppe l'écran de projection et l'ordre de passage (initiative) s'affiche au-dessus de la carte avec les avatars des combattants. Le tour actif brille d'un contour doré.
+*   📖 **Journal de Campagne (Wiki)** : Documentez votre monde, notez vos scénarios et écrivez le résumé de vos sessions dans un éditeur agréable. Organisez vos articles dans des dossiers et liez facilement des images de votre médiathèque.
+*   🗂️ **Fiches de Personnages & Bestiaire** : Créez et gérez les fiches de vos héros (statistiques, équipements, points de vie). Le MJ dispose d'un bestiaire complet pour stocker les profils de monstres et de PNJ.
+*   🖼️ **Médiathèque partagée (Drive)** : Importez vos illustrations, avatars et cartes. QuestHub s'assure que vos fichiers sont légers et optimisés (formats standardisés, pas de GIF lourds) pour garantir un chargement instantané en cours de partie.
+*   🛒 **Marché Communautaire (Marketplace)** : Partagez vos créations (fiches de monstres, modèles de personnages, objets) ou téléchargez les packs de la communauté pour les intégrer instantanément à vos campagnes.
 
 ---
 
-## 🚀 Getting Started
+## 📸 Aperçu de l'Application
 
-Follow these instructions to set up the project locally for development and testing purposes.
+### Tableau de bord du Maître de Jeu (MJ)
+Le MJ dispose de tous ses outils sur un même écran : gestion du lore, bestiaire, jetons et configuration du plateau de jeu.
+![Tableau de bord du MJ](static/example/gm_dashboard.png)
 
-### Prerequisites
+### Vue Joueur (Plateau de jeu & Immersion)
+Une interface épurée concentrée sur la carte, le chat, la feuille de personnage et les lancers de dés.
+![Vue joueur sur le plateau](static/example/player_view.png)
 
--   [Bun](https://bun.sh/) (highly recommended) or Node.js.
--   A [Supabase Cloud](https://supabase.com/) project.
+---
 
-### Installation & Database Setup
+## 🛠️ Pour les curieux (Stack Technique)
 
-1.  **Clone the repository**
+QuestHub est conçu avec des technologies ultra-modernes pour garantir une réactivité et une légèreté maximales :
+
+*   **Interface (Frontend)** : [SvelteKit](https://kit.svelte.dev/) (avec Svelte 5) pour une rapidité d'affichage incomparable, stylisé avec [TailwindCSS v4](https://tailwindcss.com/).
+*   **Base de données & Temps réel (Backend)** : [Supabase](https://supabase.com/) (PostgreSQL) gérant l'authentification (E-mail + Google), le stockage d'images sécurisé et la synchronisation en temps réel (canaux WebSocket).
+*   **Moteur d'exécution** : [Bun](https://bun.sh/) pour le développement et la compilation ultra-rapide.
+
+---
+
+## 🚀 Comment l'installer localement (Développeurs)
+
+### Prérequis
+*   [Bun](https://bun.sh/) ou Node.js installé sur votre machine.
+*   Un projet [Supabase](https://supabase.com/) actif.
+
+### Installation
+
+1.  **Cloner le projet**
     ```bash
     git clone https://github.com/yourusername/questhub.git
     cd questhub
     ```
 
-2.  **Initialize local Supabase CLI**
-    If you haven't linked the CLI to your project yet:
+2.  **Lier votre projet Supabase**
     ```bash
-    bunx supabase link --project-ref <your-project-ref>
+    bunx supabase link --project-ref <votre-identifiant-projet>
     ```
 
-3.  **Apply database migrations**
-    Push the SQL schema (tables, RLS policies, views, and RPCs) to your Supabase Cloud instance:
+3.  **Appliquer le schéma de base de données**
+    Déployez les tables, fonctions SQL, politiques d'accès (RLS) et configurations de temps réel :
     ```bash
     bunx supabase db push
     ```
 
-### Frontend Configuration
-
-1.  **Configure environment variables**
-    Create a `.env` file inside the `frontend` folder:
-    ```bash
-    cd frontend
-    touch .env
-    ```
-    Populate it with your Supabase credentials:
+4.  **Configurer les variables d'environnement**
+    Créez un fichier `.env` à la racine :
     ```env
-    PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-    PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+    PUBLIC_SUPABASE_URL=https://<votre-identifiant-projet>.supabase.co
+    PUBLIC_SUPABASE_ANON_KEY=<votre-cle-anonyme-anon>
     ```
 
-2.  **Install dependencies**
+5.  **Installer les dépendances et lancer**
     ```bash
     bun install
-    ```
-
-3.  **Run SvelteKit dev server**
-    ```bash
     bun run dev
     ```
-    Your client is running on `http://localhost:5173`.
+    Ouvrez votre navigateur sur `http://localhost:5173`.
 
 ---
 
-## 📂 Project Structure
+## 🤝 Contribuer & Licence
 
-```bash
-questhub/
-├── frontend/           # SvelteKit application
-│   ├── src/
-│   │   ├── lib/        # Reusable components, Supabase client & store wrappers
-│   │   └── routes/     # App pages & layouts
-│   └── package.json
-└── supabase/           # Supabase migrations & configurations
-    └── migrations/     # PostgreSQL schema migrations
-```
+Les contributions sont les bienvenues ! N'hésitez pas à ouvrir un rapport d'anomalie ou à soumettre une proposition de modification (Pull Request).
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Distribué sous licence MIT. Voir `LICENSE` pour plus d'informations.
