@@ -16,7 +16,11 @@ Conçu pour être simple, fluide et immersif, QuestHub vous permet d'organiser v
 
 *   🗺️ **Plateau de jeu en temps réel (VTT)** : Téléversez vos cartes, placez-y la grille de combat et déplacez vos jetons de personnages et de monstres. Les mouvements et les pings s'affichent instantanément sur les écrans de tous les joueurs.
 *   🖥️ **Mode Présentation (Idéal pour le jeu en local / IRL)** : Vous jouez tous dans la même pièce ? Lancez le mode Présentation dans un nouvel onglet, déplacez-le sur votre téléviseur ou projecteur, et affichez uniquement la carte et les jetons visibles par vos joueurs.
-*   ⚔️ **Mode Combat & Initiative** : D'un clic, passez en mode combat. Un halo rouge enveloppe l'écran de projection et l'ordre de passage (initiative) s'affiche au-dessus de la carte avec les avatars des combattants. Le tour actif brille d'un contour doré.
+*   ⚔️ **Mode Combat & Initiative** : D'un clic, passez en mode combat pour structurer vos affrontements :
+    *   **Suivi de l'Initiative & des Rounds** : Suivi en temps réel de l'ordre de passage et du round actuel. Le combattant dont c'est le tour est mis en évidence par un anneau pulsant et lumineux sous son jeton sur la carte.
+    *   **Gestion des Factions & de la Santé** : Différenciation claire des forces (Alliés, Ennemis, Neutres) avec affichage de la Classe d'Armure (CA) et de la santé (points de vie réels pour les alliés, jauges d'état de santé descriptives pour les monstres).
+    *   **Statuts & Conditions** : Suivi des effets de statut (Empoisonné, Invisible, À terre, Béni, Étourdi, Inconscient) mis à jour en temps réel pour toute la table.
+    *   **Immersion Locale (Mode Présentation)** : Sur l'écran projeté, un halo rouge enveloppe la page et l'ordre d'initiative s'affiche au-dessus de la carte avec les avatars des combattants.
 *   📖 **Journal de Campagne (Wiki)** : Documentez votre monde, notez vos scénarios et écrivez le résumé de vos sessions dans un éditeur agréable. Organisez vos articles dans des dossiers et liez facilement des images de votre médiathèque.
 *   🗂️ **Fiches de Personnages & Bestiaire** : Créez et gérez les fiches de vos héros (statistiques, équipements, points de vie). Le MJ dispose d'un bestiaire complet pour stocker les profils de monstres et de PNJ.
 *   🖼️ **Médiathèque partagée (Drive)** : Importez vos illustrations, avatars et cartes. QuestHub s'assure que vos fichiers sont légers et optimisés (formats standardisés, pas de GIF lourds) pour garantir un chargement instantané en cours de partie.
