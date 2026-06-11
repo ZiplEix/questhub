@@ -21,8 +21,10 @@
         Image as ImageIcon,
         UploadCloud,
         Copy,
-        FileImage
+        FileImage,
+        FolderHeart
     } from "lucide-svelte";
+    import MediaSelectorModal from "$lib/components/MediaSelectorModal.svelte";
     import { marked } from "marked";
     import { 
         fetchStoryFolders, 
@@ -39,7 +41,8 @@
     import {
         uploadStoryAsset,
         listStoryAssets,
-        deleteStoryAsset
+        deleteStoryAsset,
+        validateImage
     } from "$lib/api/storage";
 
     let { gameId } = $props<{ gameId: string }>();
@@ -76,6 +79,8 @@
     let assetsLoading = $state(true);
     let assetsCollapsed = $state(true);
     let isUploadingAsset = $state(false);
+    let isMediaModalOpen = $state(false);
+    let isImportingFromMedia = $state(false);
     let assetsError = $state<string | null>(null);
     let fileInputRef = $state<HTMLInputElement | null>(null);
     let textareaElement = $state<HTMLTextAreaElement | null>(null);
@@ -141,7 +146,15 @@
     async function handleUploadFiles(files: FileList | File[]) {
         if (files.length === 0) return;
         
-        const imageFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
+        const imageFiles: File[] = [];
+        for (const file of Array.from(files)) {
+            const validation = validateImage(file, 2);
+            if (!validation.valid) {
+                alert(`Fichier "${file.name}" rejeté : ${validation.error}`);
+            } else {
+                imageFiles.push(file);
+            }
+        }
         if (imageFiles.length === 0) return;
 
         isUploadingAsset = true;
@@ -175,6 +188,40 @@
         } catch (error) {
             console.error("Failed to delete asset:", error);
             alert("Erreur lors de la suppression de l'image.");
+        }
+    }
+
+    async function handleSelectFromMediaLibrary(url: string) {
+        isMediaModalOpen = false;
+        isImportingFromMedia = true;
+        saveStatus = "saving";
+        assetsError = null;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Impossible de télécharger l'image depuis la médiathèque.");
+            
+            const blob = await response.blob();
+            const urlPath = new URL(url).pathname;
+            const originalName = urlPath.split('/').pop() || 'imported_image.png';
+            const nameWithoutTimestamp = originalName.replace(/^\d+_(.+)/, '$1');
+            const file = new File([blob], nameWithoutTimestamp, { type: blob.type });
+
+            const storyAssetUrl = await uploadStoryAsset(gameId, file);
+            
+            if (selectedPage) {
+                const altText = nameWithoutTimestamp.split('.').shift() || "image";
+                insertMarkdown(`\n![${altText}](${storyAssetUrl})\n`);
+            }
+            await loadAssets();
+            saveStatus = "saved";
+        } catch (error: any) {
+            console.error("Failed to import image from media library:", error);
+            saveStatus = "error";
+            assetsError = error.message || "Échec de l'importation de l'image.";
+            alert(`Erreur lors de l'importation : ${assetsError}`);
+        } finally {
+            isImportingFromMedia = false;
         }
     }
 
@@ -676,14 +723,25 @@
                             <span class="text-[10px] font-normal text-stone-400 font-mono">({assets.length})</span>
                         </button>
 
-                        <!-- Upload file button -->
-                        <button
-                            onclick={() => fileInputRef?.click()}
-                            class="text-stone-400 hover:text-burnt-orange p-1 rounded transition-colors"
-                            title="Importer une image"
-                        >
-                            <UploadCloud size={16} />
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <!-- Import from media library button -->
+                            <button
+                                onclick={() => (isMediaModalOpen = true)}
+                                class="text-stone-400 hover:text-burnt-orange p-1 rounded transition-colors"
+                                title="Choisir depuis la médiathèque"
+                            >
+                                <FolderHeart size={16} />
+                            </button>
+
+                            <!-- Upload file button -->
+                            <button
+                                onclick={() => fileInputRef?.click()}
+                                class="text-stone-400 hover:text-burnt-orange p-1 rounded transition-colors"
+                                title="Importer une image depuis votre appareil"
+                            >
+                                <UploadCloud size={16} />
+                            </button>
+                        </div>
                         <input
                             type="file"
                             accept="image/*"
@@ -695,7 +753,7 @@
                     </div>
 
                     {#if !assetsCollapsed}
-                        {#if assetsLoading}
+                        {#if assetsLoading || isImportingFromMedia}
                             <div class="flex items-center justify-center py-4">
                                 <Loader2 class="animate-spin text-stone-400" size={16} />
                             </div>
@@ -891,6 +949,14 @@
         {/if}
     </div>
 </div>
+
+<MediaSelectorModal
+    isOpen={isMediaModalOpen}
+    onSelect={handleSelectFromMediaLibrary}
+    onClose={() => {
+        isMediaModalOpen = false;
+    }}
+/>
 
 <style>
     /* Premium Markdown styling for Story preview and presentation */

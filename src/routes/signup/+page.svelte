@@ -60,6 +60,11 @@
     };
 </script>
 
+<svelte:head>
+    <title>Inscription — QuestHub</title>
+    <meta name="description" content="Créez votre compte QuestHub pour commencer à organiser vos campagnes de jeu de rôle et jouer en ligne." />
+</svelte:head>
+
 <div class="min-h-screen flex items-center justify-center bg-cream px-4 py-12">
     <div class="w-full max-w-md">
         <div

@@ -34,6 +34,7 @@
         fetchUserCharacters,
         fetchUserMonsters,
         uploadImage,
+        validateImage,
         type MarketplaceTemplate
     } from "$lib/api";
     import { authClient } from "$lib/auth-client";
@@ -139,7 +140,15 @@
     function handleEditCoverFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            editCoverFile = input.files[0];
+            const file = input.files[0];
+            const validation = validateImage(file, 2);
+            if (!validation.valid) {
+                alert(validation.error);
+                input.value = "";
+                editCoverFile = null;
+                return;
+            }
+            editCoverFile = file;
         }
     }
 
@@ -488,7 +497,15 @@
     function handleBundleCoverFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            bundleCoverFile = input.files[0];
+            const file = input.files[0];
+            const validation = validateImage(file, 2);
+            if (!validation.valid) {
+                alert(validation.error);
+                input.value = "";
+                bundleCoverFile = null;
+                return;
+            }
+            bundleCoverFile = file;
         }
     }
 
@@ -509,6 +526,19 @@
         { id: "PACK", label: "Packs" }
     ];
 </script>
+
+<svelte:head>
+    <title>Marché Communautaire — QuestHub</title>
+    <meta name="description" content="Découvrez et importez des personnages, monstres et packs de ressources créés par la communauté JDR pour vos campagnes QuestHub." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Marché Communautaire — QuestHub" />
+    <meta property="og:description" content="Découvrez et importez des personnages, monstres et packs de ressources créés par la communauté JDR pour vos campagnes QuestHub." />
+    <meta property="og:image" content="https://questhub.fr/example/gm_dashboard.png" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Marché Communautaire — QuestHub" />
+    <meta property="twitter:description" content="Découvrez et importez des personnages, monstres et packs de ressources créés par la communauté JDR pour vos campagnes QuestHub." />
+    <meta property="twitter:image" content="https://questhub.fr/example/gm_dashboard.png" />
+</svelte:head>
 
 <div class="min-h-screen bg-cream font-sans text-dark-gray">
     <Header />

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters, deleteUserAccount } from "$lib/api";
-    import { uploadImage } from "$lib/api/storage";
+    import { fetchUserStats, fetchUserCampaigns, fetchUserCharacters, fetchUserMonsters, deleteUserAccount, fetchMediaLibrary, uploadToMediaLibrary, deleteFromMediaLibrary, type MediaAsset } from "$lib/api";
+    import { uploadImage, validateImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
     import { goto } from "$app/navigation";
     import Header from "$lib/components/Header.svelte";
@@ -17,6 +17,9 @@
         Check,
         Lock,
         ShieldAlert,
+        Trash2,
+        Link,
+        RefreshCw
     } from "lucide-svelte";
     import type { SessionUser } from "$lib/types/session-user";
 
@@ -56,12 +59,19 @@
     let passwordError = $state("");
     let passwordSuccess = $state(false);
 
+    let mediaAssets = $state<MediaAsset[]>([]);
+    let mediaLoading = $state(false);
+    let mediaUploading = $state(false);
+    let mediaError = $state("");
+    let mediaFileInput = $state<HTMLInputElement | null>(null);
+
     const tabs = [
         { id: "general", label: "Informations", icon: User },
         { id: "stats", label: "Statistiques", icon: Activity },
         { id: "campaigns", label: "Campagnes", icon: Swords },
         { id: "characters", label: "Personnages", icon: Skull },
         { id: "bestiary", label: "Bestiaire", icon: BookOpen },
+        { id: "media", label: "Médiathèque", icon: Camera },
     ];
 
     onMount(async () => {
@@ -81,7 +91,13 @@
             editName = user.name || "";
             editEmail = user.email || "";
 
-            await Promise.all([fetchStats(), fetchCampaigns(), fetchCharacters(), fetchMonsters()]);
+            await Promise.all([
+                fetchStats(), 
+                fetchCampaigns(), 
+                fetchCharacters(), 
+                fetchMonsters(),
+                fetchMedia()
+            ]);
         } catch (e) {
             console.error(e);
         } finally {
@@ -126,15 +142,9 @@
         const file = input.files?.[0];
         if (!file) return;
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            avatarError = "Veuillez sélectionner un fichier image.";
-            return;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            avatarError = "L'image ne doit pas dépasser 5 Mo.";
+        const validation = validateImage(file, 2); // 2MB limit for avatar
+        if (!validation.valid) {
+            avatarError = validation.error || "Image invalide.";
             return;
         }
 
@@ -159,6 +169,56 @@
             avatarUploading = false;
             // Reset the input so the same file can be re-selected
             if (input) input.value = "";
+        }
+    }
+
+    async function fetchMedia() {
+        try {
+            mediaLoading = true;
+            mediaAssets = await fetchMediaLibrary();
+        } catch (e) {
+            console.error("Failed to fetch media library", e);
+        } finally {
+            mediaLoading = false;
+        }
+    }
+
+    async function handleMediaUpload(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        mediaUploading = true;
+        mediaError = "";
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const validation = validateImage(file, 10);
+                if (!validation.valid) {
+                    throw new Error(validation.error || `Le fichier "${file.name}" est invalide.`);
+                }
+                await uploadToMediaLibrary(file);
+            }
+            await fetchMedia();
+        } catch (e: any) {
+            console.error("Failed to upload to media library", e);
+            mediaError = e.message || "Erreur lors du téléversement.";
+        } finally {
+            mediaUploading = false;
+            if (input) input.value = "";
+        }
+    }
+
+    async function handleDeleteMedia(id: string, url: string) {
+        if (!confirm("Voulez-vous vraiment supprimer cette image de votre médiathèque ?")) return;
+
+        try {
+            await deleteFromMediaLibrary(id, url);
+            await fetchMedia();
+        } catch (e: any) {
+            console.error("Failed to delete media asset", e);
+            alert("Erreur lors de la suppression de l'image : " + (e.message || "Erreur inconnue"));
         }
     }
 
@@ -876,6 +936,105 @@
                                     <h4 class="font-bold text-dark-gray text-lg">Aucun monstre créé</h4>
                                     <p class="text-stone-400 text-sm max-w-sm">
                                         Vous n'avez pas encore créé de monstre. Allez dans les paramètres d'une partie dont vous êtes le GM pour en ajouter au bestiaire !
+                                    </p>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
+                {#if activeTab === "media"}
+                    <div class="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-stone-200/60 shadow-2xs">
+                            <div class="space-y-1 text-center sm:text-left">
+                                <h3 class="font-display font-black text-xl text-dark-gray">Médiathèque Personnelle</h3>
+                                <p class="text-xs text-stone-400">Stockez et réutilisez vos images pour vos cartes, monstres, jetons et illustrations.</p>
+                            </div>
+                            <div>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    bind:this={mediaFileInput}
+                                    class="hidden"
+                                    onchange={handleMediaUpload}
+                                />
+                                <button
+                                    onclick={() => mediaFileInput?.click()}
+                                    disabled={mediaUploading}
+                                    class="px-5 py-2.5 bg-burnt-orange hover:bg-opacity-95 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {#if mediaUploading}
+                                        <Loader2 size={16} class="animate-spin" />
+                                        Téléversement...
+                                    {:else}
+                                        <RefreshCw size={16} />
+                                        Ajouter des images
+                                    {/if}
+                                </button>
+                            </div>
+                        </div>
+
+                        {#if mediaError}
+                            <div class="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm border border-red-100">
+                                {mediaError}
+                            </div>
+                        {/if}
+
+                        {#if mediaLoading}
+                            <div class="flex items-center justify-center py-20">
+                                <Loader2 class="animate-spin text-burnt-orange" size={32} />
+                            </div>
+                        {:else if mediaAssets.length > 0}
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {#each mediaAssets as asset}
+                                    <div class="bg-white rounded-2xl border border-stone-150 overflow-hidden shadow-3xs hover:shadow-md transition-all group flex flex-col justify-between">
+                                        <div class="relative aspect-square bg-stone-50 flex items-center justify-center border-b border-stone-100 overflow-hidden">
+                                            <img
+                                                src={asset.url}
+                                                alt={asset.name}
+                                                class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
+                                            />
+                                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <button
+                                                    onclick={() => {
+                                                        navigator.clipboard.writeText(asset.url);
+                                                        alert("URL copiée dans le presse-papiers !");
+                                                    }}
+                                                    class="p-2 bg-white rounded-lg text-dark-gray hover:text-burnt-orange shadow-sm hover:scale-110 transition-all cursor-pointer"
+                                                    title="Copier le lien de l'image"
+                                                >
+                                                    <Link size={16} />
+                                                </button>
+                                                <button
+                                                    onclick={() => handleDeleteMedia(asset.id, asset.url)}
+                                                    class="p-2 bg-white rounded-lg text-red-500 hover:text-red-700 shadow-sm hover:scale-110 transition-all cursor-pointer"
+                                                    title="Supprimer l'image"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="p-3 space-y-1">
+                                            <p class="text-xs font-bold text-dark-gray truncate" title={asset.name}>
+                                                {asset.name}
+                                            </p>
+                                            <p class="text-[10px] text-stone-400 font-mono">
+                                                {Math.round(asset.size / 1024)} Ko • {asset.mime_type.split('/')[1].toUpperCase()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="text-center py-20 bg-stone-50/50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center gap-4">
+                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-stone-300 shadow-sm border border-stone-100">
+                                    <Camera size={32} />
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="font-bold text-dark-gray text-lg">Votre médiathèque est vide</h4>
+                                    <p class="text-stone-400 text-sm max-w-sm mx-auto">
+                                        Importez vos images de cartes, de jetons de combat ou d'illustrations pour les stocker et y accéder facilement à tout moment.
                                     </p>
                                 </div>
                             </div>

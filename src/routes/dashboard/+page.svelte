@@ -8,11 +8,12 @@
     } from "lucide-svelte";
     import GameCard from "$lib/components/GameCard.svelte";
     import Header from "$lib/components/Header.svelte";
-    import { fetchGames, createGame, deleteGame, uploadImage } from "$lib/api";
+    import { fetchGames, createGame, deleteGame, uploadImage, validateImage } from "$lib/api";
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { authClient } from "$lib/auth-client";
     import type { SessionUser } from "$lib/types/session-user";
+    import MediaSelectorModal from "$lib/components/MediaSelectorModal.svelte";
 
     let games = $state<any[]>([]);
     let loading = $state(true);
@@ -62,18 +63,25 @@
     let dialog: HTMLDialogElement;
     let newGameName = $state("");
     let creating = $state(false);
-    let imageType = $state<"url" | "upload">("url");
+    let imageType = $state<"url" | "upload" | "media">("url");
     let imageUrl = $state("");
     let isUploading = $state(false);
+    let isMediaModalOpen = $state(false);
 
     async function handleFileUpload(e: Event) {
         const input = e.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
 
         const file = input.files[0];
+        const validation = validateImage(file, 2); // 2MB limit for game cover images
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
         isUploading = true;
         try {
-            imageUrl = await uploadImage(file);
+            imageUrl = await uploadImage(file, 2);
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Erreur lors de l'upload de l'image");
@@ -132,6 +140,13 @@
         }
     }
 </script>
+
+<svelte:head>
+    <title>Tableau de Bord — QuestHub</title>
+    <meta name="description" content="Accédez à vos tables de jeu, gérez vos parties de jeu de rôle et créez de nouvelles aventures." />
+    <!-- Pas d'indexation pour le dashboard des utilisateurs connectés -->
+    <meta name="robots" content="noindex, nofollow" />
+</svelte:head>
 
 <div class="min-h-screen bg-cream">
     <Header />
@@ -298,6 +313,19 @@
                         >
                             Upload
                         </button>
+                        <button
+                            type="button"
+                            class="flex-1 py-2 rounded-lg text-sm font-medium transition-all {imageType ===
+                            'media'
+                                ? 'bg-white text-dark-gray shadow-sm rounded-xl'
+                                : 'text-stone-500 hover:text-dark-gray'}"
+                            onclick={() => {
+                                imageType = "media";
+                                isMediaModalOpen = true;
+                            }}
+                        >
+                            Médiathèque
+                        </button>
                     </div>
 
                     {#if imageType === "url"}
@@ -307,7 +335,7 @@
                             class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-burnt-orange/50 focus:border-burnt-orange transition-all bg-stone-50"
                             placeholder="https://example.com/image.jpg"
                         />
-                    {:else}
+                    {:else if imageType === "upload"}
                         <div class="relative">
                             <input
                                 type="file"
@@ -324,7 +352,7 @@
                                     <div
                                         class="animate-spin rounded-full h-8 w-8 border-b-2 border-burnt-orange"
                                     ></div>
-                                {:else if imageUrl && imageType === "upload"}
+                                {:else if imageUrl}
                                     <img
                                         src={imageUrl}
                                         alt="Preview"
@@ -340,25 +368,36 @@
                                     </div>
                                 {:else}
                                     <div class="text-center p-4">
-                                        <p
-                                            class="text-sm font-medium text-dark-gray"
-                                        >
-                                            Cliquez pour uploader
-                                        </p>
-                                        <p
-                                            class="text-xs text-dark-gray/60 mt-1"
-                                        >
-                                            PNG, JPG jusqu'à 5MB
-                                        </p>
+                                        <p class="text-sm font-medium text-dark-gray">Cliquez pour uploader</p>
+                                        <p class="text-xs text-dark-gray/60 mt-1">PNG, JPG jusqu'à 5 Mo</p>
                                     </div>
                                 {/if}
                             </label>
                         </div>
-                        <p
-                            class="text-xs text-amber-600 mt-2 flex items-center gap-1"
-                        >
+                        <p class="text-xs text-amber-600 mt-2 flex items-center gap-1">
                             ⚠️ Attention : toute image uploadée est publique.
                         </p>
+                    {:else if imageType === "media"}
+                        <div 
+                            class="relative w-full h-32 border-2 border-dashed border-stone-300 rounded-xl bg-stone-50 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-stone-50 transition-colors"
+                            onclick={() => (isMediaModalOpen = true)}
+                        >
+                            {#if imageUrl}
+                                <img
+                                    src={imageUrl}
+                                    alt="Preview"
+                                    class="h-full w-full object-cover rounded-xl"
+                                />
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                    <span class="bg-white px-3 py-1.5 rounded-xl text-xs font-bold text-dark-gray">Modifier depuis la médiathèque</span>
+                                </div>
+                            {:else}
+                                <div class="text-center p-4">
+                                    <p class="text-xs text-stone-500 font-medium">Aucune image sélectionnée</p>
+                                    <span class="text-xs text-burnt-orange font-bold hover:underline mt-1.5 block">Ouvrir la médiathèque</span>
+                                </div>
+                            {/if}
+                        </div>
                     {/if}
                 </div>
 
@@ -381,4 +420,15 @@
             </form>
         </div>
     </dialog>
+
+    <MediaSelectorModal
+        isOpen={isMediaModalOpen}
+        onSelect={(url) => {
+            imageUrl = url;
+            isMediaModalOpen = false;
+        }}
+        onClose={() => {
+            isMediaModalOpen = false;
+        }}
+    />
 </div>

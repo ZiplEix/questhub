@@ -4,7 +4,7 @@
     import Header from "$lib/components/Header.svelte";
     import { onMount } from "svelte";
     import { fetchBoard, updateBoard } from "$lib/api/board";
-    import { uploadImage } from "$lib/api/storage";
+    import { uploadImage, validateImage } from "$lib/api/storage";
     import { authClient } from "$lib/auth-client";
     import {
         ArrowLeft, Check, Upload, Link as LinkIcon,
@@ -260,9 +260,16 @@
 
     async function handleFileUpload(file: File) {
         if (isUploadingFile) return;
+
+        const validation = validateImage(file, 10); // 10MB limit for maps/boards
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
         try {
             isUploadingFile = true;
-            const publicUrl = await uploadImage(file);
+            const publicUrl = await uploadImage(file, 10);
             boardUrl = publicUrl;
         } catch (err) {
             console.error("Erreur lors de l'upload de l'image :", err);

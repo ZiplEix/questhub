@@ -2,12 +2,13 @@
     import { page } from "$app/state";
     import { boardsStore } from "$lib/websocket";
     import { addBoard, deleteBoard, activateBoard } from "$lib/api/board";
-    import { uploadImage } from "$lib/api/storage";
+    import { uploadImage, validateImage } from "$lib/api/storage";
     import { 
         Plus, Trash2, Check, Image as ImageIcon, 
         Link as LinkIcon, Upload, Loader2, Layers,
         ChevronRight, Edit
     } from "lucide-svelte";
+    import MediaSelectorModal from "$lib/components/MediaSelectorModal.svelte";
 
     // Props
     let {
@@ -18,10 +19,11 @@
 
     let newBoardName = $state("");
     let newBoardUrl = $state("");
-    let uploadMethod = $state<"file" | "url">("file");
+    let uploadMethod = $state<"file" | "url" | "media">("file");
     
     let isUploadingFile = $state(false);
     let isCreatingBoard = $state(false);
+    let isMediaModalOpen = $state(false);
     
     let fileInput = $state<HTMLInputElement | null>(null);
     let dragOver = $state(false);
@@ -32,9 +34,16 @@
 
     async function handleFileUpload(file: File) {
         if (isUploadingFile) return;
+
+        const validation = validateImage(file, 10); // 10MB limit for maps/boards
+        if (!validation.valid) {
+            alert(validation.error);
+            return;
+        }
+
         try {
             isUploadingFile = true;
-            const publicUrl = await uploadImage(file);
+            const publicUrl = await uploadImage(file, 10);
             newBoardUrl = publicUrl;
         } catch (err) {
             console.error("Erreur lors de l'upload de l'image :", err);
@@ -150,6 +159,15 @@
                                 <LinkIcon size={14} />
                                 Lien externe URL
                             </button>
+                            <button
+                                type="button"
+                                onclick={() => { uploadMethod = "media"; isMediaModalOpen = true; }}
+                                class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all flex items-center justify-center gap-1.5 h-full
+                                {uploadMethod === 'media' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'}"
+                            >
+                                <ImageIcon size={14} />
+                                Médiathèque
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -187,7 +205,7 @@
                             </span>
                         {/if}
                     </div>
-                {:else}
+                {:else if uploadMethod === 'url'}
                     <div class="space-y-2">
                         <label for="board-url" class="text-sm font-bold text-dark-gray">Adresse URL de l'image</label>
                         <input
@@ -198,6 +216,25 @@
                             required
                             class="w-full px-4 py-2 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burnt-orange/20 focus:border-burnt-orange transition-all"
                         />
+                    </div>
+                {:else if uploadMethod === 'media'}
+                    <div 
+                        class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-3 bg-white border-stone-200 hover:border-stone-300"
+                        onclick={() => (isMediaModalOpen = true)}
+                        role="button"
+                        tabindex="0"
+                        onkeydown={(e) => e.key === "Enter" && (isMediaModalOpen = true)}
+                    >
+                        {#if newBoardUrl}
+                            <Check size={28} class="text-emerald-500" />
+                            <span class="text-sm text-emerald-600 font-bold">Image sélectionnée depuis la médiathèque !</span>
+                            <span class="text-xs text-stone-400 truncate max-w-full font-mono">{newBoardUrl}</span>
+                        {:else}
+                            <ImageIcon size={28} class="text-stone-400" />
+                            <span class="text-sm text-stone-500">
+                                Cliquer pour choisir une image dans la <strong class="text-burnt-orange">médiathèque</strong>
+                            </span>
+                        {/if}
                     </div>
                 {/if}
 
@@ -355,4 +392,15 @@
             </div>
         {/if}
     </div>
+
+    <MediaSelectorModal
+        isOpen={isMediaModalOpen}
+        onSelect={(url) => {
+            newBoardUrl = url;
+            isMediaModalOpen = false;
+        }}
+        onClose={() => {
+            isMediaModalOpen = false;
+        }}
+    />
 </div>

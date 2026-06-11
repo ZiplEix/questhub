@@ -258,6 +258,21 @@ async function deleteUserImages(userId: string): Promise<void> {
         });
     }
 
+    // 6. Media Library images
+    const { data: myMedia } = await supabase
+        .from('media_library')
+        .select('url')
+        .eq('user_id', userId);
+
+    if (myMedia) {
+        myMedia.forEach(m => {
+            if (m.url) {
+                const path = getStoragePath(m.url);
+                if (path) pathsToDelete.push(path);
+            }
+        });
+    }
+
     // Clean up unique and valid paths
     const uniquePaths = [...new Set(pathsToDelete.filter(Boolean))] as string[];
     if (uniquePaths.length > 0) {

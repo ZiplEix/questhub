@@ -41,6 +41,11 @@
     };
 </script>
 
+<svelte:head>
+    <title>Connexion — QuestHub</title>
+    <meta name="description" content="Connectez-vous à votre compte QuestHub pour accéder à vos campagnes de jeu de rôle et à vos tables de jeu." />
+</svelte:head>
+
 <div class="min-h-screen flex items-center justify-center bg-cream px-4 py-12">
     <div class="w-full max-w-md">
         <div

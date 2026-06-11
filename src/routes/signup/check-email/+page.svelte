@@ -1,9 +1,62 @@
 <script lang="ts">
     import { page } from "$app/stores";
-    import { Mail, ArrowLeft, ShieldCheck, HelpCircle } from "lucide-svelte";
+    import { Mail, ArrowLeft, ShieldCheck, HelpCircle, RefreshCw, CheckCircle2 } from "lucide-svelte";
+    import { supabase } from "$lib/supabaseClient";
 
     // Get email from URL parameters or fallback
-    let email = $derived($page.url.searchParams.get("email") || "votre adresse e-mail");
+    let emailParam = $derived($page.url.searchParams.get("email") || "");
+    let emailDisplay = $derived(emailParam || "votre adresse e-mail");
+
+    let resending = $state(false);
+    let resendSuccess = $state(false);
+    let resendError = $state("");
+    let cooldown = $state(0);
+    let timerId = $state<any>(null);
+
+    function startCooldown() {
+        cooldown = 60;
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(() => {
+            if (cooldown > 0) {
+                cooldown -= 1;
+            } else {
+                clearInterval(timerId);
+            }
+        }, 1000);
+    }
+
+    async function handleResend() {
+        if (!emailParam) {
+            resendError = "Adresse e-mail manquante dans l'URL. Veuillez retourner à l'inscription.";
+            return;
+        }
+        if (cooldown > 0 || resending) return;
+
+        resending = true;
+        resendError = "";
+        resendSuccess = false;
+
+        try {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: emailParam,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                }
+            });
+
+            if (error) {
+                resendError = error.message || "Une erreur est survenue lors du renvoi du mail.";
+            } else {
+                resendSuccess = true;
+                startCooldown();
+            }
+        } catch (e: any) {
+            resendError = e.message || "Une erreur inattendue est survenue.";
+        } finally {
+            resending = false;
+        }
+    }
 </script>
 
 <svelte:head>
@@ -41,7 +94,7 @@
             <p class="text-dark-gray/70 text-sm leading-relaxed mb-6">
                 Nous avons envoyé un e-mail de confirmation à :<br />
                 <span class="font-bold text-dark-gray bg-stone-50 px-2 py-1 rounded-md border border-stone-200/50 mt-1 inline-block select-all">
-                    {email}
+                    {emailDisplay}
                 </span>
             </p>
 
@@ -61,11 +114,44 @@
                     <div class="space-y-1">
                         <p class="text-xs font-bold text-dark-gray">Vous ne trouvez pas l'e-mail ?</p>
                         <p class="text-[11px] text-dark-gray/60 leading-relaxed">
-                            Pensez à vérifier votre dossier de courriers indésirables (spams) ou réessayez l'inscription.
+                            Pensez à vérifier votre dossier de courriers indésirables (spams).
                         </p>
                     </div>
                 </div>
             </div>
+
+            {#if emailParam}
+                <div class="mb-8 text-center">
+                    {#if resendSuccess}
+                        <div class="mb-4 bg-green-50 text-green-700 border border-green-100 text-xs px-4 py-3 rounded-xl flex items-center justify-center gap-2">
+                            <CheckCircle2 size={16} class="shrink-0" />
+                            <span>Un nouvel e-mail de confirmation a été envoyé !</span>
+                        </div>
+                    {/if}
+
+                    {#if resendError}
+                        <div class="mb-4 bg-red-50 text-red-600 border border-red-100 text-xs px-4 py-3 rounded-xl">
+                            {resendError}
+                        </div>
+                    {/if}
+
+                    <button
+                        onclick={handleResend}
+                        disabled={resending || cooldown > 0}
+                        class="text-xs text-burnt-orange font-bold hover:underline inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        {#if resending}
+                            <RefreshCw size={14} class="animate-spin" />
+                            Renvoi en cours...
+                        {:else if cooldown > 0}
+                            Renvoyer l'e-mail ({cooldown}s)
+                        {:else}
+                            <RefreshCw size={14} />
+                            Renvoyer l'e-mail de confirmation
+                        {/if}
+                    </button>
+                </div>
+            {/if}
 
             <!-- Action buttons -->
             <div class="space-y-3">

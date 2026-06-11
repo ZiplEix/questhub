@@ -6,11 +6,14 @@
         Trash2,
         Save,
         ArrowLeft,
+        Camera,
+        Check,
     } from "lucide-svelte";
     import IconPicker from "$lib/components/IconPicker.svelte";
-    import { createCharacter, updateCharacter, uploadImage } from "$lib/api";
+    import { createCharacter, updateCharacter, uploadImage, validateImage } from "$lib/api";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
+    import MediaSelectorModal from "$lib/components/MediaSelectorModal.svelte";
 
     let {
         gameId,
@@ -31,10 +34,11 @@
     let money = $state(0);
     let isNPC = $state(type === "NPC");
     let characterType = $state(type);
-    let avatarType = $state<"upload" | "url">("upload");
+    let avatarType = $state<"upload" | "url" | "media">("upload");
     let avatarFile = $state<File | null>(null);
     let avatarPreviewURL = $state("");
     let avatarURL = $state("");
+    let isMediaModalOpen = $state(false);
 
     $effect(() => {
         if (avatarFile) {
@@ -356,7 +360,15 @@
     function handleFileChange(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files.length > 0) {
-            avatarFile = input.files[0];
+            const file = input.files[0];
+            const validation = validateImage(file, 2);
+            if (!validation.valid) {
+                alert(validation.error);
+                input.value = "";
+                avatarFile = null;
+                return;
+            }
+            avatarFile = file;
         }
     }
 
@@ -369,7 +381,7 @@
             let uploadedAvatarUrl = character?.avatar_url || null;
             if (avatarType === "upload" && avatarFile) {
                 uploadedAvatarUrl = await uploadImage(avatarFile);
-            } else if (avatarType === "url" && avatarURL) {
+            } else if ((avatarType === "url" || avatarType === "media") && avatarURL) {
                 uploadedAvatarUrl = avatarURL;
             }
 
@@ -556,6 +568,18 @@
                         >
                             <Link size={16} /> URL
                         </button>
+                        <button
+                            class="flex items-center gap-2 text-sm font-medium {avatarType ===
+                            'media'
+                                ? 'text-burnt-orange'
+                                : 'text-stone-400'}"
+                            onclick={() => {
+                                avatarType = "media";
+                                isMediaModalOpen = true;
+                            }}
+                        >
+                            <Camera size={16} /> Médiathèque
+                        </button>
                     </div>
 
                     {#if avatarType === "upload"}
@@ -597,7 +621,7 @@
                                 </p>
                             </div>
                         {/if}
-                    {:else}
+                    {:else if avatarType === "url"}
                         <div class="space-y-4">
                             <input
                                 type="url"
@@ -615,6 +639,43 @@
                                     />
                                 </div>
                             {/if}
+                        </div>
+                    {:else if avatarType === "media"}
+                        <div class="space-y-4">
+                            <div 
+                                class="relative w-36 h-36 mx-auto group cursor-pointer overflow-hidden rounded-2xl border border-dashed border-stone-250 hover:border-burnt-orange/50 transition-all flex items-center justify-center bg-stone-50 shadow-sm"
+                                onclick={() => (isMediaModalOpen = true)}
+                                role="button"
+                                tabindex="0"
+                                onkeydown={(e) => e.key === "Enter" && (isMediaModalOpen = true)}
+                            >
+                                {#if avatarURL}
+                                    <img
+                                        src={avatarURL}
+                                        alt="Aperçu de l'avatar"
+                                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1">
+                                        <Camera size={20} />
+                                        <span class="text-[10px] font-bold uppercase tracking-wider">Modifier</span>
+                                    </div>
+                                {:else if character && character.avatar_url}
+                                    <img
+                                        src={character.avatar_url}
+                                        alt="Aperçu de l'avatar"
+                                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1">
+                                        <Camera size={20} />
+                                        <span class="text-[10px] font-bold uppercase tracking-wider">Modifier</span>
+                                    </div>
+                                {:else}
+                                    <div class="text-center p-4">
+                                        <Camera size={24} class="text-stone-400 mx-auto mb-1" />
+                                        <span class="text-xs text-stone-500 font-medium block">Médiathèque</span>
+                                    </div>
+                                {/if}
+                            </div>
                         </div>
                     {/if}
                 </div>
@@ -1239,8 +1300,15 @@
                                                         input.files &&
                                                         input.files.length > 0
                                                     ) {
-                                                        item.imageFile =
-                                                            input.files[0];
+                                                        const file = input.files[0];
+                                                        const validation = validateImage(file, 2);
+                                                        if (!validation.valid) {
+                                                            alert(validation.error);
+                                                            input.value = "";
+                                                            item.imageFile = null;
+                                                            return;
+                                                        }
+                                                        item.imageFile = file;
                                                     }
                                                 }}
                                                 class="block w-full text-xs text-stone-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-stone-200 file:text-stone-700 hover:file:bg-stone-300"
@@ -1342,4 +1410,16 @@
             </div>
         </div>
     </div>
+
+    <MediaSelectorModal
+        isOpen={isMediaModalOpen}
+        onSelect={(url) => {
+            avatarURL = url;
+            isMediaModalOpen = false;
+        }}
+        onClose={() => {
+            isMediaModalOpen = false;
+        }}
+    />
 </div>
+

@@ -9,6 +9,20 @@
     let betaBannerOpen = $state(true);
 </script>
 
+<svelte:head>
+    <title>QuestHub — Table de jeu virtuelle (VTT) & Compagnon de JDR</title>
+    <meta name="description" content="QuestHub est une table de jeu virtuelle (VTT) moderne et simplifiée. Gérez vos combats en temps réel, vos feuilles de personnages, votre lore et partagez vos créations." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="QuestHub — Table de jeu virtuelle (VTT) & Compagnon de JDR" />
+    <meta property="og:description" content="Gérez vos campagnes de jeu de rôle sur table en toute simplicité. Combats fluides en temps réel, inventaires partagés, bestiaire et lore interactif." />
+    <meta property="og:image" content="https://questhub.fr/example/gm_dashboard.png" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="QuestHub — Table de jeu virtuelle (VTT) & Compagnon de JDR" />
+    <meta property="twitter:description" content="Gérez vos campagnes de jeu de rôle sur table en toute simplicité. Combats fluides en temps réel, inventaires partagés, bestiaire et lore interactif." />
+    <meta property="twitter:image" content="https://questhub.fr/example/gm_dashboard.png" />
+</svelte:head>
+
+
 {#if betaBannerOpen}
     <div class="w-full bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-center gap-3 text-sm text-amber-800">
         <TriangleAlert size={16} class="text-amber-500 shrink-0" />
