@@ -7,6 +7,7 @@
         ChevronDown,
         Settings,
         BookOpen,
+        Presentation,
     } from "lucide-svelte";
     import { authClient } from "$lib/auth-client";
     import { clickOutside } from "$lib/actions/clickOutside";
@@ -56,6 +57,16 @@
         <div
             class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-2"
         >
+            <button
+                onclick={() => window.open(path.replace("/gm", "/presentation"), "_blank")}
+                class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm cursor-pointer"
+                title="Mode Présentation (Projeté / Local)"
+            >
+                <Presentation size={18} />
+                <span class="font-medium text-sm hidden md:inline"
+                    >Présentation</span
+                >
+            </button>
             <a
                 href="{path}/guide"
                 class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-white border border-stone-200 text-dark-gray hover:bg-stone-50 hover:border-burnt-orange/30 hover:text-burnt-orange transition-all shadow-sm"
