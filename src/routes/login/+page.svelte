@@ -1,11 +1,19 @@
 <script lang="ts">
     import { authClient } from "$lib/auth-client";
     import GoogleButton from "$lib/components/GoogleButton.svelte";
+    import { page } from "$app/state";
+    import { onMount } from "svelte";
 
     let email = $state("");
     let password = $state("");
     let error = $state("");
     let loading = $state(false);
+
+    onMount(() => {
+        if (page.url.searchParams.get("error") === "banned") {
+            error = "Votre compte a été suspendu par un administrateur.";
+        }
+    });
 
     const handleSubmit = async (event: SubmitEvent) => {
         event.preventDefault();

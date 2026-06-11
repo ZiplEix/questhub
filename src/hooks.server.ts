@@ -31,6 +31,18 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { data: { user } } = await event.locals.supabase.auth.getUser();
     
     if (user) {
+        // Check if user is banned
+        const { data: roleData } = await event.locals.supabase
+            .from('user_roles')
+            .select('is_banned')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (roleData?.is_banned) {
+            await event.locals.supabase.auth.signOut();
+            throw redirect(302, "/login?error=banned");
+        }
+
         event.locals.user = {
             id: user.id,
             email: user.email || '',

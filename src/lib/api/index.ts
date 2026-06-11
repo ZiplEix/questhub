@@ -12,4 +12,5 @@ export * from './marketplace';
 export * from './feedback';
 export * from './story';
 export * from './media';
+export * from './admin';
 

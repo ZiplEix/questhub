@@ -8,15 +8,29 @@
         Settings,
         BookOpen,
         Presentation,
+        ShieldAlert,
     } from "lucide-svelte";
     import { authClient } from "$lib/auth-client";
     import { clickOutside } from "$lib/actions/clickOutside";
     import { page } from "$app/state";
+    import { fetchCurrentUserRole } from "$lib/api";
 
     const session = authClient.useSession();
     let isMenuOpen = $state(false);
-
     let path = $state(page.url.pathname);
+    let currentUserRole = $state<'admin' | 'moderator' | null>(null);
+
+    $effect(() => {
+        if ($session.data?.user) {
+            fetchCurrentUserRole().then(res => {
+                currentUserRole = res.role;
+            }).catch(e => {
+                console.error("Failed to fetch user role for header", e);
+            });
+        } else {
+            currentUserRole = null;
+        }
+    });
 
     const handleLogout = async () => {
         await authClient.signOut({
@@ -161,6 +175,16 @@
                             <User size={18} class="text-dark-gray/60" />
                             Profil
                         </a>
+                        {#if currentUserRole === 'admin' || currentUserRole === 'moderator'}
+                            <a
+                                href="/admin"
+                                class="flex items-center gap-3 px-4 py-2.5 text-sm text-burnt-orange hover:bg-stone-50 transition-colors font-semibold"
+                                onclick={closeMenu}
+                            >
+                                <ShieldAlert size={18} />
+                                Administration
+                            </a>
+                        {/if}
                         <div class="h-px bg-stone-100 my-1"></div>
                         <button
                             class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors text-left hover:cursor-pointer"
